@@ -557,6 +557,7 @@
     .card-value { font-size: 22px; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
@@ -1020,7 +1021,7 @@
     <p class="section-desc">Yahoo Finance API 데이터로 직접 렌더링 · iframe 없음</p>
 
     <!-- 심볼 선택 -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <button class="chart-btn active" onclick="switchChart('^GSPC', this)">S&amp;P 500</button>
       <button class="chart-btn" onclick="switchChart('^NDX', this)">나스닥 100</button>
       <button class="chart-btn" onclick="switchChart('^DJI', this)">다우존스</button>
@@ -1035,18 +1036,42 @@
       <button class="chart-btn" onclick="switchChart('ETH-USD', this)">이더리움</button>
     </div>
 
+    <div class="chart-toolbar">
+      <div class="toolbar-group">
+        <span class="toolbar-label">형태</span>
+        <button class="tool-btn active" data-chart-type="candlestick" onclick="setMainChartType('candlestick', this)">캔들</button>
+        <button class="tool-btn" data-chart-type="line" onclick="setMainChartType('line', this)">선</button>
+      </div>
+      <div class="toolbar-group">
+        <span class="toolbar-label">기간</span>
+        <button class="tool-btn" data-chart-range="5d" onclick="setMainChartRange('5d', '15m', this)">5일</button>
+        <button class="tool-btn" data-chart-range="1mo" onclick="setMainChartRange('1mo', '1d', this)">1개월</button>
+        <button class="tool-btn" data-chart-range="3mo" onclick="setMainChartRange('3mo', '1d', this)">3개월</button>
+        <button class="tool-btn" data-chart-range="6mo" onclick="setMainChartRange('6mo', '1d', this)">6개월</button>
+        <button class="tool-btn active" data-chart-range="1y" onclick="setMainChartRange('1y', '1d', this)">1년</button>
+        <button class="tool-btn" data-chart-range="5y" onclick="setMainChartRange('5y', '1wk', this)">5년</button>
+      </div>
+    </div>
+
     <style>
-      .chart-btn {
+      .chart-btn, .tool-btn {
         background: var(--bg3); border: 1px solid var(--border);
         color: #d0d7de; padding: 6px 14px; border-radius: 4px;
         font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.2s;
       }
-      .chart-btn:hover { border-color: var(--accent); color: var(--accent); }
-      .chart-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
+      .chart-btn:hover, .tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .chart-btn.active, .tool-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
+      .chart-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+      .toolbar-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+      .toolbar-label { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-right:2px; }
+      .lw-chart-host { width:100%; height:100%; position:relative; }
+      .lw-chart-error, .lw-chart-loading { height:100%; display:flex; align-items:center; justify-content:center; color:var(--text3); font-family:var(--mono); font-size:12px; }
+      .lw-chart-meta { padding: 10px 14px 0; font-family: var(--mono); font-size: 11px; color: var(--text3); }
     </style>
 
     <div class="chart-card">
-      <div id="tv-main-chart" class="yf-chart" style="height:520px;position:relative;z-index:10;"></div>
+      <div class="lw-chart-meta" id="main-chart-meta">Yahoo Finance · 캔들 · 1년</div>
+      <div id="tv-main-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
     </div>
   </div>
 
@@ -1700,7 +1725,7 @@ function updateBanner() {
 
 
 // ══════════════════════════════════════════
-// ■ Yahoo Finance 차트 렌더러
+// ■ Lightweight Charts + Yahoo Finance 히스토리
 // ══════════════════════════════════════════
 const CHART_META = {
   '^GSPC': { label: 'S&P 500', decimals: 2 }, '^NDX': { label: '나스닥 100', decimals: 2 }, '^DJI': { label: '다우존스', decimals: 2 },
@@ -1712,7 +1737,18 @@ const CHART_META = {
 };
 const chartState = {};
 let _activeChartSym = '^GSPC';
+let _mainChartRange = '1y';
+let _mainChartInterval = '1d';
+let _mainChartType = 'candlestick';
 
+function chartText(sym) {
+  return CHART_META[sym]?.label || sym;
+}
+function formatChartValue(value, sym) {
+  const meta = CHART_META[sym] || {};
+  const decimals = meta.decimals ?? 2;
+  return (meta.prefix || '') + Number(value).toLocaleString('ko-KR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + (meta.suffix || '');
+}
 function getYahooChartUrls(sym, range='6mo', interval='1d') {
   const encoded = encodeURIComponent(sym);
   const direct1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encoded}?interval=${interval}&range=${range}&includePrePost=false&events=div%2Csplits`;
@@ -1723,7 +1759,10 @@ function getYahooChartUrls(sym, range='6mo', interval='1d') {
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(direct2)}`,
   ];
 }
-
+function toBusinessDay(ts) {
+  const d = new Date(ts);
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+}
 async function fetchYahooHistory(sym, range='6mo', interval='1d') {
   const cacheKey = `hist_${sym}_${range}_${interval}`;
   const cached = Cache.get(cacheKey, 1800000);
@@ -1743,73 +1782,168 @@ async function fetchYahooHistory(sym, range='6mo', interval='1d') {
       for (let j = 0; j < timestamps.length; j++) {
         const close = quote.close?.[j], open = quote.open?.[j], high = quote.high?.[j], low = quote.low?.[j];
         if ([close, open, high, low].some(v => v == null || isNaN(v))) continue;
-        rows.push({ t: timestamps[j] * 1000, open: +open, high: +high, low: +low, close: +close });
+        rows.push({
+          ts: timestamps[j],
+          time: toBusinessDay(timestamps[j] * 1000),
+          open: +open,
+          high: +high,
+          low: +low,
+          close: +close,
+          value: +close,
+        });
       }
       if (rows.length < 2) throw new Error('유효 차트 포인트 부족');
       Cache.set(cacheKey, rows);
-      Logger.log('YahooChart/' + sym, '히스토리 프록시' + (i+1) + ' 성공: ' + rows.length + '포인트', 'ok');
+      Logger.log('YahooChart/' + sym, '히스토리 프록시' + (i + 1) + ' 성공: ' + rows.length + '포인트', 'ok');
       return rows;
     } catch (e) {
-      Logger.log('YahooChart/' + sym, '히스토리 프록시' + (i+1) + ' 실패: ' + e.message, i === urls.length - 1 ? 'error' : 'warn');
+      Logger.log('YahooChart/' + sym, '히스토리 프록시' + (i + 1) + ' 실패: ' + e.message, i === urls.length - 1 ? 'error' : 'warn');
     }
   }
   return null;
 }
-
-function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function formatChartValue(value, sym) {
-  const meta = CHART_META[sym] || {};
-  const decimals = meta.decimals ?? 2;
-  return (meta.prefix || '') + Number(value).toLocaleString('ko-KR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + (meta.suffix || '');
+function getChartColors(up) {
+  return up ? { line: '#3fb950', areaTop: 'rgba(63,185,80,0.28)', areaBottom: 'rgba(63,185,80,0.03)', candleUp: '#3fb950', candleDown: '#f85149' }
+            : { line: '#f85149', areaTop: 'rgba(248,81,73,0.28)', areaBottom: 'rgba(248,81,73,0.03)', candleUp: '#3fb950', candleDown: '#f85149' };
 }
-function renderYahooChart(containerId, series, sym) {
-  const container = document.getElementById(containerId); if (!container) return;
-  const width = Math.max(container.clientWidth || 300, 300), height = Math.max(container.clientHeight || parseInt(container.style.height) || 220, 180);
-  const pad = { top: 18, right: 16, bottom: 26, left: 16 }, innerW = width - pad.left - pad.right, innerH = height - pad.top - pad.bottom;
-  const closes = series.map(p => p.close), min = Math.min(...closes), max = Math.max(...closes), diff = Math.max(max - min, 0.000001), start = closes[0], last = closes[closes.length - 1];
-  const up = last >= start, stroke = up ? '#3fb950' : '#f85149';
-  const pts = series.map((p,i) => [pad.left + (i/(series.length-1))*innerW, pad.top + (1-((p.close-min)/diff))*innerH]);
-  const polyline = pts.map(p => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ');
-  const area = `${pad.left},${height-pad.bottom} ${polyline} ${pad.left+innerW},${height-pad.bottom}`;
-  const lastPt = pts[pts.length-1], firstDate = new Date(series[0].t).toLocaleDateString('ko-KR',{month:'short',day:'numeric'}), lastDate = new Date(series[series.length-1].t).toLocaleDateString('ko-KR',{month:'short',day:'numeric'}), pct = ((last-start)/start)*100;
-  const ticks = [max, max-diff/2, min].map(v => ({ value:v, y: pad.top + (1-((v-min)/diff))*innerH }));
-  container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="${escapeHtml((CHART_META[sym]?.label||sym)+' 차트')}"><defs><linearGradient id="grad-${containerId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${stroke}" stop-opacity="0.34"></stop><stop offset="100%" stop-color="${stroke}" stop-opacity="0.02"></stop></linearGradient></defs>${ticks.map(t=>`<line x1="${pad.left}" y1="${t.y.toFixed(2)}" x2="${width-pad.right}" y2="${t.y.toFixed(2)}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3 4"></line>`).join('')}<polygon points="${area}" fill="url(#grad-${containerId})"></polygon><polyline points="${polyline}" fill="none" stroke="${stroke}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="${lastPt[0].toFixed(2)}" cy="${lastPt[1].toFixed(2)}" r="3.6" fill="${stroke}"></circle>${ticks.map(t=>`<text x="${width-pad.right}" y="${(t.y-6).toFixed(2)}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.72)">${escapeHtml(formatChartValue(t.value, sym))}</text>`).join('')}<text x="${pad.left}" y="${height-8}" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.65)">${escapeHtml(firstDate)}</text><text x="${width-pad.right}" y="${height-8}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="10" fill="rgba(255,255,255,0.65)">${escapeHtml(lastDate)}</text></svg><div class="yf-chart-legend">${escapeHtml(CHART_META[sym]?.label||sym)} · ${escapeHtml(formatChartValue(last, sym))} · ${pct>=0?'+':''}${pct.toFixed(2)}%</div>`;
+function buildChart(containerId, mode='line') {
+  const container = document.getElementById(containerId);
+  if (!container || !window.LightweightCharts) return null;
+  container.innerHTML = '';
+  const host = document.createElement('div');
+  host.className = 'lw-chart-host';
+  host.style.width = '100%';
+  host.style.height = '100%';
+  container.appendChild(host);
+  const chart = LightweightCharts.createChart(host, {
+    width: Math.max(container.clientWidth, 280),
+    height: Math.max(container.clientHeight, 180),
+    layout: { background: { color: '#0d1117' }, textColor: '#d0d7de', fontFamily: 'JetBrains Mono, monospace' },
+    grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.06)' } },
+    rightPriceScale: { borderColor: 'rgba(255,255,255,0.10)' },
+    timeScale: { borderColor: 'rgba(255,255,255,0.10)', timeVisible: false, secondsVisible: false, rightOffset: 2, barSpacing: mode === 'candlestick' ? 8 : 6 },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(88,166,255,0.35)', width: 1 }, horzLine: { color: 'rgba(88,166,255,0.35)', width: 1 } },
+    handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+    handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
+  });
+  let series;
+  if (mode === 'candlestick') {
+    series = chart.addSeries(LightweightCharts.CandlestickSeries, {
+      upColor: '#3fb950', downColor: '#f85149', borderUpColor: '#3fb950', borderDownColor: '#f85149', wickUpColor: '#3fb950', wickDownColor: '#f85149', priceLineVisible: true, lastValueVisible: true,
+    });
+  } else {
+    series = chart.addSeries(LightweightCharts.AreaSeries, {
+      lineWidth: 2, lineColor: '#58a6ff', topColor: 'rgba(88,166,255,0.28)', bottomColor: 'rgba(88,166,255,0.03)', priceLineVisible: true, lastValueVisible: true,
+    });
+  }
+  chartState[containerId] = { ...(chartState[containerId] || {}), chart, series, mode, host };
+  return chartState[containerId];
 }
-async function loadYahooChart(containerId, sym, options={}) {
-  const container = document.getElementById(containerId); if (!container) return;
-  const range = options.range || '6mo', interval = options.interval || '1d', force = !!options.force, stamp = `${sym}|${range}|${interval}`;
-  if (!force && container.dataset.loaded === stamp && container.querySelector('svg')) return;
+function applyChartData(containerId, data, sym, mode='line') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  let state = chartState[containerId];
+  if (!state || state.mode !== mode || !state.chart || !state.series) state = buildChart(containerId, mode);
+  if (!state) return;
+  const first = data[0]?.close ?? 0, last = data[data.length - 1]?.close ?? 0;
+  const up = last >= first;
+  const colors = getChartColors(up);
+  if (mode === 'candlestick') {
+    state.series.applyOptions({ upColor: colors.candleUp, downColor: colors.candleDown, borderUpColor: colors.candleUp, borderDownColor: colors.candleDown, wickUpColor: colors.candleUp, wickDownColor: colors.candleDown });
+    state.series.setData(data.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })));
+  } else {
+    state.series.applyOptions({ lineColor: colors.line, topColor: colors.areaTop, bottomColor: colors.areaBottom });
+    state.series.setData(data.map(({ time, value }) => ({ time, value })));
+  }
+  state.chart.timeScale().fitContent();
+  state.data = data;
+  state.sym = sym;
+}
+async function loadLWChart(containerId, sym, options={}) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const range = options.range || '6mo';
+  const interval = options.interval || '1d';
+  const mode = options.type || 'line';
+  const stamp = `${sym}|${range}|${interval}|${mode}`;
+  if (!options.force && container.dataset.loaded === stamp && chartState[containerId]?.data?.length) return;
   container.dataset.loaded = stamp;
-  container.innerHTML = `<div class="yf-chart-empty skeleton">차트 로딩 중</div>`;
-  const series = await fetchYahooHistory(sym, range, interval);
-  if (!series) { container.innerHTML = `<div class="yf-chart-empty">차트를 불러오지 못했습니다</div>`; return; }
-  chartState[containerId] = { sym, range, interval, series };
-  renderYahooChart(containerId, series, sym);
+  container.innerHTML = '<div class="lw-chart-loading">차트 로딩 중...</div>';
+  const data = await fetchYahooHistory(sym, range, interval);
+  if (!data) {
+    container.innerHTML = '<div class="lw-chart-error">차트를 불러오지 못했습니다</div>';
+    return;
+  }
+  applyChartData(containerId, data, sym, mode);
+}
+function updateMainChartMeta() {
+  const el = document.getElementById('main-chart-meta');
+  if (!el) return;
+  const typeText = _mainChartType === 'candlestick' ? '캔들' : '선';
+  const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
+  el.textContent = `Yahoo Finance · ${chartText(_activeChartSym)} · ${typeText} · ${rangeMap[_mainChartRange] || _mainChartRange}`;
+}
+function syncMainToolbar() {
+  document.querySelectorAll('[data-chart-type]').forEach(btn => btn.classList.toggle('active', btn.dataset.chartType === _mainChartType));
+  document.querySelectorAll('[data-chart-range]').forEach(btn => btn.classList.toggle('active', btn.dataset.chartRange === _mainChartRange));
+}
+function setMainChartRange(range, interval, btn) {
+  _mainChartRange = range;
+  _mainChartInterval = interval;
+  syncMainToolbar();
+  updateMainChartMeta();
+  loadLWChart('tv-main-chart', _activeChartSym, { range, interval, type: _mainChartType, force: true });
+}
+function setMainChartType(type, btn) {
+  _mainChartType = type;
+  syncMainToolbar();
+  updateMainChartMeta();
+  loadLWChart('tv-main-chart', _activeChartSym, { range: _mainChartRange, interval: _mainChartInterval, type, force: true });
 }
 function initYahooSectorOverview() {
-  const c = document.getElementById('tv-sector'); if (!c) return;
+  const c = document.getElementById('tv-sector');
+  if (!c) return;
   if (!c.dataset.loaded) {
     const sectors = [{label:'XLK · 기술',symbol:'XLK'},{label:'XLF · 금융',symbol:'XLF'},{label:'XLE · 에너지',symbol:'XLE'},{label:'XLV · 헬스케어',symbol:'XLV'},{label:'XLI · 산업재',symbol:'XLI'},{label:'XLY · 경기소비재',symbol:'XLY'}];
-    c.innerHTML = '<div class="sector-mini-grid"></div>'; const grid = c.querySelector('.sector-mini-grid');
-    sectors.forEach(item => { const card = document.createElement('div'); card.className='sector-mini-card'; card.innerHTML=`<div class="sector-mini-head">${item.label}</div><div id="sector_${item.symbol}" class="yf-chart" style="height:150px"></div>`; grid.appendChild(card); });
+    c.innerHTML = '<div class="sector-mini-grid"></div>';
+    const grid = c.querySelector('.sector-mini-grid');
+    sectors.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'sector-mini-card';
+      card.innerHTML = `<div class="sector-mini-head">${item.label}</div><div id="sector_${item.symbol}" class="lw-chart-host" style="height:150px"></div>`;
+      grid.appendChild(card);
+    });
     c.dataset.loaded = '1';
   }
-  ['XLK','XLF','XLE','XLV','XLI','XLY'].forEach(sym => loadYahooChart('sector_' + sym, sym, { range:'6mo', interval:'1d' }));
+  ['XLK','XLF','XLE','XLV','XLI','XLY'].forEach(sym => loadLWChart('sector_' + sym, sym, { range:'6mo', interval:'1d', type:'line' }));
 }
 function switchChart(sym, btn) {
-  _activeChartSym = sym; document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active');
-  loadYahooChart('tv-main-chart', sym, { range:'1y', interval:'1d', force:true });
+  _activeChartSym = sym;
+  document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  updateMainChartMeta();
+  loadLWChart('tv-main-chart', sym, { range: _mainChartRange, interval: _mainChartInterval, type: _mainChartType, force: true });
 }
 function showTab(name, btn) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  if (btn) btn.classList.add('active'); const sec = document.getElementById('sec-' + name); if (!sec) return; sec.classList.add('active'); initChartsForTab(name); if (name === 'charts' && !document.getElementById('tv-main-chart')?.querySelector('svg')) switchChart(_activeChartSym);
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const sec = document.getElementById('sec-' + name);
+  if (!sec) return;
+  sec.classList.add('active');
+  initChartsForTab(name);
+  if (name === 'charts') {
+    syncMainToolbar();
+    updateMainChartMeta();
+    if (!chartState['tv-main-chart']?.data?.length) switchChart(_activeChartSym, document.querySelector('.chart-btn.active'));
+  }
 }
 function initChartsForTab(name) {
-  if (name === 'us') { initYahooSectorOverview(); loadYahooChart('tv_us_sp500','^GSPC',{range:'6mo',interval:'1d'}); loadYahooChart('tv_us_ndx','^NDX',{range:'6mo',interval:'1d'}); }
-  if (name === 'kr') { loadYahooChart('tv_kospi','^KS11',{range:'6mo',interval:'1d'}); loadYahooChart('tv_kosdaq','^KQ11',{range:'6mo',interval:'1d'}); loadYahooChart('tv_usdkrw','KRW=X',{range:'6mo',interval:'1d'}); }
-  if (name === 'macro') { loadYahooChart('tv_macro_dxy','DX-Y.NYB',{range:'6mo',interval:'1d'}); loadYahooChart('tv_macro_gold','GC=F',{range:'6mo',interval:'1d'}); }
-  if (name === 'options') loadYahooChart('tv_vix_chart','^VIX',{range:'6mo',interval:'1d'});
-  if (name === 'liquidity') { loadYahooChart('liq_tv_gold','GC=F',{range:'6mo',interval:'1d'}); loadYahooChart('liq_tv_dxy','DX-Y.NYB',{range:'6mo',interval:'1d'}); loadYahooChart('liq_tv_btc','BTC-USD',{range:'6mo',interval:'1d'}); loadYahooChart('liq_tv_sp','^GSPC',{range:'6mo',interval:'1d'}); }
+  if (name === 'us') { initYahooSectorOverview(); loadLWChart('tv_us_sp500','^GSPC',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_us_ndx','^NDX',{range:'6mo',interval:'1d',type:'line'}); }
+  if (name === 'kr') { loadLWChart('tv_kospi','^KS11',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_kosdaq','^KQ11',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_usdkrw','KRW=X',{range:'6mo',interval:'1d',type:'line'}); }
+  if (name === 'macro') { loadLWChart('tv_macro_dxy','DX-Y.NYB',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_macro_gold','GC=F',{range:'6mo',interval:'1d',type:'line'}); }
+  if (name === 'options') loadLWChart('tv_vix_chart','^VIX',{range:'6mo',interval:'1d',type:'line'});
+  if (name === 'liquidity') { loadLWChart('liq_tv_gold','GC=F',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('liq_tv_dxy','DX-Y.NYB',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('liq_tv_btc','BTC-USD',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('liq_tv_sp','^GSPC',{range:'6mo',interval:'1d',type:'line'}); }
 }
 function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); Logger.render(); }
 function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); }
@@ -1817,12 +1951,12 @@ async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); }
+  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } }
   const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
-  window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (el && state?.series?.length) renderYahooChart(id, state.series, state.sym); }); }, 120); });
+  window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 </script>
 
