@@ -1747,6 +1747,8 @@ const CHART_META = {
   'XLV': { label: 'XLV · 헬스케어', decimals: 2 }, 'XLI': { label: 'XLI · 산업재', decimals: 2 }, 'XLY': { label: 'XLY · 경기소비재', decimals: 2 },
 };
 const chartState = {};
+const chartRequestSeq = {};
+const pendingHistoryRequests = {};
 let _activeChartSym = '^GSPC';
 let _mainChartRange = '1y';
 let _mainChartInterval = '1d';
@@ -1860,40 +1862,55 @@ async function fetchYahooHistory(sym, range='6mo', interval='1d') {
   const cacheKey = `hist_${sym}_${range}_${interval}`;
   const cached = Cache.get(cacheKey, 1800000);
   if (cached) return cached;
-  const urls = getYahooChartUrls(sym, range, interval);
-  for (let i = 0; i < urls.length; i++) {
-    try {
-      const r = await fetchWithTimeout(urls[i], 15000);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const raw = await r.json();
-      const d = raw.contents ? JSON.parse(raw.contents) : raw;
-      const result = d.chart?.result?.[0];
-      const quote = result?.indicators?.quote?.[0];
-      const timestamps = result?.timestamp || [];
-      if (!quote || !timestamps.length) throw new Error('차트 데이터 없음');
-      const rows = [];
-      for (let j = 0; j < timestamps.length; j++) {
-        const close = quote.close?.[j], open = quote.open?.[j], high = quote.high?.[j], low = quote.low?.[j];
-        if ([close, open, high, low].some(v => v == null || isNaN(v))) continue;
-        rows.push({
-          ts: timestamps[j],
-          time: toBusinessDay(timestamps[j] * 1000),
-          open: +open,
-          high: +high,
-          low: +low,
-          close: +close,
-          value: +close,
-        });
-      }
-      if (rows.length < 2) throw new Error('유효 차트 포인트 부족');
-      Cache.set(cacheKey, rows);
-      Logger.log('YahooChart/' + sym, '히스토리 프록시' + (i + 1) + ' 성공: ' + rows.length + '포인트', 'ok');
-      return rows;
-    } catch (e) {
-      Logger.log('YahooChart/' + sym, '히스토리 프록시' + (i + 1) + ' 실패: ' + e.message, i === urls.length - 1 ? 'error' : 'warn');
-    }
+
+  if (pendingHistoryRequests[cacheKey]) {
+    return pendingHistoryRequests[cacheKey];
   }
-  return null;
+
+  pendingHistoryRequests[cacheKey] = (async () => {
+    const urls = getYahooChartUrls(sym, range, interval);
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const r = await fetchWithTimeout(urls[i], 15000);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const raw = await r.json();
+        const d = raw.contents ? JSON.parse(raw.contents) : raw;
+        const result = d.chart?.result?.[0];
+        const quote = result?.indicators?.quote?.[0];
+        const timestamps = result?.timestamp || [];
+        if (!quote || !timestamps.length) throw new Error('차트 데이터 없음');
+
+        const rows = [];
+        for (let j = 0; j < timestamps.length; j++) {
+          const close = quote.close?.[j], open = quote.open?.[j], high = quote.high?.[j], low = quote.low?.[j];
+          if ([close, open, high, low].some(v => v == null || isNaN(v))) continue;
+          rows.push({
+            ts: timestamps[j],
+            time: toBusinessDay(timestamps[j] * 1000),
+            open: +open,
+            high: +high,
+            low: +low,
+            close: +close,
+            value: +close,
+          });
+        }
+        if (!rows.length) throw new Error('유효 차트 데이터 없음');
+        Cache.set(cacheKey, rows);
+        Logger.log('YahooHistory/' + sym, `프록시${i + 1} 성공: ${rows.length}개 (${range}/${interval})`, 'ok');
+        return rows;
+      } catch (e) {
+        const isLast = i === urls.length - 1;
+        Logger.log('YahooHistory/' + sym, `프록시${i + 1} 실패: ${e.message}`, isLast ? 'error' : 'warn');
+      }
+    }
+    return null;
+  })();
+
+  try {
+    return await pendingHistoryRequests[cacheKey];
+  } finally {
+    delete pendingHistoryRequests[cacheKey];
+  }
 }
 function getChartColors(up) {
   return up ? { line: '#3fb950', areaTop: 'rgba(63,185,80,0.28)', areaBottom: 'rgba(63,185,80,0.03)', candleUp: '#3fb950', candleDown: '#f85149' }
@@ -1914,7 +1931,7 @@ function buildChart(containerId, mode='line') {
     layout: { background: { color: '#0d1117' }, textColor: '#d0d7de', fontFamily: 'JetBrains Mono, monospace' },
     grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.06)' } },
     rightPriceScale: { borderColor: 'rgba(255,255,255,0.10)' },
-    timeScale: { borderColor: 'rgba(255,255,255,0.10)', timeVisible: false, secondsVisible: false, rightOffset: 2, barSpacing: mode === 'candlestick' ? 8 : 6 },
+    timeScale: { borderColor: 'rgba(255,255,255,0.10)', timeVisible: true, secondsVisible: false, rightOffset: 2, barSpacing: mode === 'candlestick' ? 8 : 6 },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(88,166,255,0.35)', width: 1 }, horzLine: { color: 'rgba(88,166,255,0.35)', width: 1 } },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
     handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
@@ -1955,19 +1972,51 @@ function applyChartData(containerId, data, sym, mode='line') {
 async function loadLWChart(containerId, sym, options={}) {
   const container = document.getElementById(containerId);
   if (!container) return;
+
   const range = options.range || '6mo';
   const interval = options.interval || '1d';
   const mode = options.type || 'line';
-  const stamp = `${sym}|${range}|${interval}|${mode}`;
-  if (!options.force && container.dataset.loaded === stamp && chartState[containerId]?.data?.length) return;
-  container.dataset.loaded = stamp;
-  container.innerHTML = '<div class="lw-chart-loading">차트 로딩 중...</div>';
-  const data = await fetchYahooHistory(sym, range, interval);
-  if (!data) {
-    container.innerHTML = '<div class="lw-chart-error">차트를 불러오지 못했습니다</div>';
+  const dataKey = `${sym}|${range}|${interval}`;
+  const fullStamp = `${dataKey}|${mode}`;
+
+  const state = chartState[containerId];
+  if (!options.force && container.dataset.loaded === fullStamp && state?.data?.length) return;
+
+  chartRequestSeq[containerId] = (chartRequestSeq[containerId] || 0) + 1;
+  const reqId = chartRequestSeq[containerId];
+
+  // 이미 같은 기간/심볼 데이터가 있으면 타입 전환은 즉시 처리
+  if (state?.data?.length && state.dataKey === dataKey) {
+    container.dataset.loaded = fullStamp;
+    applyChartData(containerId, state.data, sym, mode);
+    chartState[containerId].dataKey = dataKey;
+    chartState[containerId].range = range;
+    chartState[containerId].interval = interval;
     return;
   }
+
+  const hadExistingChart = !!state?.data?.length;
+  if (!hadExistingChart) {
+    container.innerHTML = '<div class="lw-chart-loading">차트 로딩 중...</div>';
+  }
+
+  const data = await fetchYahooHistory(sym, range, interval);
+
+  // 더 나중 요청이 있으면 이전 응답은 버림
+  if (reqId !== chartRequestSeq[containerId]) return;
+
+  if (!data) {
+    if (!hadExistingChart) {
+      container.innerHTML = '<div class="lw-chart-error">차트를 불러오지 못했습니다</div>';
+    }
+    return;
+  }
+
+  container.dataset.loaded = fullStamp;
   applyChartData(containerId, data, sym, mode);
+  chartState[containerId].dataKey = dataKey;
+  chartState[containerId].range = range;
+  chartState[containerId].interval = interval;
 }
 function updateMainChartMeta() {
   const el = document.getElementById('main-chart-meta');
