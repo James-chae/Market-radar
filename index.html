@@ -957,18 +957,17 @@
 // ■ 설정 & 상수
 // ══════════════════════════════════════════
 const CONFIG = {
-  // Yahoo Finance 프록시 (CORS 우회 - 무료)
-  YAHOO_PROXY: 'https://query1.finance.yahoo.com/v8/finance/chart/',
-  // Alternative: AllOrigins CORS 프록시
-  CORS_PROXY: 'https://api.allorigins.win/get?url=',
-  // FRED API (무료 - api key 없이 일부 데이터)
+  // Yahoo Finance — CORS 우회 프록시 3개 순서대로 시도
+  YAHOO_PROXIES: [
+    sym => `https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`)}`,
+    sym => `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`)}`,
+    sym => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`)}`,
+  ],
+  // FRED 프록시
+  CORS_PROXY: 'https://corsproxy.io/?url=',
+  CORS_PROXY2: 'https://api.allorigins.win/get?url=',
   FRED_BASE: 'https://fred.stlouisfed.org/graph/fredgraph.csv',
-  // Alternative Numbers API (무료 경제지표)
-  NUMBERS_API: 'https://api.fiscaldata.treasury.gov/services/api/v1/',
-  // 갱신 주기 (ms)
   REFRESH_INTERVAL: 300000, // 5분
-  // 최대 재시도
-  MAX_RETRY: 2
 };
 
 // 종목 심볼 정의
@@ -1055,29 +1054,44 @@ async function fetchYahoo(sym) {
   const cached = Cache.get(sym);
   if (cached) return cached;
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`;
-  try {
-    const r = await fetchWithTimeout(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const d = await r.json();
-    const meta = d.chart?.result?.[0]?.meta;
-    if (!meta) throw new Error('데이터 없음');
+  // 3중 프록시 폴백 — CORS 완전 우회
+  const proxies = [
+    () => `https://corsproxy.io/?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
+    () => `https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
+    () => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
+  ];
 
-    const result = {
-      price: meta.regularMarketPrice,
-      prev:  meta.previousClose || meta.chartPreviousClose,
-      change: meta.regularMarketPrice - (meta.previousClose || meta.chartPreviousClose),
-      changePct: ((meta.regularMarketPrice - (meta.previousClose || meta.chartPreviousClose)) / (meta.previousClose || meta.chartPreviousClose)) * 100,
-      high52: meta.fiftyTwoWeekHigh,
-      low52:  meta.fiftyTwoWeekLow,
-      currency: meta.currency,
-    };
-    Cache.set(sym, result);
-    return result;
-  } catch(e) {
-    Logger.log('Yahoo/' + sym, e.message, 'error');
-    return null;
+  for (let i = 0; i < proxies.length; i++) {
+    try {
+      const r = await fetchWithTimeout(proxies[i](), 12000);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const raw = await r.json();
+
+      // allorigins 는 { contents: "..." }, 나머지는 직접 JSON
+      const d = raw.contents ? JSON.parse(raw.contents) : raw;
+      const meta = d.chart?.result?.[0]?.meta;
+      if (!meta || !meta.regularMarketPrice) throw new Error('meta 없음');
+
+      const price = meta.regularMarketPrice;
+      const prev  = meta.previousClose || meta.chartPreviousClose || price;
+      const result = {
+        price,
+        prev,
+        change:    price - prev,
+        changePct: ((price - prev) / prev) * 100,
+        high52:    meta.fiftyTwoWeekHigh || null,
+        low52:     meta.fiftyTwoWeekLow  || null,
+        currency:  meta.currency || '',
+      };
+      Cache.set(sym, result);
+      Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 성공: ' + price, 'ok');
+      return result;
+    } catch(e) {
+      const isLast = i === proxies.length - 1;
+      Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 실패: ' + e.message, isLast ? 'error' : 'warn');
+    }
   }
+  return null;
 }
 
 // Binance API (BTC - CORS 허용)
@@ -1102,79 +1116,120 @@ async function fetchBinance(sym='BTCUSDT') {
   }
 }
 
-// CNN Fear & Greed (CORS 프록시 경유)
+// Fear & Greed — alternative.me(직접) → CNN(프록시) 순서
 async function fetchFearGreed() {
   const cached = Cache.get('fg');
   if (cached) return cached;
+
+  // 1순위: alternative.me — CORS 완전 허용, 직접 호출 가능
   try {
-    const url = 'https://production.dataviz.cnn.io/index/fearandgreed/graphdata';
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const r = await fetchWithTimeout(proxyUrl, 10000);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const outer = await r.json();
-    const d = JSON.parse(outer.contents);
-    const score = d.fear_and_greed?.score;
-    const rating = d.fear_and_greed?.rating;
-    if (!score) throw new Error('점수 없음');
-    const result = { score: Math.round(score), rating };
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch('https://api.alternative.me/fng/', { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const score = parseInt(d.data[0].value);
+    const rating = d.data[0].value_classification;
+    if (isNaN(score)) throw new Error('점수 없음');
+    const result = { score, rating };
     Cache.set('fg', result);
+    Logger.log('FearGreed', 'alternative.me 성공: ' + score, 'ok');
     return result;
   } catch(e) {
-    Logger.log('FearGreed', e.message, 'warn');
-    // 폴백: alternative API
-    try {
-      const r2 = await fetchWithTimeout('https://api.alternative.me/fng/');
-      const d2 = await r2.json();
-      const result = {
-        score: parseInt(d2.data[0].value),
-        rating: d2.data[0].value_classification
-      };
-      Cache.set('fg', result);
-      Logger.log('FearGreed', '폴백 API 사용 (alternative.me)', 'ok');
-      return result;
-    } catch(e2) {
-      Logger.log('FearGreed-Fallback', e2.message, 'error');
-      return null;
-    }
+    Logger.log('FearGreed', 'alternative.me 실패: ' + e.message, 'warn');
   }
+
+  // 2순위: CNN — corsproxy 경유
+  try {
+    const cnnUrl = 'https://production.dataviz.cnn.io/index/fearandgreed/graphdata';
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 12000);
+    const r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(cnnUrl), { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const text = await r.text();
+    const d = JSON.parse(text);
+    const score = Math.round(d.fear_and_greed?.score);
+    if (isNaN(score)) throw new Error('점수 없음');
+    const result = { score, rating: d.fear_and_greed?.rating || '' };
+    Cache.set('fg', result);
+    Logger.log('FearGreed', 'CNN 성공: ' + score, 'ok');
+    return result;
+  } catch(e) {
+    Logger.log('FearGreed', 'CNN 실패: ' + e.message, 'error');
+  }
+
+  return null;
 }
 
-// FRED CSV 파싱 (key 불필요 - CSV 직접)
+// FRED CSV 파싱 — corsproxy(text) + allorigins(json) 2중 폴백
 async function fetchFRED(series) {
   const cached = Cache.get('fred_' + series);
   if (cached) return cached;
-  try {
-    const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${series}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const r = await fetchWithTimeout(proxyUrl, 12000);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const outer = await r.json();
-    const csv = outer.contents;
+
+  const fredUrl = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=' + series;
+
+  // corsproxy.io — text 직접 응답
+  async function tryCorsproxy() {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 13000);
+    try {
+      const r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(fredUrl), { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.text();
+    } finally { clearTimeout(tid); }
+  }
+
+  // allorigins — JSON { contents }
+  async function tryAllOrigins() {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 14000);
+    try {
+      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(fredUrl), { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      if (!j.contents) throw new Error('contents 없음');
+      return j.contents;
+    } finally { clearTimeout(tid); }
+  }
+
+  function parseCsv(csv) {
     const lines = csv.trim().split('\n');
-    // 뒤에서 두 번째까지 유효한 값 찾기
     let latest = null, prev = null;
     for (let i = lines.length - 1; i >= 1; i--) {
       const parts = lines[i].split(',');
       const val = parseFloat(parts[1]);
       if (!isNaN(val)) {
-        if (!latest) { latest = { date: parts[0], val }; }
-        else if (!prev) { prev = { date: parts[0], val }; break; }
+        if (!latest) { latest = { date: parts[0].trim(), val }; }
+        else if (!prev) { prev = { date: parts[0].trim(), val }; break; }
       }
     }
-    if (!latest) throw new Error('유효한 데이터 없음');
-    const result = {
-      value: latest.val,
-      date: latest.date,
-      prev: prev?.val,
-      change: prev ? latest.val - prev.val : null,
-    };
-    Cache.set('fred_' + series, result);
-    Logger.log('FRED/' + series, `OK: ${latest.val} (${latest.date})`, 'ok');
-    return result;
-  } catch(e) {
-    Logger.log('FRED/' + series, e.message, 'error');
-    return null;
+    if (!latest) throw new Error('유효 데이터 없음');
+    return { value: latest.val, date: latest.date, prev: prev ? prev.val : null, change: prev ? latest.val - prev.val : null };
   }
+
+  const attempts = [
+    { name: 'corsproxy.io', fn: tryCorsproxy },
+    { name: 'allorigins',   fn: tryAllOrigins },
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      const csv = await attempt.fn();
+      const result = parseCsv(csv);
+      Cache.set('fred_' + series, result);
+      Logger.log('FRED/' + series, attempt.name + ' 성공: ' + result.value + ' (' + result.date + ')', 'ok');
+      return result;
+    } catch(e) {
+      Logger.log('FRED/' + series, attempt.name + ' 실패: ' + e.message, 'warn');
+    }
+  }
+
+  Logger.log('FRED/' + series, '모든 프록시 실패', 'error');
+  return null;
 }
 
 // ══════════════════════════════════════════
