@@ -1913,8 +1913,8 @@ async function fetchYahooHistory(sym, range='6mo', interval='1d') {
   }
 }
 function getChartColors(up) {
-  return up ? { line: '#3fb950', areaTop: 'rgba(63,185,80,0.28)', areaBottom: 'rgba(63,185,80,0.03)', candleUp: '#3fb950', candleDown: '#f85149' }
-            : { line: '#f85149', areaTop: 'rgba(248,81,73,0.28)', areaBottom: 'rgba(248,81,73,0.03)', candleUp: '#3fb950', candleDown: '#f85149' };
+  return up ? { line: '#3fb950', areaTop: 'rgba(63,185,80,0.28)', areaBottom: 'rgba(63,185,80,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' }
+            : { line: '#f85149', areaTop: 'rgba(248,81,73,0.28)', areaBottom: 'rgba(248,81,73,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' };
 }
 function buildChart(containerId, mode='line') {
   const container = document.getElementById(containerId);
@@ -1939,7 +1939,7 @@ function buildChart(containerId, mode='line') {
   let series;
   if (mode === 'candlestick') {
     series = chart.addSeries(LightweightCharts.CandlestickSeries, {
-      upColor: '#3fb950', downColor: '#f85149', borderUpColor: '#3fb950', borderDownColor: '#f85149', wickUpColor: '#3fb950', wickDownColor: '#f85149', priceLineVisible: true, lastValueVisible: true,
+      upColor: '#f85149', downColor: '#4A9EFF', borderUpColor: '#f85149', borderDownColor: '#4A9EFF', wickUpColor: '#f85149', wickDownColor: '#4A9EFF', priceLineVisible: true, lastValueVisible: true,
     });
   } else {
     series = chart.addSeries(LightweightCharts.AreaSeries, {
