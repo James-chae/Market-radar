@@ -742,7 +742,7 @@
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">KOSPI 차트</div>
-          <div class="chart-sub">KRX:KOSPI · 일봉</div>
+          <div class="chart-sub">TVC:KOSPI · 일봉</div>
         </div>
         <div id="tv_kospi" style="height:300px"></div>
       </div>
@@ -949,7 +949,7 @@
       <button class="chart-btn active" onclick="switchChart('CBOE:VIX', this)">VIX</button>
       <button class="chart-btn" onclick="switchChart('FOREXCOM:SPXUSD', this)">S&P 500</button>
       <button class="chart-btn" onclick="switchChart('NASDAQ:NDX', this)">나스닥</button>
-      <button class="chart-btn" onclick="switchChart('KRX:KOSPI', this)">코스피</button>
+      <button class="chart-btn" onclick="switchChart('TVC:KOSPI', this)">코스피</button>
       <button class="chart-btn" onclick="switchChart('FX_IDC:USDKRW', this)">원달러</button>
       <button class="chart-btn" onclick="switchChart('OANDA:XAUUSD', this)">금</button>
       <button class="chart-btn" onclick="switchChart('TVC:USOIL', this)">WTI</button>
@@ -1025,6 +1025,24 @@ const SYMBOLS = {
   vvix:    { sym: '^VVIX',     label: 'VVIX' },
 };
 
+
+
+const STOOQ_MAP = {
+  '^KS11': '^KOSPI',
+  '^KQ11': '^KOSDAQ',
+  'KRW=X': 'USDKRW',
+  '^VIX': 'VI.F',
+  '^VVIX': 'VVIX',
+  '^GSPC': '^SPX',
+  '^NDX': '^NDQ',
+  '^DJI': '^DJI',
+  '^RUT': '^RUT',
+  'GC=F': 'GC.F',
+  'CL=F': 'CL.F',
+  'HG=F': 'HG.F',
+  'DX-Y.NYB': 'DXY',
+  'JPY=X': 'USDJPY',
+};
 // ══════════════════════════════════════════
 // ■ 오류 로깅 시스템
 // ══════════════════════════════════════════
@@ -1121,9 +1139,71 @@ function isSuspiciousQuote(sym, price, prev) {
   if (!isFinite(prev) || prev <= 0) return false;
   const ratio = Math.abs((price - prev) / prev);
   const raw = decodeSym(sym);
-  if (['^KS11', '^KQ11', 'KRW=X'].includes(raw) && ratio > 0.15) return true;
-  if (['^GSPC', '^NDX', '^DJI', '^RUT', '^VIX', '^VVIX'].includes(raw) && ratio > 0.12) return true;
+  if (['^KS11', '^KQ11', 'KRW=X'].includes(raw) && ratio > 0.08) return true;
+  if (['^GSPC', '^NDX', '^DJI', '^RUT'].includes(raw) && ratio > 0.08) return true;
+  if (['^VIX', '^VVIX'].includes(raw) && ratio > 0.35) return true;
   return false;
+}
+
+function parseStooqText(html) {
+  const cleaned = String(html || '').replace(/&nbsp;/g, ' ');
+  const lastMatch = cleaned.match(/Last\s*([0-9][0-9,.'\s]*)/i);
+  const dateMatch = cleaned.match(/Date\s*([0-9:\-\s]{8,25})/i);
+  const prevMatch = cleaned.match(/Prev(?:ious)?(?:\s+close|\.?\s*kurs)?\s*([0-9][0-9,.'\s]*)/i);
+  const openMatch = cleaned.match(/Open\s*([0-9][0-9,.'\s]*)/i);
+  function n(v) {
+    if (!v) return NaN;
+    return Number(String(v).replace(/[,\s']/g, ''));
+  }
+  const price = n(lastMatch && lastMatch[1]);
+  let prev = n(prevMatch && prevMatch[1]);
+  if (!isFinite(prev)) prev = n(openMatch && openMatch[1]);
+  const date = dateMatch ? dateMatch[1].trim() : '';
+  if (!isFinite(price) || price <= 0) throw new Error('stooq parse 실패');
+  return { price, prev: isFinite(prev) && prev > 0 ? prev : price, date };
+}
+
+async function fetchStooq(rawSym) {
+  const stooqSym = STOOQ_MAP[rawSym];
+  if (!stooqSym) throw new Error('stooq 미지원');
+  const cacheKey = 'stooq_' + stooqSym;
+  const cached = Cache.get(cacheKey);
+  if (cached) return cached;
+
+  const baseUrl = 'https://stooq.com/q/?s=' + encodeURIComponent(stooqSym.toLowerCase());
+  const urls = buildProxyUrls(baseUrl);
+  const errors = [];
+  for (const url of urls) {
+    try {
+      const r = await fetchWithTimeout(url, 12000);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const raw = await r.text();
+      let html = raw;
+      if (raw && raw.trim().startsWith('{')) {
+        const payload = JSON.parse(raw);
+        html = payload && typeof payload === 'object' && 'contents' in payload ? payload.contents : raw;
+      }
+      const parsed = parseStooqText(html);
+      const result = {
+        price: parsed.price,
+        prev: parsed.prev,
+        change: parsed.price - parsed.prev,
+        changePct: parsed.prev ? ((parsed.price - parsed.prev) / parsed.prev) * 100 : 0,
+        high52: null,
+        low52: null,
+        currency: '',
+        marketTime: parsed.date || null,
+        source: 'stooq'
+      };
+      if (isSuspiciousQuote(rawSym, result.price, result.prev)) throw new Error('suspicious stooq');
+      Cache.set(cacheKey, result);
+      Logger.log('Stooq/' + rawSym, '성공: ' + result.price, 'ok');
+      return result;
+    } catch (e) {
+      errors.push(e.message);
+    }
+  }
+  throw new Error(errors.join(' | ') || 'stooq 실패');
 }
 
 async function fetchYahoo(sym) {
@@ -1135,47 +1215,55 @@ async function fetchYahoo(sym) {
   const quoteUrl = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' + encodeURIComponent(rawSym);
   const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(rawSym) + '?interval=1d&range=3mo&includePrePost=false';
 
-  const parsers = [
-    async function () {
-      const d = await fetchProxyJson(quoteUrl);
-      const q = d.quoteResponse && d.quoteResponse.result && d.quoteResponse.result[0];
-      if (!q) throw new Error('quote 없음');
-      const price = Number(q.regularMarketPrice != null ? q.regularMarketPrice : (q.postMarketPrice != null ? q.postMarketPrice : q.preMarketPrice));
-      const prev = Number(q.regularMarketPreviousClose != null ? q.regularMarketPreviousClose : q.regularMarketPrice);
-      if (isSuspiciousQuote(rawSym, price, prev)) throw new Error('suspicious quote');
-      return {
-        price: price,
-        prev: prev,
-        change: Number(q.regularMarketChange != null ? q.regularMarketChange : (price - prev)),
-        changePct: Number(q.regularMarketChangePercent != null ? q.regularMarketChangePercent : (prev ? ((price - prev) / prev) * 100 : 0)),
-        high52: Number(q.fiftyTwoWeekHigh || NaN) || null,
-        low52: Number(q.fiftyTwoWeekLow || NaN) || null,
-        currency: q.currency || '',
-        marketTime: q.regularMarketTime || null,
-        source: 'quote'
-      };
-    },
-    async function () {
-      const d = await fetchProxyJson(chartUrl);
-      const result = d.chart && d.chart.result && d.chart.result[0];
-      const meta = result && result.meta;
-      const closes = (result && result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close || []).filter(function (v) { return Number.isFinite(v); });
-      if (!meta || !closes.length) throw new Error('chart 없음');
-      const price = Number(meta.regularMarketPrice != null ? meta.regularMarketPrice : closes[closes.length - 1]);
-      const prev = Number(meta.previousClose != null ? meta.previousClose : (meta.chartPreviousClose != null ? meta.chartPreviousClose : (closes[Math.max(0, closes.length - 2)] || price)));
-      if (isSuspiciousQuote(rawSym, price, prev)) throw new Error('suspicious chart');
-      return {
-        price: price,
-        prev: prev,
-        change: price - prev,
-        changePct: prev ? ((price - prev) / prev) * 100 : 0,
-        high52: Number(meta.fiftyTwoWeekHigh || NaN) || null,
-        low52: Number(meta.fiftyTwoWeekLow || NaN) || null,
-        currency: meta.currency || '',
-        marketTime: meta.regularMarketTime || null,
-        source: 'chart'
-      };
-    }
+  const tryYahooQuote = async function () {
+    const d = await fetchProxyJson(quoteUrl);
+    const q = d.quoteResponse && d.quoteResponse.result && d.quoteResponse.result[0];
+    if (!q) throw new Error('quote 없음');
+    const price = Number(q.regularMarketPrice != null ? q.regularMarketPrice : (q.postMarketPrice != null ? q.postMarketPrice : q.preMarketPrice));
+    const prev = Number(q.regularMarketPreviousClose != null ? q.regularMarketPreviousClose : q.regularMarketPrice);
+    if (isSuspiciousQuote(rawSym, price, prev)) throw new Error('suspicious quote');
+    return {
+      price, prev,
+      change: Number(q.regularMarketChange != null ? q.regularMarketChange : (price - prev)),
+      changePct: Number(q.regularMarketChangePercent != null ? q.regularMarketChangePercent : (prev ? ((price - prev) / prev) * 100 : 0)),
+      high52: Number(q.fiftyTwoWeekHigh || NaN) || null,
+      low52: Number(q.fiftyTwoWeekLow || NaN) || null,
+      currency: q.currency || '',
+      marketTime: q.regularMarketTime || null,
+      source: 'quote'
+    };
+  };
+
+  const tryYahooChart = async function () {
+    const d = await fetchProxyJson(chartUrl);
+    const result = d.chart && d.chart.result && d.chart.result[0];
+    const meta = result && result.meta;
+    const closes = (result && result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close || []).filter(function (v) { return Number.isFinite(v); });
+    if (!meta || !closes.length) throw new Error('chart 없음');
+    const price = Number(meta.regularMarketPrice != null ? meta.regularMarketPrice : closes[closes.length - 1]);
+    const prev = Number(meta.previousClose != null ? meta.previousClose : (meta.chartPreviousClose != null ? meta.chartPreviousClose : (closes[Math.max(0, closes.length - 2)] || price)));
+    if (isSuspiciousQuote(rawSym, price, prev)) throw new Error('suspicious chart');
+    return {
+      price, prev,
+      change: price - prev,
+      changePct: prev ? ((price - prev) / prev) * 100 : 0,
+      high52: Number(meta.fiftyTwoWeekHigh || NaN) || null,
+      low52: Number(meta.fiftyTwoWeekLow || NaN) || null,
+      currency: meta.currency || '',
+      marketTime: meta.regularMarketTime || null,
+      source: 'chart'
+    };
+  };
+
+  const preferStooq = ['^KS11', '^KQ11', 'KRW=X', '^VIX', '^VVIX'].includes(rawSym);
+  const parsers = preferStooq ? [
+    async function(){ return await fetchStooq(rawSym); },
+    tryYahooQuote,
+    tryYahooChart
+  ] : [
+    tryYahooQuote,
+    tryYahooChart,
+    async function(){ return await fetchStooq(rawSym); }
   ];
 
   for (const parser of parsers) {
@@ -1470,7 +1558,7 @@ async function loadStockData() {
     setVal('btc-v', '$' + fmt(btc.price, 0));
     setChange('btc-c', btc.change, btc.changePct);
   } else {
-    setVal('btc-v', 'ERR'); setVal('btc-c', 'ERR');
+    setVal('btc-v', '—'); setVal('btc-c', '—');
   }
 }
 
@@ -1866,7 +1954,7 @@ function initChartsForTab(name) {
       initTVChart('tv_us_ndx',   'NASDAQ:NDX',     280);
     }
     if (name === 'kr') {
-      initTVChart('tv_kospi',    'KRX:KOSPI',       300);
+      initTVChart('tv_kospi',    'TVC:KOSPI',       300);
       initTVChart('tv_kosdaq',   'KRX:KOSDAQ',      300);
       initTVChart('tv_usdkrw',   'FX_IDC:USDKRW',   260);
     }
