@@ -8,25 +8,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #ffffff;
-    --bg2: #fffdf7;
-    --bg3: #fff8e1;
-    --bg4: #f3f4f6;
-    --border: rgba(0,0,0,0.08);
-    --border2: rgba(0,0,0,0.16);
-    --text: #111111;
-    --text2: #1f2937;
-    --text3: #4b5563;
-    --accent: #d4a017;
-    --accent2: #f2c94c;
-    --green: #d93025;
-    --green2: #fde8e7;
-    --red: #2563eb;
-    --red2: #e8f0ff;
-    --yellow: #d4a017;
-    --yellow2: #fff7db;
-    --purple: #7c3aed;
-    --cyan: #0891b2;
+    --bg: #080c10;
+    --bg2: #0d1117;
+    --bg3: #161b22;
+    --bg4: #1c2330;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e6edf3;
+    --text2: #e8edf2;
+    --text3: #d0d7de;
+    --accent: #58a6ff;
+    --accent2: #1f6feb;
+    --green: #3fb950;
+    --green2: #0d4a1f;
+    --red: #f85149;
+    --red2: #4a0d0d;
+    --yellow: #e3a825;
+    --yellow2: #3d2c00;
+    --purple: #bc8cff;
+    --cyan: #39d3f2;
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Noto Sans KR', sans-serif;
     --display: 'Bebas Neue', sans-serif;
@@ -51,8 +51,8 @@
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(212,160,23,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(212,160,23,0.04) 1px, transparent 1px);
+      linear-gradient(rgba(88,166,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(88,166,255,0.02) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
@@ -63,7 +63,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255,255,255,0.94);
+    background: rgba(8,12,16,0.92);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     padding: 0 24px;
@@ -77,7 +77,7 @@
     font-family: var(--display);
     font-size: 22px;
     letter-spacing: 2px;
-    color: #111111;
+    color: var(--accent);
     white-space: nowrap;
   }
   .logo span { color: #d0d7de; font-size: 11px; font-family: var(--mono); letter-spacing: 1px; display: block; margin-top: -4px; }
@@ -88,7 +88,7 @@
     gap: 8px;
     font-family: var(--mono);
     font-size: 11px;
-    color: #111111;
+    color: #e8edf2;
     margin-left: auto;
   }
 
@@ -116,7 +116,7 @@
     cursor: pointer;
     transition: all 0.2s;
   }
-  .refresh-btn:hover { border-color: var(--accent); color: #111111; background: var(--yellow2); }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   /* ── 탭 네비 ── */
   nav {
@@ -141,8 +141,8 @@
     transition: all 0.2s;
     user-select: none;
   }
-  .tab:hover { color: #111111; }
-  .tab.active { color: #111111; border-bottom-color: var(--accent); background: var(--yellow2); font-weight: 700; }
+  .tab:hover { color: #e8edf2; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* ── 레이아웃 ── */
   main {
@@ -233,7 +233,7 @@
     line-height: 1;
     margin-bottom: 6px;
     transition: color 0.5s;
-    color: #111111;
+    color: #ffffff;
   }
 
   .card-change {
@@ -410,7 +410,7 @@
     border-radius: var(--radius);
     padding: 12px 16px;
     font-size: 12px;
-    color: #111111;
+    color: #e8edf2;
     line-height: 1.7;
     margin-top: 12px;
   }
@@ -438,7 +438,7 @@
     bottom: 0; left: 0; right: 0;
     max-height: 200px;
     overflow-y: auto;
-    background: rgba(255,255,255,0.98);
+    background: rgba(8,12,16,0.97);
     border-top: 1px solid var(--red);
     z-index: 9999;
     font-family: var(--mono);
@@ -522,7 +522,7 @@
     height: 100%;
     min-height: 180px;
     position: relative;
-    background: linear-gradient(180deg, rgba(212,160,23,0.10) 0%, rgba(212,160,23,0.03) 100%);
+    background: linear-gradient(180deg, rgba(88,166,255,0.06) 0%, rgba(88,166,255,0.01) 100%);
   }
   .yf-chart svg { width: 100%; height: 100%; display: block; }
   .yf-chart-empty {
@@ -541,7 +541,7 @@
     font-family: var(--mono);
     font-size: 10px;
     color: var(--text3);
-    background: rgba(255,255,255,0.9);
+    background: rgba(8,12,16,0.74);
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 4px 8px;
@@ -1059,8 +1059,8 @@
         color: #d0d7de; padding: 6px 14px; border-radius: 4px;
         font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.2s;
       }
-      .chart-btn:hover, .tool-btn:hover { border-color: var(--accent); color: #111111; background: var(--yellow2); }
-      .chart-btn.active, .tool-btn.active { background: var(--accent2); border-color: var(--accent); color: #111111; font-weight: 700; }
+      .chart-btn:hover, .tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .chart-btn.active, .tool-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
       .chart-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
       .toolbar-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
       .toolbar-label { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-right:2px; }
@@ -1076,8 +1076,8 @@
         color: #d0d7de; padding: 4px 8px; border-radius: 4px;
         font-family: var(--mono); font-size: 10px; cursor: pointer; transition: all 0.2s;
       }
-      .mini-tool-btn:hover { border-color: var(--accent); color: #111111; background: var(--yellow2); }
-      .mini-tool-btn.active { background: var(--accent2); border-color: var(--accent); color: #111111; font-weight: 700; }
+      .mini-tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .mini-tool-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
     </style>
 
     <div class="chart-card">
@@ -1928,11 +1928,11 @@ function buildChart(containerId, mode='line') {
   const chart = LightweightCharts.createChart(host, {
     width: Math.max(container.clientWidth, 280),
     height: Math.max(container.clientHeight, 180),
-    layout: { background: { color: '#ffffff' }, textColor: '#111111', fontFamily: 'JetBrains Mono, monospace' },
-    grid: { vertLines: { color: 'rgba(0,0,0,0.08)' }, horzLines: { color: 'rgba(0,0,0,0.08)' } },
+    layout: { background: { color: '#0d1117' }, textColor: '#d0d7de', fontFamily: 'JetBrains Mono, monospace' },
+    grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.06)' } },
     rightPriceScale: { borderColor: 'rgba(255,255,255,0.10)' },
     timeScale: { borderColor: 'rgba(255,255,255,0.10)', timeVisible: true, secondsVisible: false, rightOffset: 2, barSpacing: mode === 'candlestick' ? 8 : 6 },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(212,160,23,0.55)', width: 1 }, horzLine: { color: 'rgba(212,160,23,0.55)', width: 1 } },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(88,166,255,0.35)', width: 1 }, horzLine: { color: 'rgba(88,166,255,0.35)', width: 1 } },
     handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
     handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
   });
