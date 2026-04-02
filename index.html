@@ -1067,6 +1067,17 @@
       .lw-chart-host { width:100%; height:100%; position:relative; }
       .lw-chart-error, .lw-chart-loading { height:100%; display:flex; align-items:center; justify-content:center; color:var(--text3); font-family:var(--mono); font-size:12px; }
       .lw-chart-meta { padding: 10px 14px 0; font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+      .mini-chart-shell { display:flex; flex-direction:column; height:100%; }
+      .mini-toolbar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 12px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+      .mini-toolbar .mini-label { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-right: 2px; }
+      .mini-tool-btn {
+        background: var(--bg3); border: 1px solid var(--border);
+        color: #d0d7de; padding: 4px 8px; border-radius: 4px;
+        font-family: var(--mono); font-size: 10px; cursor: pointer; transition: all 0.2s;
+      }
+      .mini-tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .mini-tool-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
     </style>
 
     <div class="chart-card">
@@ -1741,6 +1752,88 @@ let _mainChartRange = '1y';
 let _mainChartInterval = '1d';
 let _mainChartType = 'candlestick';
 
+
+const MINI_CHARTS = {
+  'tv_us_sp500': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'line' },
+  'tv_us_ndx': { sym: '^NDX', label: '나스닥 100', range: '6mo', interval: '1d', type: 'line' },
+  'tv_kospi': { sym: '^KS11', label: '코스피', range: '6mo', interval: '1d', type: 'line' },
+  'tv_kosdaq': { sym: '^KQ11', label: '코스닥', range: '6mo', interval: '1d', type: 'line' },
+  'tv_usdkrw': { sym: 'KRW=X', label: '원달러', range: '6mo', interval: '1d', type: 'line' },
+  'tv_macro_dxy': { sym: 'DX-Y.NYB', label: '달러 인덱스', range: '6mo', interval: '1d', type: 'line' },
+  'tv_macro_gold': { sym: 'GC=F', label: '금', range: '6mo', interval: '1d', type: 'line' },
+  'tv_vix_chart': { sym: '^VIX', label: 'VIX', range: '6mo', interval: '1d', type: 'line' },
+  'liq_tv_gold': { sym: 'GC=F', label: '금', range: '6mo', interval: '1d', type: 'line' },
+  'liq_tv_dxy': { sym: 'DX-Y.NYB', label: '달러 인덱스', range: '6mo', interval: '1d', type: 'line' },
+  'liq_tv_btc': { sym: 'BTC-USD', label: '비트코인', range: '6mo', interval: '1d', type: 'line' },
+  'liq_tv_sp': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'line' },
+};
+
+function ensureMiniChartUI(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container || container.dataset.miniUiReady === '1') return;
+  const shell = document.createElement('div');
+  shell.className = 'mini-chart-shell';
+  shell.style.width = '100%';
+  shell.style.height = '100%';
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'mini-toolbar';
+  toolbar.innerHTML = `
+    <span class="mini-label">형태</span>
+    <button class="mini-tool-btn" data-mini-type="candlestick">캔들</button>
+    <button class="mini-tool-btn" data-mini-type="line">선</button>
+    <span class="mini-label" style="margin-left:8px">기간</span>
+    <button class="mini-tool-btn" data-mini-range="5d" data-mini-interval="15m">5일</button>
+    <button class="mini-tool-btn" data-mini-range="1mo" data-mini-interval="1d">1개월</button>
+    <button class="mini-tool-btn" data-mini-range="6mo" data-mini-interval="1d">6개월</button>
+    <button class="mini-tool-btn" data-mini-range="1y" data-mini-interval="1d">1년</button>
+  `;
+
+  const host = document.createElement('div');
+  host.id = containerId + '__host';
+  host.className = 'lw-chart-host';
+  host.style.flex = '1';
+  host.style.minHeight = '180px';
+
+  shell.appendChild(toolbar);
+  shell.appendChild(host);
+  container.innerHTML = '';
+  container.appendChild(shell);
+  container.dataset.miniUiReady = '1';
+
+  toolbar.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mini-tool-btn');
+    if (!btn) return;
+    const cfg = MINI_CHARTS[containerId];
+    if (!cfg) return;
+    if (btn.dataset.miniType) cfg.type = btn.dataset.miniType;
+    if (btn.dataset.miniRange) {
+      cfg.range = btn.dataset.miniRange;
+      cfg.interval = btn.dataset.miniInterval || cfg.interval;
+    }
+    syncMiniToolbar(containerId);
+    loadMiniChart(containerId, true);
+  });
+
+  syncMiniToolbar(containerId);
+}
+
+function syncMiniToolbar(containerId) {
+  const container = document.getElementById(containerId);
+  const cfg = MINI_CHARTS[containerId];
+  if (!container || !cfg) return;
+  container.querySelectorAll('[data-mini-type]').forEach(btn => btn.classList.toggle('active', btn.dataset.miniType === cfg.type));
+  container.querySelectorAll('[data-mini-range]').forEach(btn => btn.classList.toggle('active', btn.dataset.miniRange === cfg.range));
+}
+
+async function loadMiniChart(containerId, force=false) {
+  const cfg = MINI_CHARTS[containerId];
+  if (!cfg) return;
+  ensureMiniChartUI(containerId);
+  syncMiniToolbar(containerId);
+  return loadLWChart(containerId + '__host', cfg.sym, { range: cfg.range, interval: cfg.interval, type: cfg.type, force });
+}
+
 function chartText(sym) {
   return CHART_META[sym]?.label || sym;
 }
@@ -1939,11 +2032,11 @@ function showTab(name, btn) {
   }
 }
 function initChartsForTab(name) {
-  if (name === 'us') { initYahooSectorOverview(); loadLWChart('tv_us_sp500','^GSPC',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_us_ndx','^NDX',{range:'6mo',interval:'1d',type:'line'}); }
-  if (name === 'kr') { loadLWChart('tv_kospi','^KS11',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_kosdaq','^KQ11',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_usdkrw','KRW=X',{range:'6mo',interval:'1d',type:'line'}); }
-  if (name === 'macro') { loadLWChart('tv_macro_dxy','DX-Y.NYB',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('tv_macro_gold','GC=F',{range:'6mo',interval:'1d',type:'line'}); }
-  if (name === 'options') loadLWChart('tv_vix_chart','^VIX',{range:'6mo',interval:'1d',type:'line'});
-  if (name === 'liquidity') { loadLWChart('liq_tv_gold','GC=F',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('liq_tv_dxy','DX-Y.NYB',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('liq_tv_btc','BTC-USD',{range:'6mo',interval:'1d',type:'line'}); loadLWChart('liq_tv_sp','^GSPC',{range:'6mo',interval:'1d',type:'line'}); }
+  if (name === 'us') { initYahooSectorOverview(); loadMiniChart('tv_us_sp500'); loadMiniChart('tv_us_ndx'); }
+  if (name === 'kr') { loadMiniChart('tv_kospi'); loadMiniChart('tv_kosdaq'); loadMiniChart('tv_usdkrw'); }
+  if (name === 'macro') { loadMiniChart('tv_macro_dxy'); loadMiniChart('tv_macro_gold'); }
+  if (name === 'options') loadMiniChart('tv_vix_chart');
+  if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
 }
 function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); Logger.render(); }
 function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); }
