@@ -689,14 +689,14 @@
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">S&P 500 차트</div>
-          <div class="chart-sub">SP:SPX · 일봉</div>
+          <div class="chart-sub">TVC:SPX · 일봉</div>
         </div>
         <div id="tv_us_sp500" style="height:280px"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">나스닥 100 차트</div>
-          <div class="chart-sub">NASDAQ:NDX · 일봉</div>
+          <div class="chart-sub">TVC:NDX · 일봉</div>
         </div>
         <div id="tv_us_ndx" style="height:280px"></div>
       </div>
@@ -740,14 +740,14 @@
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">KOSPI 차트</div>
-          <div class="chart-sub">^KS11 · 일봉</div>
+          <div class="chart-sub">TVC:KOSPI · 일봉</div>
         </div>
         <div id="tv_kospi" style="height:300px"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">KOSDAQ 차트</div>
-          <div class="chart-sub">^KQ11 · 일봉</div>
+          <div class="chart-sub">KRX:KOSDAQ · 일봉</div>
         </div>
         <div id="tv_kosdaq" style="height:300px"></div>
       </div>
@@ -757,7 +757,7 @@
     <div class="chart-card" style="margin-top:12px">
       <div class="chart-header">
         <div class="chart-title">원달러 환율 차트</div>
-        <div class="chart-sub">FX:USDKRW · 일봉</div>
+        <div class="chart-sub">FX_IDC:USDKRW · 일봉</div>
       </div>
       <div id="tv_usdkrw" style="height:260px"></div>
     </div>
@@ -836,7 +836,7 @@
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">금 (Gold)</div>
-          <div class="chart-sub">XAUUSD · 일봉</div>
+          <div class="chart-sub">OANDA:XAUUSD · 일봉</div>
         </div>
         <div id="tv_macro_gold" style="height:260px"></div>
       </div>
@@ -944,14 +944,14 @@
 
     <!-- 심볼 선택 -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      <button class="chart-btn active" onclick="switchChart('TVC:VIX')">VIX</button>
-      <button class="chart-btn" onclick="switchChart('SP:SPX')">S&P 500</button>
-      <button class="chart-btn" onclick="switchChart('NASDAQ:NDX')">나스닥</button>
-      <button class="chart-btn" onclick="switchChart('^KS11')">코스피</button>
-      <button class="chart-btn" onclick="switchChart('FX:USDKRW')">원달러</button>
-      <button class="chart-btn" onclick="switchChart('COMEX:GC1!')">금</button>
-      <button class="chart-btn" onclick="switchChart('NYMEX:CL1!')">WTI</button>
-      <button class="chart-btn" onclick="switchChart('BITSTAMP:BTCUSD')">비트코인</button>
+      <button class="chart-btn active" onclick="switchChart('TVC:VIX', this)">VIX</button>
+      <button class="chart-btn" onclick="switchChart('TVC:SPX', this)">S&P 500</button>
+      <button class="chart-btn" onclick="switchChart('TVC:NDX', this)">나스닥</button>
+      <button class="chart-btn" onclick="switchChart('TVC:KOSPI', this)">코스피</button>
+      <button class="chart-btn" onclick="switchChart('FX_IDC:USDKRW', this)">원달러</button>
+      <button class="chart-btn" onclick="switchChart('OANDA:XAUUSD', this)">금</button>
+      <button class="chart-btn" onclick="switchChart('TVC:USOIL', this)">WTI</button>
+      <button class="chart-btn" onclick="switchChart('BINANCE:BTCUSDT', this)">비트코인</button>
     </div>
 
     <style>
@@ -1621,9 +1621,11 @@ function updateBanner() {
 // ■ TradingView 메인 차트
 // ══════════════════════════════════════════
 let tvWidget = null;
-function switchChart(sym) {
+let _activeChartSym = 'TVC:VIX';
+function switchChart(sym, btn) {
+  _activeChartSym = sym;
   document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
 
   const container = document.getElementById('tv-main-chart');
   container.innerHTML = '';
@@ -1641,10 +1643,10 @@ function switchChart(sym) {
     locale: 'kr',
     backgroundColor: 'rgba(13, 17, 23, 0)',
     gridColor: 'rgba(255, 255, 255, 0.04)',
-    allow_symbol_change: true,
+    allow_symbol_change: false,
     save_image: false,
     height: 500,
-    hide_top_toolbar: false,
+    hide_top_toolbar: true,
     hide_legend: false,
     withdateranges: true,
   });
@@ -1728,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 초기 차트 로드 예비
   setTimeout(() => {
     if (document.getElementById('sec-charts').classList.contains('active')) {
-      switchChart('SP:SPX');
+      switchChart(_activeChartSym, document.querySelector('.chart-btn.active'));
     }
   }, 500);
 });
@@ -1762,7 +1764,7 @@ function initTVChart(containerId, symbol, height) {
     backgroundColor: 'rgba(13,17,23,0)',
     gridColor: 'rgba(255,255,255,0.04)',
     allow_symbol_change: false,
-    hide_top_toolbar: false,
+    hide_top_toolbar: true,
     hide_side_toolbar: true,
     withdateranges: true,
     height: height,
@@ -1777,17 +1779,17 @@ function initTVChart(containerId, symbol, height) {
 function initChartsForTab(name) {
   setTimeout(function() {
     if (name === 'us') {
-      initTVChart('tv_us_sp500', 'SP:SPX',      280);
-      initTVChart('tv_us_ndx',   'NASDAQ:NDX',  280);
+      initTVChart('tv_us_sp500', 'TVC:SPX',      280);
+      initTVChart('tv_us_ndx',   'TVC:NDX',      280);
     }
     if (name === 'kr') {
-      initTVChart('tv_kospi',    '^KS11',        300);
-      initTVChart('tv_kosdaq',   '^KQ11',        300);
-      initTVChart('tv_usdkrw',   'FX:USDKRW',   260);
+      initTVChart('tv_kospi',    'TVC:KOSPI',       300);
+      initTVChart('tv_kosdaq',   'KRX:KOSDAQ',      300);
+      initTVChart('tv_usdkrw',   'FX_IDC:USDKRW',   260);
     }
     if (name === 'macro') {
-      initTVChart('tv_macro_dxy',  'TVC:DXY',   260);
-      initTVChart('tv_macro_gold', 'TVC:GOLD',  260);
+      initTVChart('tv_macro_dxy',  'TVC:DXY',       260);
+      initTVChart('tv_macro_gold', 'OANDA:XAUUSD', 260);
     }
     if (name === 'options') {
       initTVChart('tv_vix_chart',  'TVC:VIX',   280);
