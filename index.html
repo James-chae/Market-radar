@@ -15,15 +15,15 @@
     --border: rgba(255,255,255,0.07);
     --border2: rgba(255,255,255,0.12);
     --text: #e6edf3;
-    --text2: #7d8590;
-    --text3: #4d5566;
+    --text2: #c9d1d9;
+    --text3: #8b949e;
     --accent: #58a6ff;
     --accent2: #1f6feb;
     --green: #3fb950;
     --green2: #0d4a1f;
     --red: #f85149;
     --red2: #4a0d0d;
-    --yellow: #d29922;
+    --yellow: #e3a825;
     --yellow2: #3d2c00;
     --purple: #bc8cff;
     --cyan: #39d3f2;
@@ -88,7 +88,7 @@
     gap: 8px;
     font-family: var(--mono);
     font-size: 11px;
-    color: var(--text2);
+    color: #c9d1d9;
     margin-left: auto;
   }
 
@@ -134,7 +134,7 @@
     padding: 10px 16px;
     font-size: 12px;
     font-weight: 500;
-    color: var(--text3);
+    color: #8b949e;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
@@ -166,7 +166,7 @@
   }
   .section-desc {
     font-size: 12px;
-    color: var(--text3);
+    color: var(--text2);
     font-family: var(--mono);
     margin-bottom: 20px;
   }
@@ -208,8 +208,8 @@
 
   .card-label {
     font-size: 11px;
-    font-weight: 500;
-    color: var(--text3);
+    font-weight: 600;
+    color: var(--text2);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -231,6 +231,7 @@
     line-height: 1;
     margin-bottom: 6px;
     transition: color 0.5s;
+    color: #ffffff;
   }
 
   .card-change {
@@ -244,7 +245,7 @@
 
   .card-sub {
     font-size: 11px;
-    color: var(--text3);
+    color: var(--text2);
     margin-top: 4px;
   }
 
@@ -364,7 +365,7 @@
   }
   .chart-sub {
     font-size: 11px;
-    color: var(--text3);
+    color: var(--text2);
     font-family: var(--mono);
   }
 
@@ -422,7 +423,7 @@
     border-radius: var(--radius2);
   }
   .banner-item { text-align: center; }
-  .banner-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .banner-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
   .banner-val { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-top: 2px; }
 
   /* ── 오류 콘솔 (개발자용) ── */
@@ -676,7 +677,7 @@
         </div>
       </div>
       <div id="tv-sector" style="height:500px">
-        <iframe src="https://s.tradingview.com/embed-widget/sector-overview/?locale=kr#%7B%22colorTheme%22%3A%22dark%22%2C%22dateRange%22%3A%221D%22%2C%22showFloatingTooltip%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22500%22%2C%22largeChartUrl%22%3A%22%22%2C%22isTransparent%22%3Atrue%2C%22showSymbolLogo%22%3Afalse%2C%22plotLineColorGrowing%22%3A%223fb950%22%2C%22plotLineColorFalling%22%3A%22f85149%22%2C%22gridLineColor%22%3A%22rgba(255%2C255%2C255%2C0.05)%22%2C%22scaleFontColor%22%3A%224d5566%22%2C%22belowLineFillColorGrowing%22%3A%22rgba(63%2C185%2C80%2C0.1)%22%2C%22belowLineFillColorFalling%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22symbolActiveColor%22%3A%22rgba(88%2C166%2C255%2C0.2)%22%7D" class="tv-widget" height="500" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+        <iframe src="https://s.tradingview.com/embed-widget/sector-overview/?locale=kr#%7B%22colorTheme%22%3A%22dark%22%2C%22dateRange%22%3A%221D%22%2C%22showFloatingTooltip%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22500%22%2C%22largeChartUrl%22%3A%22%22%2C%22isTransparent%22%3Atrue%2C%22showSymbolLogo%22%3Afalse%2C%22plotLineColorGrowing%22%3A%223fb950%22%2C%22plotLineColorFalling%22%3A%22f85149%22%2C%22gridLineColor%22%3A%22rgba(255%2C255%2C255%2C0.05)%22%2C%22scaleFontColor%22%3A%224d5566%22%2C%22belowLineFillColorGrowing%22%3A%22rgba(63%2C185%2C80%2C0.1)%22%2C%22belowLineFillColorFalling%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22symbolActiveColor%22%3A%22rgba(88%2C166%2C255%2C0.2)%22%7D" class="tv-widget" height="500" sandbox="allow-scripts allow-same-origin allow-forms" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
       </div>
     </div>
   </div>
@@ -722,7 +723,7 @@
             <div class="chart-sub">^KS11 · 1년</div>
           </div>
         </div>
-        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSPI%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2258a6ff%22%2C%22underLineColor%22%3A%22rgba(88%2C166%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSPI%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2258a6ff%22%2C%22underLineColor%22%3A%22rgba(88%2C166%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" sandbox="allow-scripts allow-same-origin allow-forms" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
       </div>
       <div class="chart-card">
         <div class="chart-header">
@@ -731,7 +732,7 @@
             <div class="chart-sub">^KQ11 · 1년</div>
           </div>
         </div>
-        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSDAQ%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2239d3f2%22%2C%22underLineColor%22%3A%22rgba(57%2C211%2C242%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSDAQ%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2239d3f2%22%2C%22underLineColor%22%3A%22rgba(57%2C211%2C242%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" sandbox="allow-scripts allow-same-origin allow-forms" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
       </div>
     </div>
 
@@ -743,7 +744,7 @@
           <div class="chart-sub">KRW/USD · 1년</div>
         </div>
       </div>
-      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22FX%3AUSDKRW%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22220%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22f85149%22%2C%22underLineColor%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="220" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22FX%3AUSDKRW%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22220%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22f85149%22%2C%22underLineColor%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="220" sandbox="allow-scripts allow-same-origin allow-forms" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
     </div>
   </div>
 
@@ -905,7 +906,7 @@
         <div class="chart-title">VIX 변동성 지수 · 1년</div>
         <div class="chart-sub">CBOE Volatility Index</div>
       </div>
-      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22CBOE%3AVIX%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22bc8cff%22%2C%22underLineColor%22%3A%22rgba(188%2C140%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22CBOE%3AVIX%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22bc8cff%22%2C%22underLineColor%22%3A%22rgba(188%2C140%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" sandbox="allow-scripts allow-same-origin allow-forms" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
     </div>
   </div>
 
@@ -957,17 +958,22 @@
 // ■ 설정 & 상수
 // ══════════════════════════════════════════
 const CONFIG = {
+  // ══════════════════════════════════════════
+  // ★ FRED API 키 설정 (무료 발급: https://fred.stlouisfed.org/docs/api/api_key.html)
+  // 아래 키를 본인 키로 교체하면 유동성/금리 데이터가 완벽히 작동합니다
+  // ══════════════════════════════════════════
+  FRED_API_KEY: 'a8993e9d8da09bb39e14a3cad25e53df',  // ← 여기에 본인 키 입력
+
   // Yahoo Finance — CORS 우회 프록시 3개 순서대로 시도
   YAHOO_PROXIES: [
     sym => `https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`)}`,
     sym => `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`)}`,
     sym => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://query2.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`)}`,
   ],
-  // FRED 프록시
   CORS_PROXY: 'https://corsproxy.io/?url=',
   CORS_PROXY2: 'https://api.allorigins.win/get?url=',
   FRED_BASE: 'https://fred.stlouisfed.org/graph/fredgraph.csv',
-  REFRESH_INTERVAL: 300000, // 5분
+  REFRESH_INTERVAL: 300000,
 };
 
 // 종목 심볼 정의
@@ -1173,7 +1179,7 @@ async function fetchFRED(series) {
   async function tryFredApi() {
     const url = 'https://api.stlouisfed.org/fred/series/observations'
       + '?series_id=' + series
-      + '&api_key=a8993e9d8da09bb39e14a3cad25e53df'  // 공개 데모 키
+      + '&api_key=' + CONFIG.FRED_API_KEY  // 공개 데모 키
       + '&sort_order=desc&limit=5&file_type=json';
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), 12000);
