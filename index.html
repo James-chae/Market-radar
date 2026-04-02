@@ -1756,18 +1756,18 @@ let _mainChartType = 'candlestick';
 
 
 const MINI_CHARTS = {
-  'tv_us_sp500': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'line' },
-  'tv_us_ndx': { sym: '^NDX', label: '나스닥 100', range: '6mo', interval: '1d', type: 'line' },
-  'tv_kospi': { sym: '^KS11', label: '코스피', range: '6mo', interval: '1d', type: 'line' },
-  'tv_kosdaq': { sym: '^KQ11', label: '코스닥', range: '6mo', interval: '1d', type: 'line' },
-  'tv_usdkrw': { sym: 'KRW=X', label: '원달러', range: '6mo', interval: '1d', type: 'line' },
-  'tv_macro_dxy': { sym: 'DX-Y.NYB', label: '달러 인덱스', range: '6mo', interval: '1d', type: 'line' },
-  'tv_macro_gold': { sym: 'GC=F', label: '금', range: '6mo', interval: '1d', type: 'line' },
-  'tv_vix_chart': { sym: '^VIX', label: 'VIX', range: '6mo', interval: '1d', type: 'line' },
-  'liq_tv_gold': { sym: 'GC=F', label: '금', range: '6mo', interval: '1d', type: 'line' },
-  'liq_tv_dxy': { sym: 'DX-Y.NYB', label: '달러 인덱스', range: '6mo', interval: '1d', type: 'line' },
-  'liq_tv_btc': { sym: 'BTC-USD', label: '비트코인', range: '6mo', interval: '1d', type: 'line' },
-  'liq_tv_sp': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'line' },
+  'tv_us_sp500': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_us_ndx': { sym: '^NDX', label: '나스닥 100', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kospi': { sym: '^KS11', label: '코스피', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kosdaq': { sym: '^KQ11', label: '코스닥', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_usdkrw': { sym: 'KRW=X', label: '원달러', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_macro_dxy': { sym: 'DX-Y.NYB', label: '달러 인덱스', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_macro_gold': { sym: 'GC=F', label: '금', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_vix_chart': { sym: '^VIX', label: 'VIX', range: '6mo', interval: '1d', type: 'candlestick' },
+  'liq_tv_gold': { sym: 'GC=F', label: '금', range: '6mo', interval: '1d', type: 'candlestick' },
+  'liq_tv_dxy': { sym: 'DX-Y.NYB', label: '달러 인덱스', range: '6mo', interval: '1d', type: 'candlestick' },
+  'liq_tv_btc': { sym: 'BTC-USD', label: '비트코인', range: '6mo', interval: '1d', type: 'candlestick' },
+  'liq_tv_sp': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'candlestick' },
 };
 
 function ensureMiniChartUI(containerId) {
@@ -1913,8 +1913,8 @@ async function fetchYahooHistory(sym, range='6mo', interval='1d') {
   }
 }
 function getChartColors(up) {
-  return up ? { line: '#3fb950', areaTop: 'rgba(63,185,80,0.28)', areaBottom: 'rgba(63,185,80,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' }
-            : { line: '#f85149', areaTop: 'rgba(248,81,73,0.28)', areaBottom: 'rgba(248,81,73,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' };
+  return up ? { line: '#f85149', areaTop: 'rgba(248,81,73,0.28)', areaBottom: 'rgba(248,81,73,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' }
+            : { line: '#4A9EFF', areaTop: 'rgba(74,158,255,0.24)', areaBottom: 'rgba(74,158,255,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' };
 }
 function buildChart(containerId, mode='line') {
   const container = document.getElementById(containerId);
