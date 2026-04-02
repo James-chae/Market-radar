@@ -15,8 +15,8 @@
     --border: rgba(255,255,255,0.07);
     --border2: rgba(255,255,255,0.12);
     --text: #e6edf3;
-    --text2: #c9d1d9;
-    --text3: #8b949e;
+    --text2: #e8edf2;
+    --text3: #d0d7de;
     --accent: #58a6ff;
     --accent2: #1f6feb;
     --green: #3fb950;
@@ -80,7 +80,7 @@
     color: var(--accent);
     white-space: nowrap;
   }
-  .logo span { color: var(--text2); font-size: 11px; font-family: var(--mono); letter-spacing: 1px; display: block; margin-top: -4px; }
+  .logo span { color: #d0d7de; font-size: 11px; font-family: var(--mono); letter-spacing: 1px; display: block; margin-top: -4px; }
 
   .header-status {
     display: flex;
@@ -88,7 +88,7 @@
     gap: 8px;
     font-family: var(--mono);
     font-size: 11px;
-    color: #c9d1d9;
+    color: #e8edf2;
     margin-left: auto;
   }
 
@@ -103,12 +103,12 @@
     50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(63,185,80,0); }
   }
 
-  #last-update { color: var(--text3); }
+  #last-update { color: #d0d7de; }
 
   .refresh-btn {
     background: var(--bg3);
     border: 1px solid var(--border);
-    color: var(--text2);
+    color: #d0d7de;
     padding: 4px 10px;
     border-radius: 4px;
     font-family: var(--mono);
@@ -134,14 +134,14 @@
     padding: 10px 16px;
     font-size: 12px;
     font-weight: 500;
-    color: #8b949e;
+    color: #d0d7de;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
     transition: all 0.2s;
     user-select: none;
   }
-  .tab:hover { color: var(--text2); }
+  .tab:hover { color: #e8edf2; }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* ── 레이아웃 ── */
@@ -166,7 +166,7 @@
   }
   .section-desc {
     font-size: 12px;
-    color: var(--text2);
+    color: #d0d7de;
     font-family: var(--mono);
     margin-bottom: 20px;
   }
@@ -209,7 +209,7 @@
   .card-label {
     font-size: 11px;
     font-weight: 600;
-    color: var(--text2);
+    color: #d0d7de;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -245,13 +245,13 @@
 
   .card-sub {
     font-size: 11px;
-    color: var(--text2);
+    color: #d0d7de;
     margin-top: 4px;
   }
 
   .up { color: var(--green); }
   .down { color: var(--red); }
-  .neutral { color: var(--text2); }
+  .neutral { color: #d0d7de; }
 
   /* 로딩 스켈레톤 */
   .skeleton {
@@ -305,7 +305,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 9px;
-    color: var(--text3);
+    color: #d0d7de;
     font-family: var(--mono);
   }
 
@@ -365,7 +365,7 @@
   }
   .chart-sub {
     font-size: 11px;
-    color: var(--text2);
+    color: #d0d7de;
     font-family: var(--mono);
   }
 
@@ -405,7 +405,7 @@
     border-radius: var(--radius);
     padding: 12px 16px;
     font-size: 12px;
-    color: var(--text2);
+    color: #e8edf2;
     line-height: 1.7;
     margin-top: 12px;
   }
@@ -423,7 +423,7 @@
     border-radius: var(--radius2);
   }
   .banner-item { text-align: center; }
-  .banner-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .banner-label { font-size: 10px; color: #d0d7de; text-transform: uppercase; letter-spacing: 0.5px; }
   .banner-val { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-top: 2px; }
 
   /* ── 오류 콘솔 (개발자용) ── */
@@ -442,7 +442,7 @@
   }
   #error-console.has-errors { display: block; }
   .console-row { padding: 3px 0; border-bottom: 1px solid var(--border); display: flex; gap: 12px; }
-  .console-time { color: var(--text3); flex-shrink: 0; }
+  .console-time { color: #d0d7de; flex-shrink: 0; }
   .console-src { color: var(--yellow); flex-shrink: 0; }
   .console-msg { color: var(--red); }
   .console-msg.warn { color: var(--yellow); }
@@ -638,7 +638,7 @@
     </div>
 
     <!-- 금리 섹션 -->
-    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:var(--text2);margin:20px 0 12px">RATES & DOLLAR</p>
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 12px">RATES & DOLLAR</p>
     <div class="grid grid-4">
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>10년물 국채 금리</div>
@@ -667,7 +667,7 @@
     </div>
 
     <!-- 섹터 히트맵 -->
-    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:var(--text2);margin:20px 0 4px">SECTOR HEATMAP</p>
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">SECTOR HEATMAP</p>
     <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">XL ETF 기준 · 전일 대비 등락률</p>
     <div class="chart-card">
       <div class="chart-header">
@@ -930,7 +930,7 @@
     <style>
       .chart-btn {
         background: var(--bg3); border: 1px solid var(--border);
-        color: var(--text2); padding: 6px 14px; border-radius: 4px;
+        color: #d0d7de; padding: 6px 14px; border-radius: 4px;
         font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.2s;
       }
       .chart-btn:hover { border-color: var(--accent); color: var(--accent); }
