@@ -683,25 +683,43 @@
         <iframe src="https://s.tradingview.com/embed-widget/sector-overview/?locale=kr#%7B%22colorTheme%22%3A%22dark%22%2C%22dateRange%22%3A%221D%22%2C%22showFloatingTooltip%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22500%22%2C%22largeChartUrl%22%3A%22%22%2C%22isTransparent%22%3Atrue%2C%22showSymbolLogo%22%3Afalse%2C%22plotLineColorGrowing%22%3A%223fb950%22%2C%22plotLineColorFalling%22%3A%22f85149%22%2C%22gridLineColor%22%3A%22rgba(255%2C255%2C255%2C0.05)%22%2C%22scaleFontColor%22%3A%224d5566%22%2C%22belowLineFillColorGrowing%22%3A%22rgba(63%2C185%2C80%2C0.1)%22%2C%22belowLineFillColorFalling%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22symbolActiveColor%22%3A%22rgba(88%2C166%2C255%2C0.2)%22%7D" class="tv-widget" height="500" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
       </div>
     </div>
+
+    <!-- S&P500 / 나스닥 차트 -->
+    <div class="grid g2" style="margin-top:12px">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">S&P 500 차트</div>
+          <div class="chart-sub">SP:SPX · 일봉</div>
+        </div>
+        <div id="tv_us_sp500" style="height:280px"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">나스닥 100 차트</div>
+          <div class="chart-sub">NASDAQ:NDX · 일봉</div>
+        </div>
+        <div id="tv_us_ndx" style="height:280px"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════ 3. 한국 시장 ══════════════ -->
   <div class="section" id="sec-kr">
     <p class="section-title">KOREA MARKET</p>
-    <p class="section-desc">한국 주요 지수 · 환율 · 삼성전자</p>
+    <p class="section-desc">코스피 · 코스닥 · 원달러 · 삼성전자</p>
 
-    <div class="grid grid-4">
+    <div class="grid g4">
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--green)"></span>코스피</div>
         <div class="card-value" id="kr-kospi-v">--</div>
         <div class="card-change" id="kr-kospi-c">--</div>
-        <div class="card-sub">전고점 낙폭: <span id="kr-kospi-dd">--</span></div>
+        <div class="card-sub">52주고점 낙폭: <span id="kr-kospi-dd" class="neutral">--</span></div>
       </div>
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>코스닥</div>
         <div class="card-value" id="kr-kosdaq-v">--</div>
         <div class="card-change" id="kr-kosdaq-c">--</div>
-        <div class="card-sub">전고점 낙폭: <span id="kr-kosdaq-dd">--</span></div>
+        <div class="card-sub">52주고점 낙폭: <span id="kr-kosdaq-dd" class="neutral">--</span></div>
       </div>
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--red)"></span>원달러 환율</div>
@@ -717,40 +735,33 @@
       </div>
     </div>
 
-    <!-- 한국 차트 (TradingView) -->
-    <div style="margin-top:16px" class="grid grid-2">
+    <!-- KOSPI / KOSDAQ 차트 — advanced-chart (무료 심볼) -->
+    <div class="grid g2" style="margin-top:12px">
       <div class="chart-card">
         <div class="chart-header">
-          <div>
-            <div class="chart-title">KOSPI 차트</div>
-            <div class="chart-sub">^KS11 · 1년</div>
-          </div>
+          <div class="chart-title">KOSPI 차트</div>
+          <div class="chart-sub">^KS11 · 일봉</div>
         </div>
-        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSPI%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2258a6ff%22%2C%22underLineColor%22%3A%22rgba(88%2C166%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+        <div id="tv_kospi" style="height:300px"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
-          <div>
-            <div class="chart-title">KOSDAQ 차트</div>
-            <div class="chart-sub">^KQ11 · 1년</div>
-          </div>
+          <div class="chart-title">KOSDAQ 차트</div>
+          <div class="chart-sub">^KQ11 · 일봉</div>
         </div>
-        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSDAQ%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2239d3f2%22%2C%22underLineColor%22%3A%22rgba(57%2C211%2C242%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+        <div id="tv_kosdaq" style="height:300px"></div>
       </div>
     </div>
 
-    <!-- 환율 차트 -->
-    <div style="margin-top:12px" class="chart-card">
+    <!-- 원달러 환율 차트 -->
+    <div class="chart-card" style="margin-top:12px">
       <div class="chart-header">
-        <div>
-          <div class="chart-title">원달러 환율 차트</div>
-          <div class="chart-sub">KRW/USD · 1년</div>
-        </div>
+        <div class="chart-title">원달러 환율 차트</div>
+        <div class="chart-sub">FX:USDKRW · 일봉</div>
       </div>
-      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22FX%3AUSDKRW%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22220%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22f85149%22%2C%22underLineColor%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="220" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+      <div id="tv_usdkrw" style="height:260px"></div>
     </div>
   </div>
-
   <!-- ══════════════ 4. 매크로 ══════════════ -->
   <div class="section" id="sec-macro">
     <p class="section-title">MACRO</p>
@@ -812,6 +823,24 @@
       📌 <strong>장단기 금리차</strong>: 음수(-) 역전 시 과거 모든 미국 경기침체 전에 나타났던 선행지표. 단, 역전 후 침체까지 12~24개월 시차 있음.<br>
       📌 <strong>하이일드 스프레드</strong>: 4% 이하 정상 · 6% 이상 경고 · 8% 이상 위기. 주식시장보다 먼저 위험 신호를 포착.
     </div>
+
+    <!-- DXY / 금 차트 -->
+    <div class="grid g2" style="margin-top:12px">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">달러 인덱스 (DXY)</div>
+          <div class="chart-sub">TVC:DXY · 일봉</div>
+        </div>
+        <div id="tv_macro_dxy" style="height:260px"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">금 (Gold)</div>
+          <div class="chart-sub">XAUUSD · 일봉</div>
+        </div>
+        <div id="tv_macro_gold" style="height:260px"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════ 5. 유동성 ══════════════ -->
@@ -871,14 +900,12 @@
     <p class="section-title">OPTIONS & VOL</p>
     <p class="section-desc">변동성 지수 · 옵션 심리 · 공포 온도계</p>
 
-    <div class="grid grid-4">
+    <div class="grid g4">
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--red)"></span>VIX 공포지수</div>
         <div class="card-value" id="opt-vix-v">--</div>
         <div class="card-change" id="opt-vix-c">--</div>
-        <div class="level-bar" style="margin-top:8px">
-          <div class="level-fill" id="opt-vix-bar" style="width:0%;background:var(--green)"></div>
-        </div>
+        <div class="level-bar" style="margin-top:7px"><div class="level-fill" id="opt-vix-bar" style="width:0%;background:var(--green)"></div></div>
         <div class="card-sub" id="opt-vix-label">20↓ 안정 · 30↑ 경계</div>
       </div>
       <div class="card">
@@ -890,9 +917,7 @@
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>공포·탐욕 지수</div>
         <div class="card-value" id="opt-fg-v">--</div>
-        <div class="fear-gauge" style="margin:8px 0 4px">
-          <div class="fear-needle" id="opt-fg-needle" style="left:50%"></div>
-        </div>
+        <div class="fear-gauge" style="margin:7px 0 4px"><div class="fear-needle" id="opt-fg-needle" style="left:50%"></div></div>
         <div class="card-sub" id="opt-fg-label">CNN Fear & Greed</div>
       </div>
       <div class="card">
@@ -903,16 +928,15 @@
       </div>
     </div>
 
-    <!-- VIX 차트 (TradingView) -->
-    <div style="margin-top:16px" class="chart-card">
+    <!-- VIX 차트 — advanced-chart -->
+    <div class="chart-card" style="margin-top:12px">
       <div class="chart-header">
-        <div class="chart-title">VIX 변동성 지수 · 1년</div>
-        <div class="chart-sub">CBOE Volatility Index</div>
+        <div class="chart-title">VIX 공포지수 차트</div>
+        <div class="chart-sub">CBOE Volatility Index · 일봉</div>
       </div>
-      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22CBOE%3AVIX%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22bc8cff%22%2C%22underLineColor%22%3A%22rgba(188%2C140%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+      <div id="tv_vix_chart" style="height:280px"></div>
     </div>
   </div>
-
   <!-- ══════════════ 7. 차트 ══════════════ -->
   <div class="section" id="sec-charts">
     <p class="section-title">CHARTS</p>
@@ -920,10 +944,10 @@
 
     <!-- 심볼 선택 -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      <button class="chart-btn active" onclick="switchChart('CBOE:VIX')">VIX</button>
+      <button class="chart-btn active" onclick="switchChart('TVC:VIX')">VIX</button>
       <button class="chart-btn" onclick="switchChart('SP:SPX')">S&P 500</button>
       <button class="chart-btn" onclick="switchChart('NASDAQ:NDX')">나스닥</button>
-      <button class="chart-btn" onclick="switchChart('KRX:KOSPI')">코스피</button>
+      <button class="chart-btn" onclick="switchChart('^KS11')">코스피</button>
       <button class="chart-btn" onclick="switchChart('FX:USDKRW')">원달러</button>
       <button class="chart-btn" onclick="switchChart('COMEX:GC1!')">금</button>
       <button class="chart-btn" onclick="switchChart('NYMEX:CL1!')">WTI</button>
@@ -1700,5 +1724,84 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 500);
 });
 </script>
+
+<script>
+// ══════════════════════════════════════════
+// ■ TradingView 차트 초기화 — 각 탭 내 차트
+// ══════════════════════════════════════════
+function initTVChart(containerId, symbol, height) {
+  var c = document.getElementById(containerId);
+  if (!c || c.dataset.loaded) return;
+  c.dataset.loaded = '1';
+  c.innerHTML = '';
+
+  var w = document.createElement('div');
+  w.className = 'tradingview-widget-container';
+  w.style.height = height + 'px';
+  w.style.width  = '100%';
+
+  var s = document.createElement('script');
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  s.async = true;
+  s.textContent = JSON.stringify({
+    symbol: symbol,
+    interval: 'D',
+    timezone: 'Asia/Seoul',
+    theme: 'dark',
+    style: '1',
+    locale: 'kr',
+    backgroundColor: 'rgba(13,17,23,0)',
+    gridColor: 'rgba(255,255,255,0.04)',
+    allow_symbol_change: false,
+    hide_top_toolbar: false,
+    withdateranges: true,
+    height: height,
+    autosize: true,
+    hide_side_toolbar: true,
+  });
+
+  w.appendChild(s);
+  c.appendChild(w);
+}
+
+// 탭 전환 시 해당 탭 차트 초기화
+var _origShowTab = showTab;
+showTab = function(name, el) {
+  _origShowTab(name, el);
+  setTimeout(function() {
+    if (name === 'kr') {
+      initTVChart('tv_kospi',   '^KS11',     300);
+      initTVChart('tv_kosdaq',  '^KQ11',     300);
+      initTVChart('tv_usdkrw',  'FX:USDKRW', 260);
+    }
+    if (name === 'us') {
+      initTVChart('tv_us_sp500', 'SP:SPX',   280);
+      initTVChart('tv_us_ndx',   'NASDAQ:NDX', 280);
+    }
+    if (name === 'macro') {
+      initTVChart('tv_macro_dxy', 'TVC:DXY',  260);
+      initTVChart('tv_macro_gold','XAUUSD',   260);
+    }
+    if (name === 'options') {
+      initTVChart('tv_vix_chart', 'TVC:VIX',  280);
+    }
+    if (name === 'charts') {
+      // 차트 탭은 switchChart 로 직접 로드
+      if (!document.querySelector('#tv-main-chart .tradingview-widget-container')) {
+        setTimeout(function() {
+          switchChart(_activeChartSym, document.querySelector('.chart-btn.active'));
+        }, 200);
+      }
+    }
+  }, 100);
+};
+
+// 페이지 로드시 overview 탭 (기본) 은 차트 없으므로 skip
+// 첫 탭 로드
+document.addEventListener('DOMContentLoaded', function() {
+  // 기본 탭은 overview — 차트 없음
+});
+</script>
+
 </body>
 </html>
