@@ -1663,11 +1663,20 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   event.target.classList.add('active');
-  document.getElementById('sec-' + name).classList.add('active');
+  const sec = document.getElementById('sec-' + name);
+  if (sec) sec.classList.add('active');
 
-  // 차트 탭 진입 시 초기 로드
-  if (name === 'charts' && !document.querySelector('.tradingview-widget-container')) {
-    setTimeout(() => switchChart('SP:SPX'), 100);
+  // 각 탭 인라인 차트 초기화
+  initChartsForTab(name);
+
+  // 차트 탭 진입 시 메인 차트 로드
+  if (name === 'charts') {
+    setTimeout(() => {
+      const mainChart = document.getElementById('tv-main-chart');
+      if (mainChart && !mainChart.querySelector('.tradingview-widget-container')) {
+        switchChart(_activeChartSym, document.querySelector('.chart-btn.active'));
+      }
+    }, 150);
   }
 }
 
@@ -1727,11 +1736,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
 // ══════════════════════════════════════════
-// ■ TradingView 차트 초기화 — 각 탭 내 차트
+// ■ TradingView 인라인 차트 초기화
 // ══════════════════════════════════════════
 function initTVChart(containerId, symbol, height) {
   var c = document.getElementById(containerId);
-  if (!c || c.dataset.loaded) return;
+  if (!c || c.dataset.loaded === '1') return;
   c.dataset.loaded = '1';
   c.innerHTML = '';
 
@@ -1754,53 +1763,37 @@ function initTVChart(containerId, symbol, height) {
     gridColor: 'rgba(255,255,255,0.04)',
     allow_symbol_change: false,
     hide_top_toolbar: false,
+    hide_side_toolbar: true,
     withdateranges: true,
     height: height,
-    autosize: true,
-    hide_side_toolbar: true,
+    autosize: true
   });
 
   w.appendChild(s);
   c.appendChild(w);
 }
 
-// 탭 전환 시 해당 탭 차트 초기화
-var _origShowTab = showTab;
-showTab = function(name, el) {
-  _origShowTab(name, el);
+// 탭 전환 시 차트 초기화 — 탭별로 해당 차트 로드
+function initChartsForTab(name) {
   setTimeout(function() {
-    if (name === 'kr') {
-      initTVChart('tv_kospi',   '^KS11',     300);
-      initTVChart('tv_kosdaq',  '^KQ11',     300);
-      initTVChart('tv_usdkrw',  'FX:USDKRW', 260);
-    }
     if (name === 'us') {
-      initTVChart('tv_us_sp500', 'SP:SPX',   280);
-      initTVChart('tv_us_ndx',   'NASDAQ:NDX', 280);
+      initTVChart('tv_us_sp500', 'SP:SPX',      280);
+      initTVChart('tv_us_ndx',   'NASDAQ:NDX',  280);
+    }
+    if (name === 'kr') {
+      initTVChart('tv_kospi',    '^KS11',        300);
+      initTVChart('tv_kosdaq',   '^KQ11',        300);
+      initTVChart('tv_usdkrw',   'FX:USDKRW',   260);
     }
     if (name === 'macro') {
-      initTVChart('tv_macro_dxy', 'TVC:DXY',  260);
-      initTVChart('tv_macro_gold','XAUUSD',   260);
+      initTVChart('tv_macro_dxy',  'TVC:DXY',   260);
+      initTVChart('tv_macro_gold', 'TVC:GOLD',  260);
     }
     if (name === 'options') {
-      initTVChart('tv_vix_chart', 'TVC:VIX',  280);
+      initTVChart('tv_vix_chart',  'TVC:VIX',   280);
     }
-    if (name === 'charts') {
-      // 차트 탭은 switchChart 로 직접 로드
-      if (!document.querySelector('#tv-main-chart .tradingview-widget-container')) {
-        setTimeout(function() {
-          switchChart(_activeChartSym, document.querySelector('.chart-btn.active'));
-        }, 200);
-      }
-    }
-  }, 100);
-};
-
-// 페이지 로드시 overview 탭 (기본) 은 차트 없으므로 skip
-// 첫 탭 로드
-document.addEventListener('DOMContentLoaded', function() {
-  // 기본 탭은 overview — 차트 없음
-});
+  }, 150);
+}
 </script>
 
 </body>
