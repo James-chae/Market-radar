@@ -177,10 +177,12 @@
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
   .grid-4 { grid-template-columns: repeat(4, 1fr); }
   .grid-auto { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .g2 { display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; }
+  .g4 { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
 
-  @media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 1200px) { .grid-4, .g4 { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 768px) {
-    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .grid-2, .grid-3, .grid-4, .g2, .g4 { grid-template-columns: 1fr; }
     main { padding: 12px 12px 60px; }
   }
 
@@ -512,13 +514,13 @@
 </header>
 
 <nav>
-  <div class="tab active" onclick="showTab('overview')">📊 전체 요약</div>
-  <div class="tab" onclick="showTab('us')">🇺🇸 미국 시장</div>
-  <div class="tab" onclick="showTab('kr')">🇰🇷 한국 시장</div>
-  <div class="tab" onclick="showTab('macro')">🌐 매크로</div>
-  <div class="tab" onclick="showTab('liquidity')">💧 유동성</div>
-  <div class="tab" onclick="showTab('options')">🎯 옵션·변동성</div>
-  <div class="tab" onclick="showTab('charts')">📈 차트</div>
+  <div class="tab active" onclick="showTab('overview', this)">📊 전체 요약</div>
+  <div class="tab" onclick="showTab('us', this)">🇺🇸 미국 시장</div>
+  <div class="tab" onclick="showTab('kr', this)">🇰🇷 한국 시장</div>
+  <div class="tab" onclick="showTab('macro', this)">🌐 매크로</div>
+  <div class="tab" onclick="showTab('liquidity', this)">💧 유동성</div>
+  <div class="tab" onclick="showTab('options', this)">🎯 옵션·변동성</div>
+  <div class="tab" onclick="showTab('charts', this)">📈 차트</div>
 </nav>
 
 <main>
@@ -689,14 +691,14 @@
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">S&P 500 차트</div>
-          <div class="chart-sub">TVC:SPX · 일봉</div>
+          <div class="chart-sub">FOREXCOM:SPXUSD · 일봉</div>
         </div>
         <div id="tv_us_sp500" style="height:280px"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">나스닥 100 차트</div>
-          <div class="chart-sub">TVC:NDX · 일봉</div>
+          <div class="chart-sub">NASDAQ:NDX · 일봉</div>
         </div>
         <div id="tv_us_ndx" style="height:280px"></div>
       </div>
@@ -740,7 +742,7 @@
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">KOSPI 차트</div>
-          <div class="chart-sub">TVC:KOSPI · 일봉</div>
+          <div class="chart-sub">KRX:KOSPI · 일봉</div>
         </div>
         <div id="tv_kospi" style="height:300px"></div>
       </div>
@@ -944,10 +946,10 @@
 
     <!-- 심볼 선택 -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      <button class="chart-btn active" onclick="switchChart('TVC:VIX', this)">VIX</button>
-      <button class="chart-btn" onclick="switchChart('TVC:SPX', this)">S&P 500</button>
-      <button class="chart-btn" onclick="switchChart('TVC:NDX', this)">나스닥</button>
-      <button class="chart-btn" onclick="switchChart('TVC:KOSPI', this)">코스피</button>
+      <button class="chart-btn active" onclick="switchChart('CBOE:VIX', this)">VIX</button>
+      <button class="chart-btn" onclick="switchChart('FOREXCOM:SPXUSD', this)">S&P 500</button>
+      <button class="chart-btn" onclick="switchChart('NASDAQ:NDX', this)">나스닥</button>
+      <button class="chart-btn" onclick="switchChart('KRX:KOSPI', this)">코스피</button>
       <button class="chart-btn" onclick="switchChart('FX_IDC:USDKRW', this)">원달러</button>
       <button class="chart-btn" onclick="switchChart('OANDA:XAUUSD', this)">금</button>
       <button class="chart-btn" onclick="switchChart('TVC:USOIL', this)">WTI</button>
@@ -1005,22 +1007,22 @@ const CONFIG = {
 
 // 종목 심볼 정의
 const SYMBOLS = {
-  sp500:   { sym: '%5EGSPC',   label: 'S&P 500',    ids: ['sp500-v','sp500-c','us-sp500-v','us-sp500-c'] },
-  ndx:     { sym: '%5ENDX',    label: '나스닥 100',  ids: ['ndx-v','ndx-c','us-ndx-v','us-ndx-c'] },
-  dji:     { sym: '%5EDJI',    label: '다우',        ids: ['us-dji-v','us-dji-c'] },
-  rut:     { sym: '%5ERUT',    label: '러셀 2000',   ids: ['us-rut-v','us-rut-c'] },
-  kospi:   { sym: '%5EKS11',   label: '코스피',      ids: ['kospi-v','kospi-c','kr-kospi-v','kr-kospi-c'] },
-  kosdaq:  { sym: '%5EKQ11',   label: '코스닥',      ids: ['kosdaq-v','kosdaq-c','kr-kosdaq-v','kr-kosdaq-c'] },
-  usdkrw:  { sym: 'KRW%3DX',  label: '원달러',      ids: ['usdkrw-v','usdkrw-c','kr-usdkrw-v','kr-usdkrw-c'] },
-  samsung: { sym: '005930.KS', label: '삼성전자',    ids: ['kr-samsung-v','kr-samsung-c'] },
-  gold:    { sym: 'GC%3DF',    label: '금',          ids: ['gold-v','gold-c','mac-gold-v','mac-gold-c','opt-gold-v','opt-gold-c'] },
-  oil:     { sym: 'CL%3DF',    label: 'WTI 원유',    ids: ['oil-v','oil-c','mac-oil-v','mac-oil-c'] },
-  btc:     { sym: 'BTC-USD',   label: '비트코인',    ids: ['btc-v','btc-c'] },
-  dxy:     { sym: 'DX-Y.NYB',  label: '달러 인덱스', ids: ['dxy-v','dxy-c','mac-dxy-v','mac-dxy-c'] },
-  jpy:     { sym: 'JPY%3DX',   label: '달러/엔',     ids: ['mac-jpyusd-v','mac-jpyusd-c'] },
-  copper:  { sym: 'HG%3DF',    label: '구리',        ids: ['mac-copper-v','mac-copper-c'] },
-  vix:     { sym: '%5EVIX',    label: 'VIX',         ids: ['vix-v','vix-c','opt-vix-v','opt-vix-c'] },
-  vvix:    { sym: '%5EVVIX',   label: 'VVIX',        ids: ['opt-vvix-v','opt-vvix-c'] },
+  sp500:   { sym: '^GSPC',     label: 'S&P 500' },
+  ndx:     { sym: '^NDX',      label: '나스닥 100' },
+  dji:     { sym: '^DJI',      label: '다우' },
+  rut:     { sym: '^RUT',      label: '러셀 2000' },
+  kospi:   { sym: '^KS11',     label: '코스피' },
+  kosdaq:  { sym: '^KQ11',     label: '코스닥' },
+  usdkrw:  { sym: 'KRW=X',     label: '원달러' },
+  samsung: { sym: '005930.KS', label: '삼성전자' },
+  gold:    { sym: 'GC=F',      label: '금' },
+  oil:     { sym: 'CL=F',      label: 'WTI 원유' },
+  btc:     { sym: 'BTC-USD',   label: '비트코인' },
+  dxy:     { sym: 'DX-Y.NYB',  label: '달러 인덱스' },
+  jpy:     { sym: 'JPY=X',     label: '달러/엔' },
+  copper:  { sym: 'HG=F',      label: '구리' },
+  vix:     { sym: '^VIX',      label: 'VIX' },
+  vvix:    { sym: '^VVIX',     label: 'VVIX' },
 };
 
 // ══════════════════════════════════════════
@@ -1082,48 +1084,112 @@ async function fetchWithTimeout(url, timeout=8000) {
   }
 }
 
-// Yahoo Finance API (CORS 직접 호출 - 브라우저에서 가능)
-async function fetchYahoo(sym) {
-  const cached = Cache.get(sym);
-  if (cached) return cached;
+// Yahoo Finance API (quote 우선, chart 폴백)
+function decodeSym(sym) {
+  try { return decodeURIComponent(sym); } catch (e) { return sym; }
+}
 
-  // 3중 프록시 폴백 — CORS 완전 우회
-  const proxies = [
-    () => `https://corsproxy.io/?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
-    () => `https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
-    () => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
+function buildProxyUrls(url) {
+  return [
+    'https://corsproxy.io/?url=' + encodeURIComponent(url),
+    'https://api.allorigins.win/get?url=' + encodeURIComponent(url),
+    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
   ];
+}
 
-  for (let i = 0; i < proxies.length; i++) {
+async function fetchProxyJson(url, timeout=12000) {
+  const errs = [];
+  for (const proxyUrl of buildProxyUrls(url)) {
     try {
-      const r = await fetchWithTimeout(proxies[i](), 12000);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const raw = await r.json();
-
-      // allorigins 는 { contents: "..." }, 나머지는 직접 JSON
-      const d = raw.contents ? JSON.parse(raw.contents) : raw;
-      const meta = d.chart?.result?.[0]?.meta;
-      if (!meta || !meta.regularMarketPrice) throw new Error('meta 없음');
-
-      const price = meta.regularMarketPrice;
-      const prev  = meta.previousClose || meta.chartPreviousClose || price;
-      const result = {
-        price,
-        prev,
-        change:    price - prev,
-        changePct: ((price - prev) / prev) * 100,
-        high52:    meta.fiftyTwoWeekHigh || null,
-        low52:     meta.fiftyTwoWeekLow  || null,
-        currency:  meta.currency || '',
-      };
-      Cache.set(sym, result);
-      Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 성공: ' + price, 'ok');
-      return result;
-    } catch(e) {
-      const isLast = i === proxies.length - 1;
-      Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 실패: ' + e.message, isLast ? 'error' : 'warn');
+      const r = await fetchWithTimeout(proxyUrl, timeout);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const raw = await r.text();
+      const payload = raw && raw.trim().startsWith('{') ? JSON.parse(raw) : raw;
+      if (payload && typeof payload === 'object' && 'contents' in payload) {
+        return JSON.parse(payload.contents);
+      }
+      return typeof payload === 'string' ? JSON.parse(payload) : payload;
+    } catch (e) {
+      errs.push(e.message);
     }
   }
+  throw new Error(errs.join(' | '));
+}
+
+function isSuspiciousQuote(sym, price, prev) {
+  if (!isFinite(price) || price <= 0) return true;
+  if (!isFinite(prev) || prev <= 0) return false;
+  const ratio = Math.abs((price - prev) / prev);
+  const raw = decodeSym(sym);
+  if (['^KS11', '^KQ11', 'KRW=X'].includes(raw) && ratio > 0.15) return true;
+  if (['^GSPC', '^NDX', '^DJI', '^RUT', '^VIX', '^VVIX'].includes(raw) && ratio > 0.12) return true;
+  return false;
+}
+
+async function fetchYahoo(sym) {
+  const rawSym = decodeSym(sym);
+  const cacheKey = 'yahoo_' + rawSym;
+  const cached = Cache.get(cacheKey);
+  if (cached) return cached;
+
+  const quoteUrl = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' + encodeURIComponent(rawSym);
+  const chartUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(rawSym) + '?interval=1d&range=3mo&includePrePost=false';
+
+  const parsers = [
+    async function () {
+      const d = await fetchProxyJson(quoteUrl);
+      const q = d.quoteResponse && d.quoteResponse.result && d.quoteResponse.result[0];
+      if (!q) throw new Error('quote 없음');
+      const price = Number(q.regularMarketPrice != null ? q.regularMarketPrice : (q.postMarketPrice != null ? q.postMarketPrice : q.preMarketPrice));
+      const prev = Number(q.regularMarketPreviousClose != null ? q.regularMarketPreviousClose : q.regularMarketPrice);
+      if (isSuspiciousQuote(rawSym, price, prev)) throw new Error('suspicious quote');
+      return {
+        price: price,
+        prev: prev,
+        change: Number(q.regularMarketChange != null ? q.regularMarketChange : (price - prev)),
+        changePct: Number(q.regularMarketChangePercent != null ? q.regularMarketChangePercent : (prev ? ((price - prev) / prev) * 100 : 0)),
+        high52: Number(q.fiftyTwoWeekHigh || NaN) || null,
+        low52: Number(q.fiftyTwoWeekLow || NaN) || null,
+        currency: q.currency || '',
+        marketTime: q.regularMarketTime || null,
+        source: 'quote'
+      };
+    },
+    async function () {
+      const d = await fetchProxyJson(chartUrl);
+      const result = d.chart && d.chart.result && d.chart.result[0];
+      const meta = result && result.meta;
+      const closes = (result && result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close || []).filter(function (v) { return Number.isFinite(v); });
+      if (!meta || !closes.length) throw new Error('chart 없음');
+      const price = Number(meta.regularMarketPrice != null ? meta.regularMarketPrice : closes[closes.length - 1]);
+      const prev = Number(meta.previousClose != null ? meta.previousClose : (meta.chartPreviousClose != null ? meta.chartPreviousClose : (closes[Math.max(0, closes.length - 2)] || price)));
+      if (isSuspiciousQuote(rawSym, price, prev)) throw new Error('suspicious chart');
+      return {
+        price: price,
+        prev: prev,
+        change: price - prev,
+        changePct: prev ? ((price - prev) / prev) * 100 : 0,
+        high52: Number(meta.fiftyTwoWeekHigh || NaN) || null,
+        low52: Number(meta.fiftyTwoWeekLow || NaN) || null,
+        currency: meta.currency || '',
+        marketTime: meta.regularMarketTime || null,
+        source: 'chart'
+      };
+    }
+  ];
+
+  for (const parser of parsers) {
+    try {
+      const out = await parser();
+      Cache.set(cacheKey, out);
+      Logger.log('Yahoo/' + rawSym, out.source + ' 성공: ' + out.price, 'ok');
+      return out;
+    } catch (e) {
+      Logger.log('Yahoo/' + rawSym, e.message, 'warn');
+    }
+  }
+
+  Logger.log('Yahoo/' + rawSym, '모든 소스 실패', 'error');
   return null;
 }
 
@@ -1356,21 +1422,21 @@ async function loadYahooCard(sym, vId, cId, formatFn) {
 async function loadStockData() {
   // 병렬로 모든 Yahoo Finance 데이터 로드
   const tasks = [
-    { key: '%5EGSPC',   vIds: ['sp500-v','us-sp500-v'],     cIds: ['sp500-c','us-sp500-c'],     fmt: v => fmt(v,2) },
-    { key: '%5ENDX',    vIds: ['ndx-v','us-ndx-v'],         cIds: ['ndx-c','us-ndx-c'],         fmt: v => fmt(v,2) },
-    { key: '%5EDJI',    vIds: ['us-dji-v'],                  cIds: ['us-dji-c'],                  fmt: v => fmt(v,2) },
-    { key: '%5ERUT',    vIds: ['us-rut-v'],                  cIds: ['us-rut-c'],                  fmt: v => fmt(v,2) },
-    { key: '%5EKS11',   vIds: ['kospi-v','kr-kospi-v'],      cIds: ['kospi-c','kr-kospi-c'],      fmt: v => fmt(v,2) },
-    { key: '%5EKQ11',   vIds: ['kosdaq-v','kr-kosdaq-v'],    cIds: ['kosdaq-c','kr-kosdaq-c'],    fmt: v => fmt(v,2) },
-    { key: 'KRW%3DX',  vIds: ['usdkrw-v','kr-usdkrw-v'],   cIds: ['usdkrw-c','kr-usdkrw-c'],   fmt: v => fmt(v,2) },
+    { key: '^GSPC',   vIds: ['sp500-v','us-sp500-v'],     cIds: ['sp500-c','us-sp500-c'],     fmt: v => fmt(v,2) },
+    { key: '^NDX',    vIds: ['ndx-v','us-ndx-v'],         cIds: ['ndx-c','us-ndx-c'],         fmt: v => fmt(v,2) },
+    { key: '^DJI',    vIds: ['us-dji-v'],                  cIds: ['us-dji-c'],                  fmt: v => fmt(v,2) },
+    { key: '^RUT',    vIds: ['us-rut-v'],                  cIds: ['us-rut-c'],                  fmt: v => fmt(v,2) },
+    { key: '^KS11',   vIds: ['kospi-v','kr-kospi-v'],      cIds: ['kospi-c','kr-kospi-c'],      fmt: v => fmt(v,2) },
+    { key: '^KQ11',   vIds: ['kosdaq-v','kr-kosdaq-v'],    cIds: ['kosdaq-c','kr-kosdaq-c'],    fmt: v => fmt(v,2) },
+    { key: 'KRW=X',  vIds: ['usdkrw-v','kr-usdkrw-v'],   cIds: ['usdkrw-c','kr-usdkrw-c'],   fmt: v => fmt(v,2) },
     { key: '005930.KS', vIds: ['kr-samsung-v'],              cIds: ['kr-samsung-c'],              fmt: v => fmt(v,0)+'원' },
-    { key: 'GC%3DF',   vIds: ['gold-v','mac-gold-v','opt-gold-v'], cIds: ['gold-c','mac-gold-c','opt-gold-c'], fmt: v => '$'+fmt(v,2) },
-    { key: 'CL%3DF',   vIds: ['oil-v','mac-oil-v'],         cIds: ['oil-c','mac-oil-c'],         fmt: v => '$'+fmt(v,2) },
+    { key: 'GC=F',   vIds: ['gold-v','mac-gold-v','opt-gold-v'], cIds: ['gold-c','mac-gold-c','opt-gold-c'], fmt: v => '$'+fmt(v,2) },
+    { key: 'CL=F',   vIds: ['oil-v','mac-oil-v'],         cIds: ['oil-c','mac-oil-c'],         fmt: v => '$'+fmt(v,2) },
     { key: 'DX-Y.NYB', vIds: ['dxy-v','mac-dxy-v'],         cIds: ['dxy-c','mac-dxy-c'],         fmt: v => fmt(v,3) },
-    { key: 'JPY%3DX',  vIds: ['mac-jpyusd-v'],              cIds: ['mac-jpyusd-c'],              fmt: v => fmt(v,3) },
-    { key: 'HG%3DF',   vIds: ['mac-copper-v'],              cIds: ['mac-copper-c'],              fmt: v => '$'+fmt(v,4) },
-    { key: '%5EVIX',   vIds: ['vix-v','opt-vix-v'],         cIds: ['vix-c','opt-vix-c'],         fmt: v => fmt(v,2) },
-    { key: '%5EVVIX',  vIds: ['opt-vvix-v'],                cIds: ['opt-vvix-c'],                fmt: v => fmt(v,2) },
+    { key: 'JPY=X',  vIds: ['mac-jpyusd-v'],              cIds: ['mac-jpyusd-c'],              fmt: v => fmt(v,3) },
+    { key: 'HG=F',   vIds: ['mac-copper-v'],              cIds: ['mac-copper-c'],              fmt: v => '$'+fmt(v,4) },
+    { key: '^VIX',   vIds: ['vix-v','opt-vix-v'],         cIds: ['vix-c','opt-vix-c'],         fmt: v => fmt(v,2) },
+    { key: '^VVIX',  vIds: ['opt-vvix-v'],                cIds: ['opt-vvix-c'],                fmt: v => fmt(v,2) },
   ];
 
   // 모두 스켈레톤 처리
@@ -1383,18 +1449,18 @@ async function loadStockData() {
     const d = await fetchYahoo(t.key);
     if (!d) {
       t.vIds.forEach(id => setVal(id, 'ERR'));
-      t.cIds.forEach(id => { setVal(id, 'ERR'); document.getElementById(id)?.classList.add('neutral'); });
+      t.cIds.forEach(id => setChange(id, null, null));
       return;
     }
     t.vIds.forEach(id => setVal(id, t.fmt(d.price)));
     t.cIds.forEach(id => setChange(id, d.change, d.changePct));
 
     // 특수 처리
-    if (t.key === '%5EVIX') updateVIX(d.price);
-    if (t.key === '%5EKS11') updateDrawdown('kr-kospi-dd', d.price, d.high52);
-    if (t.key === '%5EKQ11') updateDrawdown('kr-kosdaq-dd', d.price, d.high52);
-    if (t.key === '%5EGSPC') updateDrawdown('us-sp500-dd', d.price, d.high52);
-    if (t.key === '%5ENDX')  updateDrawdown('us-ndx-dd', d.price, d.high52);
+    if (t.key === '^VIX') updateVIX(d.price);
+    if (t.key === '^KS11') updateDrawdown('kr-kospi-dd', d.price, d.high52);
+    if (t.key === '^KQ11') updateDrawdown('kr-kosdaq-dd', d.price, d.high52);
+    if (t.key === '^GSPC') updateDrawdown('us-sp500-dd', d.price, d.high52);
+    if (t.key === '^NDX')  updateDrawdown('us-ndx-dd', d.price, d.high52);
   }));
 
   // BTC 별도 (Binance)
@@ -1579,12 +1645,12 @@ async function loadFREDData() {
 // 배너 업데이트
 function updateBanner() {
   const items = [
-    { id: 'banner-sp500', label: 'S&P 500', src: '%5EGSPC' },
+    { id: 'banner-sp500', label: 'S&P 500', src: '^GSPC' },
     { id: 'banner-btc',   label: '비트코인', special: 'btc' },
-    { id: 'banner-kospi', label: '코스피',  src: '%5EKS11' },
-    { id: 'banner-usd',   label: '원달러',  src: 'KRW%3DX' },
-    { id: 'banner-gold',  label: '금',      src: 'GC%3DF' },
-    { id: 'banner-vix',   label: 'VIX',     src: '%5EVIX' },
+    { id: 'banner-kospi', label: '코스피',  src: '^KS11' },
+    { id: 'banner-usd',   label: '원달러',  src: 'KRW=X' },
+    { id: 'banner-gold',  label: '금',      src: 'GC=F' },
+    { id: 'banner-vix',   label: 'VIX',     src: '^VIX' },
   ];
   const el = document.getElementById('banner');
   el.innerHTML = items.map(item => `
@@ -1605,7 +1671,7 @@ function updateBanner() {
         }
       }
     } else {
-      const d = Cache.get(item.src);
+      const d = Cache.get('yahoo_' + item.src);
       if (d) {
         const el2 = document.getElementById(item.id);
         if (el2) {
@@ -1621,7 +1687,7 @@ function updateBanner() {
 // ■ TradingView 메인 차트
 // ══════════════════════════════════════════
 let tvWidget = null;
-let _activeChartSym = 'TVC:VIX';
+let _activeChartSym = 'CBOE:VIX';
 function switchChart(sym, btn) {
   _activeChartSym = sym;
   document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
@@ -1647,8 +1713,14 @@ function switchChart(sym, btn) {
     save_image: false,
     height: 500,
     hide_top_toolbar: true,
+    hide_side_toolbar: true,
     hide_legend: false,
+    details: false,
+    hotlist: false,
+    calendar: false,
     withdateranges: true,
+    studies: [],
+    support_host: 'https://www.tradingview.com',
   });
 
   const wrapper = document.createElement('div');
@@ -1661,10 +1733,10 @@ function switchChart(sym, btn) {
 // ══════════════════════════════════════════
 // ■ 탭 전환
 // ══════════════════════════════════════════
-function showTab(name) {
+function showTab(name, tabEl) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  event.target.classList.add('active');
+  if (tabEl) tabEl.classList.add('active');
   const sec = document.getElementById('sec-' + name);
   if (sec) sec.classList.add('active');
 
@@ -1713,6 +1785,8 @@ async function refreshAll() {
   ]);
 
   updateBanner();
+  const activeSection = document.querySelector('.section.active');
+  if (activeSection) initChartsForTab(activeSection.id.replace('sec-', ''));
 
   const now = new Date().toLocaleTimeString('ko-KR');
   setVal('last-update', now);
@@ -1725,6 +1799,7 @@ async function refreshAll() {
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok');
   refreshAll();
+  initChartsForTab('overview');
   // 자동 갱신
   setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   // 초기 차트 로드 예비
@@ -1742,8 +1817,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════
 function initTVChart(containerId, symbol, height) {
   var c = document.getElementById(containerId);
-  if (!c || c.dataset.loaded === '1') return;
+  if (!c) return;
+  if (c.dataset.loaded === '1' && c.dataset.symbol === symbol) return;
   c.dataset.loaded = '1';
+  c.dataset.symbol = symbol;
   c.innerHTML = '';
 
   var w = document.createElement('div');
@@ -1766,7 +1843,13 @@ function initTVChart(containerId, symbol, height) {
     allow_symbol_change: false,
     hide_top_toolbar: true,
     hide_side_toolbar: true,
+    hide_legend: false,
+    details: false,
+    hotlist: false,
+    calendar: false,
     withdateranges: true,
+    studies: [],
+    support_host: 'https://www.tradingview.com',
     height: height,
     autosize: true
   });
@@ -1779,11 +1862,11 @@ function initTVChart(containerId, symbol, height) {
 function initChartsForTab(name) {
   setTimeout(function() {
     if (name === 'us') {
-      initTVChart('tv_us_sp500', 'TVC:SPX',      280);
-      initTVChart('tv_us_ndx',   'TVC:NDX',      280);
+      initTVChart('tv_us_sp500', 'FOREXCOM:SPXUSD', 280);
+      initTVChart('tv_us_ndx',   'NASDAQ:NDX',     280);
     }
     if (name === 'kr') {
-      initTVChart('tv_kospi',    'TVC:KOSPI',       300);
+      initTVChart('tv_kospi',    'KRX:KOSPI',       300);
       initTVChart('tv_kosdaq',   'KRX:KOSDAQ',      300);
       initTVChart('tv_usdkrw',   'FX_IDC:USDKRW',   260);
     }
@@ -1792,7 +1875,7 @@ function initChartsForTab(name) {
       initTVChart('tv_macro_gold', 'OANDA:XAUUSD', 260);
     }
     if (name === 'options') {
-      initTVChart('tv_vix_chart',  'TVC:VIX',   280);
+      initTVChart('tv_vix_chart',  'CBOE:VIX',      280);
     }
   }, 150);
 }
