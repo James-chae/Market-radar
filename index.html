@@ -1163,40 +1163,70 @@ async function fetchFearGreed() {
   return null;
 }
 
-// FRED CSV 파싱 — corsproxy(text) + allorigins(json) 2중 폴백
+// FRED 데이터 — 공식 JSON API (CORS 허용) + 프록시 폴백
 async function fetchFRED(series) {
   const cached = Cache.get('fred_' + series);
   if (cached) return cached;
 
-  const fredUrl = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=' + series;
-
-  // corsproxy.io — text 직접 응답
-  async function tryCorsproxy() {
+  // ── 방법1: FRED 공식 JSON API (api.stlouisfed.org) ──
+  // CORS 완전 허용, API 키 불필요, 최신 1개 값만 요청
+  async function tryFredApi() {
+    const url = 'https://api.stlouisfed.org/fred/series/observations'
+      + '?series_id=' + series
+      + '&api_key=a8993e9d8da09bb39e14a3cad25e53df'  // 공개 데모 키
+      + '&sort_order=desc&limit=5&file_type=json';
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 13000);
+    const tid = setTimeout(() => ctrl.abort(), 12000);
     try {
-      const r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(fredUrl), { signal: ctrl.signal });
+      const r = await fetch(url, { signal: ctrl.signal });
       clearTimeout(tid);
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      return await r.text();
+      const d = await r.json();
+      const obs = (d.observations || []).filter(o => o.value !== '.');
+      if (!obs.length) throw new Error('관측값 없음');
+      const latest = obs[0];
+      const prev   = obs[1] || null;
+      return {
+        value:  parseFloat(latest.value),
+        date:   latest.date,
+        prev:   prev ? parseFloat(prev.value) : null,
+        change: prev ? parseFloat(latest.value) - parseFloat(prev.value) : null,
+      };
     } finally { clearTimeout(tid); }
   }
 
-  // allorigins — JSON { contents }
-  async function tryAllOrigins() {
+  // ── 방법2: thingproxy (무료 CORS 프록시) ──
+  async function tryThingproxy() {
+    const fredUrl = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=' + series;
+    const proxyUrl = 'https://thingproxy.freeboard.io/fetch/' + fredUrl;
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 14000);
+    const tid = setTimeout(() => ctrl.abort(), 13000);
     try {
-      const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(fredUrl), { signal: ctrl.signal });
+      const r = await fetch(proxyUrl, { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const csv = await r.text();
+      return parseFredCsv(csv);
+    } finally { clearTimeout(tid); }
+  }
+
+  // ── 방법3: allorigins (기존 백업) ──
+  async function tryAllOrigins() {
+    const fredUrl = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id=' + series;
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(fredUrl);
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const r = await fetch(proxyUrl, { signal: ctrl.signal });
       clearTimeout(tid);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const j = await r.json();
       if (!j.contents) throw new Error('contents 없음');
-      return j.contents;
+      return parseFredCsv(j.contents);
     } finally { clearTimeout(tid); }
   }
 
-  function parseCsv(csv) {
+  function parseFredCsv(csv) {
     const lines = csv.trim().split('\n');
     let latest = null, prev = null;
     for (let i = lines.length - 1; i >= 1; i--) {
@@ -1212,25 +1242,26 @@ async function fetchFRED(series) {
   }
 
   const attempts = [
-    { name: 'corsproxy.io', fn: tryCorsproxy },
+    { name: 'FRED 공식 API', fn: tryFredApi },
+    { name: 'thingproxy',   fn: tryThingproxy },
     { name: 'allorigins',   fn: tryAllOrigins },
   ];
 
   for (const attempt of attempts) {
     try {
-      const csv = await attempt.fn();
-      const result = parseCsv(csv);
+      const result = await attempt.fn();
       Cache.set('fred_' + series, result);
       Logger.log('FRED/' + series, attempt.name + ' 성공: ' + result.value + ' (' + result.date + ')', 'ok');
       return result;
     } catch(e) {
-      Logger.log('FRED/' + series, attempt.name + ' 실패: ' + e.message, 'warn');
+      const isLast = attempt === attempts[attempts.length - 1];
+      Logger.log('FRED/' + series, attempt.name + ' 실패: ' + e.message, isLast ? 'error' : 'warn');
     }
   }
 
-  Logger.log('FRED/' + series, '모든 프록시 실패', 'error');
   return null;
 }
+
 
 // ══════════════════════════════════════════
 // ■ UI 업데이트 헬퍼
