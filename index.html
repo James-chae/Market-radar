@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마켓 레이더 · Market Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --bg2: #0d1117;
+    --bg3: #161b22;
+    --bg4: #1c2330;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e6edf3;
+    --text2: #7d8590;
+    --text3: #4d5566;
+    --accent: #58a6ff;
+    --accent2: #1f6feb;
+    --green: #3fb950;
+    --green2: #0d4a1f;
+    --red: #f85149;
+    --red2: #4a0d0d;
+    --yellow: #d29922;
+    --yellow2: #3d2c00;
+    --purple: #bc8cff;
+    --cyan: #39d3f2;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+    --display: 'Bebas Neue', sans-serif;
+    --radius: 8px;
+    --radius2: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── 배경 그리드 텍스처 ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(88,166,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(88,166,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── 헤더 ── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,12,16,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    gap: 20px;
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .logo span { color: var(--text2); font-size: 11px; font-family: var(--mono); letter-spacing: 1px; display: block; margin-top: -4px; }
+
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    margin-left: auto;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(63,185,80,0.4); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(63,185,80,0); }
+  }
+
+  #last-update { color: var(--text3); }
+
+  .refresh-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── 탭 네비 ── */
+  nav {
+    display: flex;
+    gap: 2px;
+    padding: 0 24px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── 레이아웃 ── */
+  main {
+    position: relative;
+    z-index: 1;
+    padding: 20px 24px 60px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── 섹션 타이틀 ── */
+  .section-title {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .section-desc {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 20px;
+  }
+
+  /* ── 카드 그리드 ── */
+  .grid { display: grid; gap: 12px; }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-auto { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+  @media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    main { padding: 12px 12px 60px; }
+  }
+
+  /* ── 메트릭 카드 ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(88,166,255,0.3), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .card:hover::before { opacity: 1; }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-label .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .card-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 6px;
+    transition: color 0.5s;
+  }
+
+  .card-change {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .card-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+  .neutral { color: var(--text2); }
+
+  /* 로딩 스켈레톤 */
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    color: transparent !important;
+    user-select: none;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* 오류 상태 */
+  .error-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--red);
+    background: rgba(248,81,73,0.1);
+    border: 1px solid rgba(248,81,73,0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  /* ── 공포탐욕 게이지 ── */
+  .fear-gauge {
+    position: relative;
+    height: 8px;
+    background: linear-gradient(90deg,
+      #f85149 0%, #d29922 40%, #3fb950 70%, #39d3f2 100%);
+    border-radius: 4px;
+    margin: 12px 0 6px;
+  }
+  .fear-needle {
+    position: absolute;
+    top: -4px;
+    width: 3px;
+    height: 16px;
+    background: white;
+    border-radius: 2px;
+    transform: translateX(-50%);
+    box-shadow: 0 0 6px rgba(255,255,255,0.5);
+    transition: left 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .fear-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  /* ── VIX 레벨 바 ── */
+  .level-bar {
+    height: 6px;
+    background: var(--bg4);
+    border-radius: 3px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .level-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease, background 0.5s;
+  }
+
+  /* ── 섹터 히트맵 ── */
+  .sector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .sector-cell {
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.3s;
+    cursor: default;
+  }
+  .sector-cell:hover { filter: brightness(1.2); transform: scale(1.02); }
+  .sector-name { font-size: 10px; opacity: 0.8; margin-bottom: 3px; }
+  .sector-val { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+
+  /* ── 큰 차트 카드 ── */
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 0;
+    overflow: hidden;
+  }
+  .chart-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .chart-sub {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  /* TradingView 위젯 래퍼 */
+  .tv-widget {
+    width: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* ── 상관관계 매트릭스 ── */
+  .corr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .corr-table th {
+    padding: 6px 8px;
+    color: var(--text3);
+    font-weight: 400;
+    text-align: center;
+    font-size: 10px;
+  }
+  .corr-table td {
+    padding: 5px 8px;
+    text-align: center;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* ── 정보 패널 ── */
+  .info-panel {
+    background: rgba(31,111,235,0.05);
+    border: 1px solid rgba(88,166,255,0.15);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-top: 12px;
+  }
+  .info-panel strong { color: var(--accent); }
+
+  /* ── 마켓 요약 배너 ── */
+  .summary-banner {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+  }
+  .banner-item { text-align: center; }
+  .banner-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .banner-val { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-top: 2px; }
+
+  /* ── 오류 콘솔 (개발자용) ── */
+  #error-console {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(8,12,16,0.97);
+    border-top: 1px solid var(--red);
+    z-index: 9999;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px 16px;
+  }
+  #error-console.has-errors { display: block; }
+  .console-row { padding: 3px 0; border-bottom: 1px solid var(--border); display: flex; gap: 12px; }
+  .console-time { color: var(--text3); flex-shrink: 0; }
+  .console-src { color: var(--yellow); flex-shrink: 0; }
+  .console-msg { color: var(--red); }
+  .console-msg.warn { color: var(--yellow); }
+  .console-msg.ok { color: var(--green); }
+  .close-console {
+    position: sticky;
+    top: 0;
+    float: right;
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  /* ── 상태 토글 (개발자) ── */
+  .dev-toggle {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    z-index: 9998;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    cursor: pointer;
+  }
+  .dev-toggle:hover { color: var(--text); }
+
+  /* ── 스피너 ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+  /* ── 반응형 ── */
+  @media (max-width: 600px) {
+    header { padding: 0 12px; }
+    nav { padding: 0 12px; }
+    .summary-banner { grid-template-columns: repeat(2, 1fr); }
+    .sector-grid { grid-template-columns: repeat(3, 1fr); }
+    .card-value { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    MARKET RADAR
+    <span>GLOBAL ASSET MONITOR · FREE DATA API</span>
+  </div>
+  <div class="header-status">
+    <span class="live-dot"></span>
+    <span>LIVE</span>
+    <span id="last-update">--:--:--</span>
+    <button class="refresh-btn" onclick="refreshAll()">↻ 새로고침</button>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showTab('overview')">📊 전체 요약</div>
+  <div class="tab" onclick="showTab('us')">🇺🇸 미국 시장</div>
+  <div class="tab" onclick="showTab('kr')">🇰🇷 한국 시장</div>
+  <div class="tab" onclick="showTab('macro')">🌐 매크로</div>
+  <div class="tab" onclick="showTab('liquidity')">💧 유동성</div>
+  <div class="tab" onclick="showTab('options')">🎯 옵션·변동성</div>
+  <div class="tab" onclick="showTab('charts')">📈 차트</div>
+</nav>
+
+<main>
+
+  <!-- ══════════════ 1. 전체 요약 ══════════════ -->
+  <div class="section active" id="sec-overview">
+    <p class="section-title">OVERVIEW</p>
+    <p class="section-desc">주요 자산 한눈에 · 5분마다 자동 갱신</p>
+
+    <div class="summary-banner" id="banner"></div>
+
+    <div class="grid grid-4">
+      <!-- 미국 지수 -->
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--accent)"></span>S&P 500</div>
+        <div class="card-value" id="sp500-v">--</div>
+        <div class="card-change" id="sp500-c">--</div>
+        <div class="card-sub">^GSPC · Yahoo Finance</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--purple)"></span>나스닥 100</div>
+        <div class="card-value" id="ndx-v">--</div>
+        <div class="card-change" id="ndx-c">--</div>
+        <div class="card-sub">^NDX · Yahoo Finance</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>금 (Gold)</div>
+        <div class="card-value" id="gold-v">--</div>
+        <div class="card-change" id="gold-c">--</div>
+        <div class="card-sub">GC=F · USD/온스</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>비트코인</div>
+        <div class="card-value" id="btc-v">--</div>
+        <div class="card-change" id="btc-c">--</div>
+        <div class="card-sub">BTC-USD · Binance</div>
+      </div>
+      <!-- 한국 -->
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:#3fb950"></span>코스피</div>
+        <div class="card-value" id="kospi-v">--</div>
+        <div class="card-change" id="kospi-c">--</div>
+        <div class="card-sub">^KS11 · Yahoo Finance</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:#39d3f2"></span>코스닥</div>
+        <div class="card-value" id="kosdaq-v">--</div>
+        <div class="card-change" id="kosdaq-c">--</div>
+        <div class="card-sub">^KQ11 · Yahoo Finance</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:#f85149"></span>원달러 환율</div>
+        <div class="card-value" id="usdkrw-v">--</div>
+        <div class="card-change" id="usdkrw-c">--</div>
+        <div class="card-sub">KRW=X · USD/KRW</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:#d29922"></span>WTI 원유</div>
+        <div class="card-value" id="oil-v">--</div>
+        <div class="card-change" id="oil-c">--</div>
+        <div class="card-sub">CL=F · USD/배럴</div>
+      </div>
+    </div>
+
+    <!-- 공포탐욕 + VIX -->
+    <div class="grid grid-2" style="margin-top:12px">
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>공포·탐욕 지수 <span style="font-family:var(--mono);color:var(--text3);font-size:10px">CNN</span></div>
+        <div class="card-value" id="fg-val">--</div>
+        <div class="fear-gauge">
+          <div class="fear-needle" id="fg-needle" style="left:50%"></div>
+        </div>
+        <div class="fear-labels">
+          <span>극단적 공포</span><span>공포</span><span>중립</span><span>탐욕</span><span>극단적 탐욕</span>
+        </div>
+        <div class="card-sub" style="margin-top:8px" id="fg-label">로딩 중...</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--purple)"></span>VIX 변동성 지수</div>
+        <div class="card-value" id="vix-v">--</div>
+        <div class="level-bar">
+          <div class="level-fill" id="vix-bar" style="width:0%;background:var(--green)"></div>
+        </div>
+        <div class="card-change" id="vix-c">--</div>
+        <div class="card-sub" id="vix-label">20↓ 안정 · 30↑ 경계 · 40↑ 위기</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ 2. 미국 시장 ══════════════ -->
+  <div class="section" id="sec-us">
+    <p class="section-title">US MARKET</p>
+    <p class="section-desc">미국 주요 지수 · 국채금리 · 달러</p>
+
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="card-label"><span class="dot"></span>S&P 500</div>
+        <div class="card-value" id="us-sp500-v">--</div>
+        <div class="card-change" id="us-sp500-c">--</div>
+        <div class="card-sub">전고점 대비 낙폭: <span id="us-sp500-dd">--</span></div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--purple)"></span>나스닥 100</div>
+        <div class="card-value" id="us-ndx-v">--</div>
+        <div class="card-change" id="us-ndx-c">--</div>
+        <div class="card-sub">전고점 대비 낙폭: <span id="us-ndx-dd">--</span></div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>다우 존스</div>
+        <div class="card-value" id="us-dji-v">--</div>
+        <div class="card-change" id="us-dji-c">--</div>
+        <div class="card-sub">^DJI</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>러셀 2000</div>
+        <div class="card-value" id="us-rut-v">--</div>
+        <div class="card-change" id="us-rut-c">--</div>
+        <div class="card-sub">^RUT · 소형주</div>
+      </div>
+    </div>
+
+    <!-- 금리 섹션 -->
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:var(--text2);margin:20px 0 12px">RATES & DOLLAR</p>
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>10년물 국채 금리</div>
+        <div class="card-value" id="t10y-v">--%</div>
+        <div class="card-change" id="t10y-c">--</div>
+        <div class="card-sub">DGS10 · FRED</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>2년물 국채 금리</div>
+        <div class="card-value" id="t2y-v">--%</div>
+        <div class="card-change" id="t2y-c">--</div>
+        <div class="card-sub">DGS2 · FRED</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--green)"></span>10Y-2Y 스프레드</div>
+        <div class="card-value" id="spread-v">--%</div>
+        <div class="card-change" id="spread-c">--</div>
+        <div class="card-sub" id="spread-label">역전 여부 확인 중...</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--accent)"></span>달러 인덱스 (DXY)</div>
+        <div class="card-value" id="dxy-v">--</div>
+        <div class="card-change" id="dxy-c">--</div>
+        <div class="card-sub">DX-Y.NYB</div>
+      </div>
+    </div>
+
+    <!-- 섹터 히트맵 -->
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:var(--text2);margin:20px 0 4px">SECTOR HEATMAP</p>
+    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">XL ETF 기준 · 전일 대비 등락률</p>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">S&P 500 섹터별 등락</div>
+          <div class="chart-sub">TradingView 실시간</div>
+        </div>
+      </div>
+      <div id="tv-sector" style="height:500px">
+        <iframe src="https://s.tradingview.com/embed-widget/sector-overview/?locale=kr#%7B%22colorTheme%22%3A%22dark%22%2C%22dateRange%22%3A%221D%22%2C%22showFloatingTooltip%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22500%22%2C%22largeChartUrl%22%3A%22%22%2C%22isTransparent%22%3Atrue%2C%22showSymbolLogo%22%3Afalse%2C%22plotLineColorGrowing%22%3A%223fb950%22%2C%22plotLineColorFalling%22%3A%22f85149%22%2C%22gridLineColor%22%3A%22rgba(255%2C255%2C255%2C0.05)%22%2C%22scaleFontColor%22%3A%224d5566%22%2C%22belowLineFillColorGrowing%22%3A%22rgba(63%2C185%2C80%2C0.1)%22%2C%22belowLineFillColorFalling%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22symbolActiveColor%22%3A%22rgba(88%2C166%2C255%2C0.2)%22%7D" class="tv-widget" height="500" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ 3. 한국 시장 ══════════════ -->
+  <div class="section" id="sec-kr">
+    <p class="section-title">KOREA MARKET</p>
+    <p class="section-desc">한국 주요 지수 · 환율 · 삼성전자</p>
+
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--green)"></span>코스피</div>
+        <div class="card-value" id="kr-kospi-v">--</div>
+        <div class="card-change" id="kr-kospi-c">--</div>
+        <div class="card-sub">전고점 낙폭: <span id="kr-kospi-dd">--</span></div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>코스닥</div>
+        <div class="card-value" id="kr-kosdaq-v">--</div>
+        <div class="card-change" id="kr-kosdaq-c">--</div>
+        <div class="card-sub">전고점 낙폭: <span id="kr-kosdaq-dd">--</span></div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>원달러 환율</div>
+        <div class="card-value" id="kr-usdkrw-v">--</div>
+        <div class="card-change" id="kr-usdkrw-c">--</div>
+        <div class="card-sub">KRW=X · 원/달러</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>삼성전자</div>
+        <div class="card-value" id="kr-samsung-v">--</div>
+        <div class="card-change" id="kr-samsung-c">--</div>
+        <div class="card-sub">005930.KS · 원</div>
+      </div>
+    </div>
+
+    <!-- 한국 차트 (TradingView) -->
+    <div style="margin-top:16px" class="grid grid-2">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">KOSPI 차트</div>
+            <div class="chart-sub">^KS11 · 1년</div>
+          </div>
+        </div>
+        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSPI%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2258a6ff%22%2C%22underLineColor%22%3A%22rgba(88%2C166%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">KOSDAQ 차트</div>
+            <div class="chart-sub">^KQ11 · 1년</div>
+          </div>
+        </div>
+        <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22KRX%3AKOSDAQ%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%2239d3f2%22%2C%22underLineColor%22%3A%22rgba(57%2C211%2C242%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+      </div>
+    </div>
+
+    <!-- 환율 차트 -->
+    <div style="margin-top:12px" class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">원달러 환율 차트</div>
+          <div class="chart-sub">KRW/USD · 1년</div>
+        </div>
+      </div>
+      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22FX%3AUSDKRW%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22220%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22f85149%22%2C%22underLineColor%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="220" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+    </div>
+  </div>
+
+  <!-- ══════════════ 4. 매크로 ══════════════ -->
+  <div class="section" id="sec-macro">
+    <p class="section-title">MACRO</p>
+    <p class="section-desc">글로벌 매크로 지표 · FRED 공개 데이터</p>
+
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--accent)"></span>달러 인덱스</div>
+        <div class="card-value" id="mac-dxy-v">--</div>
+        <div class="card-change" id="mac-dxy-c">--</div>
+        <div class="card-sub">DXY · ICE 달러</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>달러/엔</div>
+        <div class="card-value" id="mac-jpyusd-v">--</div>
+        <div class="card-change" id="mac-jpyusd-c">--</div>
+        <div class="card-sub">JPY=X · 엔/달러</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>10년물 금리</div>
+        <div class="card-value" id="mac-t10-v">--%</div>
+        <div class="card-change" id="mac-t10-c">--</div>
+        <div class="card-sub">DGS10 · FRED</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>WTI 원유</div>
+        <div class="card-value" id="mac-oil-v">--</div>
+        <div class="card-change" id="mac-oil-c">--</div>
+        <div class="card-sub">CL=F · USD/bbl</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--green)"></span>금 (Gold)</div>
+        <div class="card-value" id="mac-gold-v">--</div>
+        <div class="card-change" id="mac-gold-c">--</div>
+        <div class="card-sub">GC=F · USD/온스</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--purple)"></span>구리 (Copper)</div>
+        <div class="card-value" id="mac-copper-v">--</div>
+        <div class="card-change" id="mac-copper-c">--</div>
+        <div class="card-sub">HG=F · USD/파운드</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>장단기 스프레드</div>
+        <div class="card-value" id="mac-spread-v">--%</div>
+        <div class="card-change neutral" id="mac-spread-c">10Y - 2Y</div>
+        <div class="card-sub" id="mac-spread-label">역전 여부 확인 중</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>하이일드 스프레드</div>
+        <div class="card-value" id="mac-hy-v">--%</div>
+        <div class="card-change" id="mac-hy-c">--</div>
+        <div class="card-sub">BAMLH0A0HYM2 · FRED</div>
+      </div>
+    </div>
+
+    <!-- 하이일드 설명 -->
+    <div class="info-panel">
+      📌 <strong>장단기 금리차</strong>: 음수(-) 역전 시 과거 모든 미국 경기침체 전에 나타났던 선행지표. 단, 역전 후 침체까지 12~24개월 시차 있음.<br>
+      📌 <strong>하이일드 스프레드</strong>: 4% 이하 정상 · 6% 이상 경고 · 8% 이상 위기. 주식시장보다 먼저 위험 신호를 포착.
+    </div>
+  </div>
+
+  <!-- ══════════════ 5. 유동성 ══════════════ -->
+  <div class="section" id="sec-liquidity">
+    <p class="section-title">LIQUIDITY</p>
+    <p class="section-desc">연준 대차대조표 · 역레포 · TGA · FRED 공개 데이터</p>
+
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--accent)"></span>연준 총자산</div>
+        <div class="card-value" id="liq-walcl-v">-- T</div>
+        <div class="card-change" id="liq-walcl-c">--</div>
+        <div class="card-sub">WALCL · FRED · 주간</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--green)"></span>지급준비금</div>
+        <div class="card-value" id="liq-res-v">-- T</div>
+        <div class="card-change" id="liq-res-c">--</div>
+        <div class="card-sub">WRESBAL · FRED · 주간</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>역레포(RRP) 잔액</div>
+        <div class="card-value" id="liq-rrp-v">-- B</div>
+        <div class="card-change" id="liq-rrp-c">--</div>
+        <div class="card-sub">RRPONTSYD · FRED · 일간</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>TGA 잔액</div>
+        <div class="card-value" id="liq-tga-v">-- B</div>
+        <div class="card-change" id="liq-tga-c">--</div>
+        <div class="card-sub">WTREGEN · FRED · 주간</div>
+      </div>
+    </div>
+
+    <div class="info-panel" style="margin-top:12px">
+      💧 <strong>지급준비금↓ + TGA↑</strong> → 긴축 국면 (시장에서 돈이 빠져나감)<br>
+      🌊 <strong>지급준비금↑ + TGA↓</strong> → 유동성 공급 국면 (돈이 시장으로 유입)<br>
+      ⚠️ <strong>역레포 잔액</strong>: 2022년 2조 달러 고점 → 현재 거의 소진. 추가 유동성 공급 여력 제한적.
+    </div>
+
+    <!-- FRED 차트들 (TradingView 매크로 위젯) -->
+    <div style="margin-top:16px" class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">글로벌 유동성 지표 · FRED</div>
+          <div class="chart-sub">데이터: St. Louis Fed (FRED) 공개 API</div>
+        </div>
+      </div>
+      <div id="liquidity-chart" style="padding:20px">
+        <canvas id="liq-canvas" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ 6. 옵션·변동성 ══════════════ -->
+  <div class="section" id="sec-options">
+    <p class="section-title">OPTIONS & VOL</p>
+    <p class="section-desc">변동성 지수 · 옵션 심리 · 공포 온도계</p>
+
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>VIX 공포지수</div>
+        <div class="card-value" id="opt-vix-v">--</div>
+        <div class="card-change" id="opt-vix-c">--</div>
+        <div class="level-bar" style="margin-top:8px">
+          <div class="level-fill" id="opt-vix-bar" style="width:0%;background:var(--green)"></div>
+        </div>
+        <div class="card-sub" id="opt-vix-label">20↓ 안정 · 30↑ 경계</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--purple)"></span>VVIX (VIX의 VIX)</div>
+        <div class="card-value" id="opt-vvix-v">--</div>
+        <div class="card-change" id="opt-vvix-c">--</div>
+        <div class="card-sub">변동성의 변동성 · 130↑ 경계</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>공포·탐욕 지수</div>
+        <div class="card-value" id="opt-fg-v">--</div>
+        <div class="fear-gauge" style="margin:8px 0 4px">
+          <div class="fear-needle" id="opt-fg-needle" style="left:50%"></div>
+        </div>
+        <div class="card-sub" id="opt-fg-label">CNN Fear & Greed</div>
+      </div>
+      <div class="card">
+        <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>금 (안전자산 수요)</div>
+        <div class="card-value" id="opt-gold-v">--</div>
+        <div class="card-change" id="opt-gold-c">--</div>
+        <div class="card-sub">위험회피 → 금 강세</div>
+      </div>
+    </div>
+
+    <!-- VIX 차트 (TradingView) -->
+    <div style="margin-top:16px" class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">VIX 변동성 지수 · 1년</div>
+        <div class="chart-sub">CBOE Volatility Index</div>
+      </div>
+      <iframe src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?locale=kr#%7B%22symbol%22%3A%22CBOE%3AVIX%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22250%22%2C%22dateRange%22%3A%2212M%22%2C%22colorTheme%22%3A%22dark%22%2C%22trendLineColor%22%3A%22bc8cff%22%2C%22underLineColor%22%3A%22rgba(188%2C140%2C255%2C0.1)%22%2C%22isTransparent%22%3Atrue%2C%22autosize%22%3Afalse%7D" class="tv-widget" height="250" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+    </div>
+  </div>
+
+  <!-- ══════════════ 7. 차트 ══════════════ -->
+  <div class="section" id="sec-charts">
+    <p class="section-title">CHARTS</p>
+    <p class="section-desc">TradingView 임베드 · 주요 자산 인터랙티브 차트</p>
+
+    <!-- 심볼 선택 -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="chart-btn active" onclick="switchChart('CBOE:VIX')">VIX</button>
+      <button class="chart-btn" onclick="switchChart('SP:SPX')">S&P 500</button>
+      <button class="chart-btn" onclick="switchChart('NASDAQ:NDX')">나스닥</button>
+      <button class="chart-btn" onclick="switchChart('KRX:KOSPI')">코스피</button>
+      <button class="chart-btn" onclick="switchChart('FX:USDKRW')">원달러</button>
+      <button class="chart-btn" onclick="switchChart('COMEX:GC1!')">금</button>
+      <button class="chart-btn" onclick="switchChart('NYMEX:CL1!')">WTI</button>
+      <button class="chart-btn" onclick="switchChart('BITSTAMP:BTCUSD')">비트코인</button>
+    </div>
+
+    <style>
+      .chart-btn {
+        background: var(--bg3); border: 1px solid var(--border);
+        color: var(--text2); padding: 6px 14px; border-radius: 4px;
+        font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.2s;
+      }
+      .chart-btn:hover { border-color: var(--accent); color: var(--accent); }
+      .chart-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
+    </style>
+
+    <div class="chart-card">
+      <div id="tv-main-chart"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- 오류 콘솔 (하단 고정) -->
+<div id="error-console">
+  <button class="close-console" onclick="closeConsole()">✕ 닫기</button>
+  <div id="console-log"></div>
+</div>
+
+<!-- 개발자 토글 -->
+<button class="dev-toggle" onclick="toggleConsole()" title="오류 콘솔 토글">DEV</button>
+
+<script>
+// ══════════════════════════════════════════
+// ■ 설정 & 상수
+// ══════════════════════════════════════════
+const CONFIG = {
+  // Yahoo Finance 프록시 (CORS 우회 - 무료)
+  YAHOO_PROXY: 'https://query1.finance.yahoo.com/v8/finance/chart/',
+  // Alternative: AllOrigins CORS 프록시
+  CORS_PROXY: 'https://api.allorigins.win/get?url=',
+  // FRED API (무료 - api key 없이 일부 데이터)
+  FRED_BASE: 'https://fred.stlouisfed.org/graph/fredgraph.csv',
+  // Alternative Numbers API (무료 경제지표)
+  NUMBERS_API: 'https://api.fiscaldata.treasury.gov/services/api/v1/',
+  // 갱신 주기 (ms)
+  REFRESH_INTERVAL: 300000, // 5분
+  // 최대 재시도
+  MAX_RETRY: 2
+};
+
+// 종목 심볼 정의
+const SYMBOLS = {
+  sp500:   { sym: '%5EGSPC',   label: 'S&P 500',    ids: ['sp500-v','sp500-c','us-sp500-v','us-sp500-c'] },
+  ndx:     { sym: '%5ENDX',    label: '나스닥 100',  ids: ['ndx-v','ndx-c','us-ndx-v','us-ndx-c'] },
+  dji:     { sym: '%5EDJI',    label: '다우',        ids: ['us-dji-v','us-dji-c'] },
+  rut:     { sym: '%5ERUT',    label: '러셀 2000',   ids: ['us-rut-v','us-rut-c'] },
+  kospi:   { sym: '%5EKS11',   label: '코스피',      ids: ['kospi-v','kospi-c','kr-kospi-v','kr-kospi-c'] },
+  kosdaq:  { sym: '%5EKQ11',   label: '코스닥',      ids: ['kosdaq-v','kosdaq-c','kr-kosdaq-v','kr-kosdaq-c'] },
+  usdkrw:  { sym: 'KRW%3DX',  label: '원달러',      ids: ['usdkrw-v','usdkrw-c','kr-usdkrw-v','kr-usdkrw-c'] },
+  samsung: { sym: '005930.KS', label: '삼성전자',    ids: ['kr-samsung-v','kr-samsung-c'] },
+  gold:    { sym: 'GC%3DF',    label: '금',          ids: ['gold-v','gold-c','mac-gold-v','mac-gold-c','opt-gold-v','opt-gold-c'] },
+  oil:     { sym: 'CL%3DF',    label: 'WTI 원유',    ids: ['oil-v','oil-c','mac-oil-v','mac-oil-c'] },
+  btc:     { sym: 'BTC-USD',   label: '비트코인',    ids: ['btc-v','btc-c'] },
+  dxy:     { sym: 'DX-Y.NYB',  label: '달러 인덱스', ids: ['dxy-v','dxy-c','mac-dxy-v','mac-dxy-c'] },
+  jpy:     { sym: 'JPY%3DX',   label: '달러/엔',     ids: ['mac-jpyusd-v','mac-jpyusd-c'] },
+  copper:  { sym: 'HG%3DF',    label: '구리',        ids: ['mac-copper-v','mac-copper-c'] },
+  vix:     { sym: '%5EVIX',    label: 'VIX',         ids: ['vix-v','vix-c','opt-vix-v','opt-vix-c'] },
+  vvix:    { sym: '%5EVVIX',   label: 'VVIX',        ids: ['opt-vvix-v','opt-vvix-c'] },
+};
+
+// ══════════════════════════════════════════
+// ■ 오류 로깅 시스템
+// ══════════════════════════════════════════
+const Logger = {
+  logs: [],
+  log(src, msg, type='error') {
+    const t = new Date().toLocaleTimeString('ko-KR');
+    this.logs.push({ t, src, msg, type });
+    if (this.logs.length > 50) this.logs.shift();
+    this.render();
+    if (type === 'error') console.error(`[${src}]`, msg);
+    else if (type === 'warn') console.warn(`[${src}]`, msg);
+    else console.log(`[${src}]`, msg);
+  },
+  render() {
+    const el = document.getElementById('console-log');
+    const cons = document.getElementById('error-console');
+    const hasErrors = this.logs.some(l => l.type === 'error');
+    if (hasErrors) cons.classList.add('has-errors');
+    el.innerHTML = this.logs.slice().reverse().map(l =>
+      `<div class="console-row">
+        <span class="console-time">${l.t}</span>
+        <span class="console-src">${l.src}</span>
+        <span class="console-msg ${l.type}">${l.msg}</span>
+      </div>`
+    ).join('');
+  }
+};
+
+// ══════════════════════════════════════════
+// ■ 데이터 캐시
+// ══════════════════════════════════════════
+const Cache = {
+  data: {},
+  set(key, val) { this.data[key] = { val, ts: Date.now() }; },
+  get(key, maxAge=300000) {
+    const d = this.data[key];
+    if (!d) return null;
+    if (Date.now() - d.ts > maxAge) return null;
+    return d.val;
+  }
+};
+
+// ══════════════════════════════════════════
+// ■ API 레이어 (실패 시 폴백)
+// ══════════════════════════════════════════
+async function fetchWithTimeout(url, timeout=8000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(id);
+    return r;
+  } catch(e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
+// Yahoo Finance API (CORS 직접 호출 - 브라우저에서 가능)
+async function fetchYahoo(sym) {
+  const cached = Cache.get(sym);
+  if (cached) return cached;
+
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`;
+  try {
+    const r = await fetchWithTimeout(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const meta = d.chart?.result?.[0]?.meta;
+    if (!meta) throw new Error('데이터 없음');
+
+    const result = {
+      price: meta.regularMarketPrice,
+      prev:  meta.previousClose || meta.chartPreviousClose,
+      change: meta.regularMarketPrice - (meta.previousClose || meta.chartPreviousClose),
+      changePct: ((meta.regularMarketPrice - (meta.previousClose || meta.chartPreviousClose)) / (meta.previousClose || meta.chartPreviousClose)) * 100,
+      high52: meta.fiftyTwoWeekHigh,
+      low52:  meta.fiftyTwoWeekLow,
+      currency: meta.currency,
+    };
+    Cache.set(sym, result);
+    return result;
+  } catch(e) {
+    Logger.log('Yahoo/' + sym, e.message, 'error');
+    return null;
+  }
+}
+
+// Binance API (BTC - CORS 허용)
+async function fetchBinance(sym='BTCUSDT') {
+  const cached = Cache.get('binance_' + sym);
+  if (cached) return cached;
+  try {
+    const r = await fetchWithTimeout(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    const result = {
+      price: parseFloat(d.lastPrice),
+      change: parseFloat(d.priceChange),
+      changePct: parseFloat(d.priceChangePercent),
+      prev: parseFloat(d.prevClosePrice),
+    };
+    Cache.set('binance_' + sym, result);
+    return result;
+  } catch(e) {
+    Logger.log('Binance', e.message, 'error');
+    return null;
+  }
+}
+
+// CNN Fear & Greed (CORS 프록시 경유)
+async function fetchFearGreed() {
+  const cached = Cache.get('fg');
+  if (cached) return cached;
+  try {
+    const url = 'https://production.dataviz.cnn.io/index/fearandgreed/graphdata';
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const r = await fetchWithTimeout(proxyUrl, 10000);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const outer = await r.json();
+    const d = JSON.parse(outer.contents);
+    const score = d.fear_and_greed?.score;
+    const rating = d.fear_and_greed?.rating;
+    if (!score) throw new Error('점수 없음');
+    const result = { score: Math.round(score), rating };
+    Cache.set('fg', result);
+    return result;
+  } catch(e) {
+    Logger.log('FearGreed', e.message, 'warn');
+    // 폴백: alternative API
+    try {
+      const r2 = await fetchWithTimeout('https://api.alternative.me/fng/');
+      const d2 = await r2.json();
+      const result = {
+        score: parseInt(d2.data[0].value),
+        rating: d2.data[0].value_classification
+      };
+      Cache.set('fg', result);
+      Logger.log('FearGreed', '폴백 API 사용 (alternative.me)', 'ok');
+      return result;
+    } catch(e2) {
+      Logger.log('FearGreed-Fallback', e2.message, 'error');
+      return null;
+    }
+  }
+}
+
+// FRED CSV 파싱 (key 불필요 - CSV 직접)
+async function fetchFRED(series) {
+  const cached = Cache.get('fred_' + series);
+  if (cached) return cached;
+  try {
+    const url = `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${series}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const r = await fetchWithTimeout(proxyUrl, 12000);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const outer = await r.json();
+    const csv = outer.contents;
+    const lines = csv.trim().split('\n');
+    // 뒤에서 두 번째까지 유효한 값 찾기
+    let latest = null, prev = null;
+    for (let i = lines.length - 1; i >= 1; i--) {
+      const parts = lines[i].split(',');
+      const val = parseFloat(parts[1]);
+      if (!isNaN(val)) {
+        if (!latest) { latest = { date: parts[0], val }; }
+        else if (!prev) { prev = { date: parts[0], val }; break; }
+      }
+    }
+    if (!latest) throw new Error('유효한 데이터 없음');
+    const result = {
+      value: latest.val,
+      date: latest.date,
+      prev: prev?.val,
+      change: prev ? latest.val - prev.val : null,
+    };
+    Cache.set('fred_' + series, result);
+    Logger.log('FRED/' + series, `OK: ${latest.val} (${latest.date})`, 'ok');
+    return result;
+  } catch(e) {
+    Logger.log('FRED/' + series, e.message, 'error');
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════
+// ■ UI 업데이트 헬퍼
+// ══════════════════════════════════════════
+function fmt(val, decimals=2) {
+  if (val === null || val === undefined || isNaN(val)) return '--';
+  if (Math.abs(val) >= 1e12) return (val/1e12).toFixed(2) + 'T';
+  if (Math.abs(val) >= 1e9) return (val/1e9).toFixed(2) + 'B';
+  if (Math.abs(val) >= 1e6) return (val/1e6).toFixed(2) + 'M';
+  return val.toLocaleString('ko-KR', { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
+}
+
+function setVal(id, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('skeleton');
+  el.textContent = text;
+}
+
+function setChange(id, change, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('skeleton', 'up', 'down', 'neutral');
+  if (change === null || isNaN(change)) {
+    el.textContent = '--';
+    el.classList.add('neutral');
+    return;
+  }
+  const sign = change >= 0 ? '+' : '';
+  const arrow = change >= 0 ? '▲' : '▼';
+  el.textContent = `${arrow} ${sign}${fmt(change)} (${sign}${pct.toFixed(2)}%)`;
+  el.classList.add(change >= 0 ? 'up' : 'down');
+}
+
+function setSkeleton(...ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.add('skeleton'); el.textContent = '██████'; }
+  });
+}
+
+// ══════════════════════════════════════════
+// ■ 각 섹션 데이터 로드
+// ══════════════════════════════════════════
+
+async function loadYahooCard(sym, vId, cId, formatFn) {
+  setSkeleton(vId, cId);
+  const d = await fetchYahoo(sym);
+  if (!d) {
+    setVal(vId, 'ERR');
+    setChange(cId, null, null);
+    return null;
+  }
+  setVal(vId, formatFn ? formatFn(d.price) : fmt(d.price));
+  setChange(cId, d.change, d.changePct);
+  return d;
+}
+
+async function loadStockData() {
+  // 병렬로 모든 Yahoo Finance 데이터 로드
+  const tasks = [
+    { key: '%5EGSPC',   vIds: ['sp500-v','us-sp500-v'],     cIds: ['sp500-c','us-sp500-c'],     fmt: v => fmt(v,2) },
+    { key: '%5ENDX',    vIds: ['ndx-v','us-ndx-v'],         cIds: ['ndx-c','us-ndx-c'],         fmt: v => fmt(v,2) },
+    { key: '%5EDJI',    vIds: ['us-dji-v'],                  cIds: ['us-dji-c'],                  fmt: v => fmt(v,2) },
+    { key: '%5ERUT',    vIds: ['us-rut-v'],                  cIds: ['us-rut-c'],                  fmt: v => fmt(v,2) },
+    { key: '%5EKS11',   vIds: ['kospi-v','kr-kospi-v'],      cIds: ['kospi-c','kr-kospi-c'],      fmt: v => fmt(v,2) },
+    { key: '%5EKQ11',   vIds: ['kosdaq-v','kr-kosdaq-v'],    cIds: ['kosdaq-c','kr-kosdaq-c'],    fmt: v => fmt(v,2) },
+    { key: 'KRW%3DX',  vIds: ['usdkrw-v','kr-usdkrw-v'],   cIds: ['usdkrw-c','kr-usdkrw-c'],   fmt: v => fmt(v,2) },
+    { key: '005930.KS', vIds: ['kr-samsung-v'],              cIds: ['kr-samsung-c'],              fmt: v => fmt(v,0)+'원' },
+    { key: 'GC%3DF',   vIds: ['gold-v','mac-gold-v','opt-gold-v'], cIds: ['gold-c','mac-gold-c','opt-gold-c'], fmt: v => '$'+fmt(v,2) },
+    { key: 'CL%3DF',   vIds: ['oil-v','mac-oil-v'],         cIds: ['oil-c','mac-oil-c'],         fmt: v => '$'+fmt(v,2) },
+    { key: 'DX-Y.NYB', vIds: ['dxy-v','mac-dxy-v'],         cIds: ['dxy-c','mac-dxy-c'],         fmt: v => fmt(v,3) },
+    { key: 'JPY%3DX',  vIds: ['mac-jpyusd-v'],              cIds: ['mac-jpyusd-c'],              fmt: v => fmt(v,3) },
+    { key: 'HG%3DF',   vIds: ['mac-copper-v'],              cIds: ['mac-copper-c'],              fmt: v => '$'+fmt(v,4) },
+    { key: '%5EVIX',   vIds: ['vix-v','opt-vix-v'],         cIds: ['vix-c','opt-vix-c'],         fmt: v => fmt(v,2) },
+    { key: '%5EVVIX',  vIds: ['opt-vvix-v'],                cIds: ['opt-vvix-c'],                fmt: v => fmt(v,2) },
+  ];
+
+  // 모두 스켈레톤 처리
+  tasks.forEach(t => {
+    t.vIds.forEach(id => setSkeleton(id));
+    t.cIds.forEach(id => setSkeleton(id));
+  });
+
+  await Promise.allSettled(tasks.map(async t => {
+    const d = await fetchYahoo(t.key);
+    if (!d) {
+      t.vIds.forEach(id => setVal(id, 'ERR'));
+      t.cIds.forEach(id => { setVal(id, 'ERR'); document.getElementById(id)?.classList.add('neutral'); });
+      return;
+    }
+    t.vIds.forEach(id => setVal(id, t.fmt(d.price)));
+    t.cIds.forEach(id => setChange(id, d.change, d.changePct));
+
+    // 특수 처리
+    if (t.key === '%5EVIX') updateVIX(d.price);
+    if (t.key === '%5EKS11') updateDrawdown('kr-kospi-dd', d.price, d.high52);
+    if (t.key === '%5EKQ11') updateDrawdown('kr-kosdaq-dd', d.price, d.high52);
+    if (t.key === '%5EGSPC') updateDrawdown('us-sp500-dd', d.price, d.high52);
+    if (t.key === '%5ENDX')  updateDrawdown('us-ndx-dd', d.price, d.high52);
+  }));
+
+  // BTC 별도 (Binance)
+  setSkeleton('btc-v', 'btc-c');
+  const btc = await fetchBinance('BTCUSDT');
+  if (btc) {
+    setVal('btc-v', '$' + fmt(btc.price, 0));
+    setChange('btc-c', btc.change, btc.changePct);
+  } else {
+    setVal('btc-v', 'ERR'); setVal('btc-c', 'ERR');
+  }
+}
+
+function updateVIX(price) {
+  const bars = ['vix-bar','opt-vix-bar'];
+  const labels = ['vix-label','opt-vix-label'];
+  const pct = Math.min((price / 50) * 100, 100);
+  const color = price < 20 ? 'var(--green)' : price < 30 ? 'var(--yellow)' : 'var(--red)';
+  bars.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.width = pct + '%'; el.style.background = color; }
+  });
+  const txt = price < 20 ? '😌 안정 구간 (<20)' : price < 30 ? '😐 주의 구간 (20-30)' : price < 40 ? '😱 경계 구간 (30-40)' : '🚨 위기 구간 (40+)';
+  labels.forEach(id => setVal(id, txt));
+}
+
+function updateDrawdown(id, price, high52) {
+  if (!high52 || !price) return;
+  const dd = ((price - high52) / high52) * 100;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = dd.toFixed(1) + '%';
+  el.className = dd > -5 ? 'up' : dd > -20 ? 'neutral' : 'down';
+}
+
+async function loadFearGreed() {
+  setSkeleton('fg-val','opt-fg-v');
+  const d = await fetchFearGreed();
+  if (!d) {
+    setVal('fg-val', 'ERR'); setVal('opt-fg-v', 'ERR');
+    setVal('fg-label', 'API 오류 - 재시도 중');
+    return;
+  }
+  const score = d.score;
+  const color = score < 25 ? 'var(--red)' : score < 45 ? 'var(--yellow)' : score < 55 ? 'var(--text2)' : score < 75 ? 'var(--green)' : 'var(--cyan)';
+  const label = score < 25 ? '😱 극단적 공포' : score < 45 ? '😨 공포' : score < 55 ? '😐 중립' : score < 75 ? '😊 탐욕' : '🤑 극단적 탐욕';
+
+  ['fg-val','opt-fg-v'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = score; el.style.color = color; }
+  });
+  const pct = score + '%';
+  ['fg-needle','opt-fg-needle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.left = pct;
+  });
+  setVal('fg-label', label);
+  setVal('opt-fg-label', label + ' · ' + score + '/100');
+}
+
+async function loadFREDData() {
+  // 10년물, 2년물 금리
+  const [t10, t2, hy, walcl, wres, rrp, tga] = await Promise.allSettled([
+    fetchFRED('DGS10'),
+    fetchFRED('DGS2'),
+    fetchFRED('BAMLH0A0HYM2'),
+    fetchFRED('WALCL'),
+    fetchFRED('WRESBAL'),
+    fetchFRED('RRPONTSYD'),
+    fetchFRED('WTREGEN'),
+  ]);
+
+  const get = r => r.status === 'fulfilled' ? r.value : null;
+  const T10 = get(t10), T2 = get(t2), HY = get(hy);
+  const WALCL = get(walcl), WRES = get(wres), RRP = get(rrp), TGA = get(tga);
+
+  // 금리 표시
+  if (T10) {
+    setVal('t10y-v', T10.value.toFixed(2) + '%');
+    setVal('mac-t10-v', T10.value.toFixed(2) + '%');
+    if (T10.change !== null) {
+      const c = T10.change;
+      const el1 = document.getElementById('t10y-c');
+      const el2 = document.getElementById('mac-t10-c');
+      [el1,el2].forEach(el => {
+        if (!el) return;
+        el.textContent = (c>=0?'+':'')+c.toFixed(3)+'%p';
+        el.className = 'card-change ' + (c>=0?'up':'down');
+      });
+    }
+  }
+  if (T2) {
+    setVal('t2y-v', T2.value.toFixed(2) + '%');
+    if (T2.change !== null) {
+      const el = document.getElementById('t2y-c');
+      if (el) {
+        const c = T2.change;
+        el.textContent = (c>=0?'+':'')+c.toFixed(3)+'%p';
+        el.className = 'card-change ' + (c>=0?'up':'down');
+      }
+    }
+  }
+
+  // 장단기 스프레드
+  if (T10 && T2) {
+    const sp = T10.value - T2.value;
+    const spPrev = (T10.prev !== undefined && T2.prev !== undefined) ? T10.prev - T2.prev : null;
+    setVal('spread-v', sp.toFixed(3) + '%');
+    setVal('mac-spread-v', sp.toFixed(3) + '%');
+    const label = sp < 0 ? '⚠️ 역전 중' : '✅ 정상';
+    setVal('spread-label', label);
+    setVal('mac-spread-label', label + ` · ${T10.value.toFixed(2)} - ${T2.value.toFixed(2)}`);
+    ['spread-c','mac-spread-c'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (spPrev !== null) {
+        const delta = sp - spPrev;
+        el.textContent = (delta>=0?'+':'')+delta.toFixed(3)+'%p';
+        el.className = 'card-change ' + (sp < 0 ? 'down' : 'up');
+      } else {
+        el.textContent = '10Y - 2Y';
+        el.className = 'card-change neutral';
+      }
+    });
+  }
+
+  // 하이일드 스프레드
+  if (HY) {
+    setVal('mac-hy-v', HY.value.toFixed(2) + '%');
+    const c = HY.change;
+    const el = document.getElementById('mac-hy-c');
+    if (el && c !== null) {
+      el.textContent = (c>=0?'+':'')+c.toFixed(2)+'%p';
+      el.className = 'card-change ' + (c>=0?'down':'up'); // 스프레드는 올라가면 나쁨
+    }
+  }
+
+  // 유동성 지표
+  function fmtB(v) { // 십억 달러 단위
+    if (!v && v !== 0) return '--';
+    if (v >= 1000) return (v/1000).toFixed(2) + 'T';
+    return v.toFixed(0) + 'B';
+  }
+  if (WALCL) {
+    setVal('liq-walcl-v', fmtB(WALCL.value/1000)); // WALCL 단위: 백만 달러
+    const el = document.getElementById('liq-walcl-c');
+    if (el && WALCL.change !== null) {
+      const c = WALCL.change/1000;
+      el.textContent = (c>=0?'+':'')+fmtB(c);
+      el.className = 'card-change ' + (c>=0?'up':'down');
+    }
+  }
+  if (WRES) {
+    setVal('liq-res-v', fmtB(WRES.value/1000));
+    const el = document.getElementById('liq-res-c');
+    if (el && WRES.change !== null) {
+      const c = WRES.change/1000;
+      el.textContent = (c>=0?'+':'')+fmtB(c);
+      el.className = 'card-change ' + (c>=0?'up':'down');
+    }
+  }
+  if (RRP) {
+    setVal('liq-rrp-v', fmtB(RRP.value/1000));
+    const el = document.getElementById('liq-rrp-c');
+    if (el && RRP.change !== null) {
+      const c = RRP.change/1000;
+      el.textContent = (c>=0?'+':'')+fmtB(c);
+      el.className = 'card-change ' + (c>=0?'down':'up');
+    }
+  }
+  if (TGA) {
+    setVal('liq-tga-v', fmtB(TGA.value/1000));
+    const el = document.getElementById('liq-tga-c');
+    if (el && TGA.change !== null) {
+      const c = TGA.change/1000;
+      el.textContent = (c>=0?'+':'')+fmtB(c);
+      el.className = 'card-change ' + (c>=0?'down':'up');
+    }
+  }
+}
+
+// 배너 업데이트
+function updateBanner() {
+  const items = [
+    { id: 'banner-sp500', label: 'S&P 500', src: '%5EGSPC' },
+    { id: 'banner-btc',   label: '비트코인', special: 'btc' },
+    { id: 'banner-kospi', label: '코스피',  src: '%5EKS11' },
+    { id: 'banner-usd',   label: '원달러',  src: 'KRW%3DX' },
+    { id: 'banner-gold',  label: '금',      src: 'GC%3DF' },
+    { id: 'banner-vix',   label: 'VIX',     src: '%5EVIX' },
+  ];
+  const el = document.getElementById('banner');
+  el.innerHTML = items.map(item => `
+    <div class="banner-item">
+      <div class="banner-label">${item.label}</div>
+      <div class="banner-val" id="${item.id}">--</div>
+    </div>
+  `).join('');
+
+  items.forEach(item => {
+    if (item.special === 'btc') {
+      const btcData = Cache.get('binance_BTCUSDT');
+      if (btcData) {
+        const el2 = document.getElementById(item.id);
+        if (el2) {
+          el2.textContent = '$' + fmt(btcData.price, 0);
+          el2.className = 'banner-val ' + (btcData.change >= 0 ? 'up' : 'down');
+        }
+      }
+    } else {
+      const d = Cache.get(item.src);
+      if (d) {
+        const el2 = document.getElementById(item.id);
+        if (el2) {
+          el2.textContent = fmt(d.price, 2);
+          el2.className = 'banner-val ' + (d.change >= 0 ? 'up' : 'down');
+        }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// ■ TradingView 메인 차트
+// ══════════════════════════════════════════
+let tvWidget = null;
+function switchChart(sym) {
+  document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const container = document.getElementById('tv-main-chart');
+  container.innerHTML = '';
+
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.textContent = JSON.stringify({
+    autosize: true,
+    symbol: sym,
+    interval: 'D',
+    timezone: 'Asia/Seoul',
+    theme: 'dark',
+    style: '1',
+    locale: 'kr',
+    backgroundColor: 'rgba(13, 17, 23, 0)',
+    gridColor: 'rgba(255, 255, 255, 0.04)',
+    allow_symbol_change: true,
+    save_image: false,
+    height: 500,
+    hide_top_toolbar: false,
+    hide_legend: false,
+    withdateranges: true,
+  });
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tradingview-widget-container';
+  wrapper.style.height = '500px';
+  wrapper.appendChild(script);
+  container.appendChild(wrapper);
+}
+
+// ══════════════════════════════════════════
+// ■ 탭 전환
+// ══════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('sec-' + name).classList.add('active');
+
+  // 차트 탭 진입 시 초기 로드
+  if (name === 'charts' && !document.querySelector('.tradingview-widget-container')) {
+    setTimeout(() => switchChart('SP:SPX'), 100);
+  }
+}
+
+// ══════════════════════════════════════════
+// ■ 오류 콘솔
+// ══════════════════════════════════════════
+function toggleConsole() {
+  const el = document.getElementById('error-console');
+  el.classList.toggle('has-errors');
+  Logger.render();
+}
+function closeConsole() {
+  document.getElementById('error-console').classList.remove('has-errors');
+}
+
+// ══════════════════════════════════════════
+// ■ 메인 초기화
+// ══════════════════════════════════════════
+async function refreshAll() {
+  // 캐시 비우기
+  Cache.data = {};
+
+  const btn = document.querySelector('.refresh-btn');
+  if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
+
+  Logger.log('System', '데이터 갱신 시작', 'ok');
+
+  await Promise.allSettled([
+    loadStockData(),
+    loadFearGreed(),
+    loadFREDData(),
+  ]);
+
+  updateBanner();
+
+  const now = new Date().toLocaleTimeString('ko-KR');
+  setVal('last-update', now);
+
+  if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; }
+  Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
+}
+
+// 앱 시작
+document.addEventListener('DOMContentLoaded', () => {
+  Logger.log('System', '마켓 레이더 초기화', 'ok');
+  refreshAll();
+  // 자동 갱신
+  setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  // 초기 차트 로드 예비
+  setTimeout(() => {
+    if (document.getElementById('sec-charts').classList.contains('active')) {
+      switchChart('SP:SPX');
+    }
+  }, 500);
+});
+</script>
+</body>
+</html>
