@@ -680,7 +680,28 @@
         </div>
       </div>
       <div id="tv-sector" style="height:500px">
-        <iframe src="https://s.tradingview.com/embed-widget/sector-overview/?locale=kr#%7B%22colorTheme%22%3A%22dark%22%2C%22dateRange%22%3A%221D%22%2C%22showFloatingTooltip%22%3Atrue%2C%22width%22%3A%22100%25%22%2C%22height%22%3A%22500%22%2C%22largeChartUrl%22%3A%22%22%2C%22isTransparent%22%3Atrue%2C%22showSymbolLogo%22%3Afalse%2C%22plotLineColorGrowing%22%3A%223fb950%22%2C%22plotLineColorFalling%22%3A%22f85149%22%2C%22gridLineColor%22%3A%22rgba(255%2C255%2C255%2C0.05)%22%2C%22scaleFontColor%22%3A%224d5566%22%2C%22belowLineFillColorGrowing%22%3A%22rgba(63%2C185%2C80%2C0.1)%22%2C%22belowLineFillColorFalling%22%3A%22rgba(248%2C81%2C73%2C0.1)%22%2C%22symbolActiveColor%22%3A%22rgba(88%2C166%2C255%2C0.2)%22%7D" class="tv-widget" height="500" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+        <div class="tradingview-widget-container" style="height:500px;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-sector-overview.js" async>
+          {
+            "colorTheme": "dark",
+            "dateRange": "1D",
+            "showFloatingTooltip": false,
+            "width": "100%",
+            "height": "500",
+            "isTransparent": true,
+            "showSymbolLogo": false,
+            "locale": "kr",
+            "plotLineColorGrowing": "rgba(63, 185, 80, 1)",
+            "plotLineColorFalling": "rgba(248, 81, 73, 1)",
+            "gridLineColor": "rgba(255, 255, 255, 0.05)",
+            "scaleFontColor": "rgba(120, 130, 150, 1)",
+            "belowLineFillColorGrowing": "rgba(63, 185, 80, 0.1)",
+            "belowLineFillColorFalling": "rgba(248, 81, 73, 0.1)",
+            "symbolActiveColor": "rgba(88, 166, 255, 0.2)"
+          }
+          </script>
+        </div>
       </div>
     </div>
 
@@ -881,16 +902,31 @@
       ⚠️ <strong>역레포 잔액</strong>: 2022년 2조 달러 고점 → 현재 거의 소진. 추가 유동성 공급 여력 제한적.
     </div>
 
-    <!-- FRED 차트들 (TradingView 매크로 위젯) -->
+    <!-- FRED 유동성 차트 - TradingView 이용 -->
     <div style="margin-top:16px" class="chart-card">
       <div class="chart-header">
         <div>
-          <div class="chart-title">글로벌 유동성 지표 · FRED</div>
-          <div class="chart-sub">데이터: St. Louis Fed (FRED) 공개 API</div>
+          <div class="chart-title">글로벌 유동성 지표</div>
+          <div class="chart-sub">주요 유동성 관련 자산 추이</div>
         </div>
       </div>
-      <div id="liquidity-chart" style="padding:20px">
-        <canvas id="liq-canvas" height="200"></canvas>
+      <div style="padding:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">금 (안전자산 / 유동성 프록시)</div>
+          <div id="liq_tv_gold" style="height:220px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">달러 인덱스 (DXY)</div>
+          <div id="liq_tv_dxy" style="height:220px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">비트코인 (위험자산 유동성 지표)</div>
+          <div id="liq_tv_btc" style="height:220px"></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">S&P 500 (유동성 반영 주가)</div>
+          <div id="liq_tv_sp" style="height:220px"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -944,14 +980,18 @@
 
     <!-- 심볼 선택 -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      <button class="chart-btn active" onclick="switchChart('TVC:VIX')">VIX</button>
-      <button class="chart-btn" onclick="switchChart('SP:SPX')">S&P 500</button>
-      <button class="chart-btn" onclick="switchChart('NASDAQ:NDX')">나스닥</button>
-      <button class="chart-btn" onclick="switchChart('^KS11')">코스피</button>
+      <button class="chart-btn active" onclick="switchChart('SP:SPX')">S&amp;P 500</button>
+      <button class="chart-btn" onclick="switchChart('NASDAQ:NDX')">나스닥 100</button>
+      <button class="chart-btn" onclick="switchChart('CURRENCYCOM:US30')">다우존스</button>
+      <button class="chart-btn" onclick="switchChart('TVC:VIX')">VIX</button>
+      <button class="chart-btn" onclick="switchChart('KRX:KOSPI')">코스피</button>
+      <button class="chart-btn" onclick="switchChart('KRX:KOSDAQ')">코스닥</button>
       <button class="chart-btn" onclick="switchChart('FX:USDKRW')">원달러</button>
-      <button class="chart-btn" onclick="switchChart('COMEX:GC1!')">금</button>
+      <button class="chart-btn" onclick="switchChart('TVC:DXY')">달러인덱스</button>
+      <button class="chart-btn" onclick="switchChart('TVC:GOLD')">금</button>
       <button class="chart-btn" onclick="switchChart('NYMEX:CL1!')">WTI</button>
       <button class="chart-btn" onclick="switchChart('BITSTAMP:BTCUSD')">비트코인</button>
+      <button class="chart-btn" onclick="switchChart('BINANCE:ETHUSD')">이더리움</button>
     </div>
 
     <style>
@@ -1621,9 +1661,11 @@ function updateBanner() {
 // ■ TradingView 메인 차트
 // ══════════════════════════════════════════
 let tvWidget = null;
+let _activeChartSym = 'SP:SPX';
 function switchChart(sym) {
+  _activeChartSym = sym;
   document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
 
   const container = document.getElementById('tv-main-chart');
   container.innerHTML = '';
@@ -1641,17 +1683,20 @@ function switchChart(sym) {
     locale: 'kr',
     backgroundColor: 'rgba(13, 17, 23, 0)',
     gridColor: 'rgba(255, 255, 255, 0.04)',
-    allow_symbol_change: true,
+    allow_symbol_change: false,
     save_image: false,
-    height: 500,
+    height: 520,
     hide_top_toolbar: false,
+    hide_side_toolbar: true,
     hide_legend: false,
     withdateranges: true,
+    no_referral_id: true
   });
 
   const wrapper = document.createElement('div');
   wrapper.className = 'tradingview-widget-container';
-  wrapper.style.height = '500px';
+  wrapper.style.height = '520px';
+  wrapper.style.width = '100%';
   wrapper.appendChild(script);
   container.appendChild(wrapper);
 }
@@ -1662,7 +1707,7 @@ function switchChart(sym) {
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  event.target.classList.add('active');
+  if (event && event.target) event.target.classList.add('active');
   const sec = document.getElementById('sec-' + name);
   if (sec) sec.classList.add('active');
 
@@ -1674,7 +1719,13 @@ function showTab(name) {
     setTimeout(() => {
       const mainChart = document.getElementById('tv-main-chart');
       if (mainChart && !mainChart.querySelector('.tradingview-widget-container')) {
-        switchChart(_activeChartSym, document.querySelector('.chart-btn.active'));
+        switchChart(_activeChartSym);
+        // 첫 번째 버튼 active 표시
+        const firstBtn = document.querySelector('.chart-btn');
+        if (firstBtn) {
+          document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+          firstBtn.classList.add('active');
+        }
       }
     }, 150);
   }
@@ -1725,12 +1776,7 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshAll();
   // 자동 갱신
   setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
-  // 초기 차트 로드 예비
-  setTimeout(() => {
-    if (document.getElementById('sec-charts').classList.contains('active')) {
-      switchChart('SP:SPX');
-    }
-  }, 500);
+  // 초기 차트 탭이 아닌 경우엔 로드 안 함
 });
 </script>
 
@@ -1762,11 +1808,45 @@ function initTVChart(containerId, symbol, height) {
     backgroundColor: 'rgba(13,17,23,0)',
     gridColor: 'rgba(255,255,255,0.04)',
     allow_symbol_change: false,
-    hide_top_toolbar: false,
+    hide_top_toolbar: true,
     hide_side_toolbar: true,
-    withdateranges: true,
+    hide_legend: false,
+    withdateranges: false,
+    save_image: false,
     height: height,
-    autosize: true
+    autosize: true,
+    no_referral_id: true
+  });
+
+  w.appendChild(s);
+  c.appendChild(w);
+}
+
+// TradingView 미니 심플 차트 (팝업 완전 제거)
+function initTVMini(containerId, symbol, height) {
+  var c = document.getElementById(containerId);
+  if (!c || c.dataset.loaded === '1') return;
+  c.dataset.loaded = '1';
+  c.innerHTML = '';
+
+  var w = document.createElement('div');
+  w.className = 'tradingview-widget-container';
+  w.style.height = height + 'px';
+  w.style.width  = '100%';
+
+  var s = document.createElement('script');
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js';
+  s.async = true;
+  s.textContent = JSON.stringify({
+    symbol: symbol,
+    width: '100%',
+    height: height,
+    locale: 'kr',
+    dateRange: '3M',
+    colorTheme: 'dark',
+    isTransparent: true,
+    autosize: false,
+    largeChartUrl: ''
   });
 
   w.appendChild(s);
@@ -1777,22 +1857,28 @@ function initTVChart(containerId, symbol, height) {
 function initChartsForTab(name) {
   setTimeout(function() {
     if (name === 'us') {
-      initTVChart('tv_us_sp500', 'SP:SPX',      280);
-      initTVChart('tv_us_ndx',   'NASDAQ:NDX',  280);
+      initTVChart('tv_us_sp500', 'SP:SPX',       300);
+      initTVChart('tv_us_ndx',  'NASDAQ:NDX',    300);
     }
     if (name === 'kr') {
-      initTVChart('tv_kospi',    '^KS11',        300);
-      initTVChart('tv_kosdaq',   '^KQ11',        300);
-      initTVChart('tv_usdkrw',   'FX:USDKRW',   260);
+      initTVChart('tv_kospi',   'KRX:KOSPI',     320);
+      initTVChart('tv_kosdaq',  'KRX:KOSDAQ',    320);
+      initTVChart('tv_usdkrw',  'FX:USDKRW',    280);
     }
     if (name === 'macro') {
-      initTVChart('tv_macro_dxy',  'TVC:DXY',   260);
-      initTVChart('tv_macro_gold', 'TVC:GOLD',  260);
+      initTVChart('tv_macro_dxy',  'TVC:DXY',    280);
+      initTVChart('tv_macro_gold', 'TVC:GOLD',   280);
     }
     if (name === 'options') {
-      initTVChart('tv_vix_chart',  'TVC:VIX',   280);
+      initTVChart('tv_vix_chart',  'TVC:VIX',    300);
     }
-  }, 150);
+    if (name === 'liquidity') {
+      initTVChart('liq_tv_gold', 'TVC:GOLD',     220);
+      initTVChart('liq_tv_dxy',  'TVC:DXY',      220);
+      initTVChart('liq_tv_btc',  'BITSTAMP:BTCUSD', 220);
+      initTVChart('liq_tv_sp',   'SP:SPX',       220);
+    }
+  }, 200);
 }
 </script>
 
