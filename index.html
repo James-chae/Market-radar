@@ -675,7 +675,26 @@
 
   .tab-label-mobile { display: none; }
 
-  .stock-section-subdesc {
+  
+
+  /* 요청 반영: 차트 높이 보정 */
+  #tv_kospi, #tv_kosdaq { height: 330px !important; }
+  #tv_usdkrw { height: 390px !important; }
+
+  @media (max-width: 768px) {
+    #tv_us_sp500, #tv_us_ndx, #tv_macro_dxy, #tv_macro_gold, #tv_vix_chart,
+    #tv_kospi, #tv_kosdaq, #liq_tv_gold, #liq_tv_dxy, #liq_tv_btc, #liq_tv_sp {
+      height: 330px !important;
+    }
+    .sector-mini-card #sector_XLK, .sector-mini-card #sector_XLF, .sector-mini-card #sector_XLE, .sector-mini-card #sector_XLV, .sector-mini-card #sector_XLI, .sector-mini-card #sector_XLY {
+      height: 330px !important;
+    }
+    .sector-mini-card { min-height: 372px; }
+    #tv-main-chart, #tv-usstocks-chart, #tv-krstocks-chart {
+      height: 347px !important;
+    }
+  }
+.stock-section-subdesc {
     font-size: 11px;
     color: var(--text3);
     font-family: var(--mono);
@@ -789,13 +808,13 @@
         <div class="card-label"><span class="dot" style="background:#3fb950"></span>코스피</div>
         <div class="card-value" id="kospi-v">--</div>
         <div class="card-change" id="kospi-c">--</div>
-        <div class="card-sub">^KS11 · Yahoo Finance</div>
+        <div class="card-sub" id="kospi-source">KOSPI · Naver Finance</div>
       </div>
       <div class="card">
         <div class="card-label"><span class="dot" style="background:#39d3f2"></span>코스닥</div>
         <div class="card-value" id="kosdaq-v">--</div>
         <div class="card-change" id="kosdaq-c">--</div>
-        <div class="card-sub">^KQ11 · Yahoo Finance</div>
+        <div class="card-sub" id="kosdaq-source">KOSDAQ · Naver Finance</div>
       </div>
       <div class="card">
         <div class="card-label"><span class="dot" style="background:#f85149"></span>원달러 환율</div>
@@ -898,7 +917,7 @@
     </div>
 
     <!-- 섹터 히트맵 -->
-    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">SECTOR HEATMAP</p>
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">SECTOR 차트</p>
     <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">XL ETF 기준 · 전일 대비 등락률</p>
     <div class="chart-card">
       <div class="chart-header">
@@ -941,13 +960,13 @@
         <div class="card-label"><span class="dot" style="background:var(--green)"></span>코스피</div>
         <div class="card-value" id="kr-kospi-v">--</div>
         <div class="card-change" id="kr-kospi-c">--</div>
-        <div class="card-sub">52주고점 낙폭: <span id="kr-kospi-dd" class="neutral">--</span></div>
+        <div class="card-sub" id="kr-kospi-source">KOSPI · Naver Finance · 52주고점 낙폭: <span id="kr-kospi-dd" class="neutral">--</span></div>
       </div>
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>코스닥</div>
         <div class="card-value" id="kr-kosdaq-v">--</div>
         <div class="card-change" id="kr-kosdaq-c">--</div>
-        <div class="card-sub">52주고점 낙폭: <span id="kr-kosdaq-dd" class="neutral">--</span></div>
+        <div class="card-sub" id="kr-kosdaq-source">KOSDAQ · Naver Finance · 52주고점 낙폭: <span id="kr-kosdaq-dd" class="neutral">--</span></div>
       </div>
       <div class="card">
         <div class="card-label"><span class="dot" style="background:var(--red)"></span>원달러 환율</div>
@@ -968,14 +987,14 @@
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">KOSPI 차트</div>
-          <div class="chart-sub">^KS11 · 일봉</div>
+          <div class="chart-sub">KOSPI · Naver Finance</div>
         </div>
         <div id="tv_kospi" class="yf-chart" style="height:300px"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">KOSDAQ 차트</div>
-          <div class="chart-sub">^KQ11 · 일봉</div>
+          <div class="chart-sub">KOSDAQ · Naver Finance</div>
         </div>
         <div id="tv_kosdaq" class="yf-chart" style="height:300px"></div>
       </div>
@@ -1212,8 +1231,8 @@
         <button class="tool-btn" data-chart-range="5d" onclick="setMainChartRange('5d', '15m', this)">5일</button>
         <button class="tool-btn" data-chart-range="1mo" onclick="setMainChartRange('1mo', '1d', this)">1개월</button>
         <button class="tool-btn" data-chart-range="3mo" onclick="setMainChartRange('3mo', '1d', this)">3개월</button>
-        <button class="tool-btn" data-chart-range="6mo" onclick="setMainChartRange('6mo', '1d', this)">6개월</button>
-        <button class="tool-btn active" data-chart-range="1y" onclick="setMainChartRange('1y', '1d', this)">1년</button>
+        <button class="tool-btn active" data-chart-range="6mo" onclick="setMainChartRange('6mo', '1d', this)">6개월</button>
+        <button class="tool-btn" data-chart-range="1y" onclick="setMainChartRange('1y', '1d', this)">1년</button>
         <button class="tool-btn" data-chart-range="5y" onclick="setMainChartRange('5y', '1wk', this)">5년</button>
       </div>
     </div>
@@ -1246,7 +1265,7 @@
     </style>
 
     <div class="chart-card">
-      <div class="lw-chart-meta" id="main-chart-meta">Yahoo Finance · 캔들 · 1년</div>
+      <div class="lw-chart-meta" id="main-chart-meta">Yahoo Finance · 캔들 · 6개월</div>
       <div id="tv-main-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
     </div>
   </div>
@@ -1283,14 +1302,14 @@
         <button class="tool-btn" data-usstocks-range="5d" onclick="setTabChartRange('usstocks', '5d', '15m', this)">5일</button>
         <button class="tool-btn" data-usstocks-range="1mo" onclick="setTabChartRange('usstocks', '1mo', '1d', this)">1개월</button>
         <button class="tool-btn" data-usstocks-range="3mo" onclick="setTabChartRange('usstocks', '3mo', '1d', this)">3개월</button>
-        <button class="tool-btn" data-usstocks-range="6mo" onclick="setTabChartRange('usstocks', '6mo', '1d', this)">6개월</button>
-        <button class="tool-btn active" data-usstocks-range="1y" onclick="setTabChartRange('usstocks', '1y', '1d', this)">1년</button>
+        <button class="tool-btn active" data-usstocks-range="6mo" onclick="setTabChartRange('usstocks', '6mo', '1d', this)">6개월</button>
+        <button class="tool-btn" data-usstocks-range="1y" onclick="setTabChartRange('usstocks', '1y', '1d', this)">1년</button>
         <button class="tool-btn" data-usstocks-range="5y" onclick="setTabChartRange('usstocks', '5y', '1wk', this)">5년</button>
       </div>
     </div>
 
     <div class="chart-card">
-      <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · NVIDIA · 캔들 · 1년</div>
+      <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · NVIDIA · 캔들 · 6개월</div>
       <div id="tv-usstocks-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
     </div>
   </div>
@@ -1334,14 +1353,14 @@
         <button class="tool-btn" data-krstocks-range="5d" onclick="setTabChartRange('krstocks', '5d', '15m', this)">5일</button>
         <button class="tool-btn" data-krstocks-range="1mo" onclick="setTabChartRange('krstocks', '1mo', '1d', this)">1개월</button>
         <button class="tool-btn" data-krstocks-range="3mo" onclick="setTabChartRange('krstocks', '3mo', '1d', this)">3개월</button>
-        <button class="tool-btn" data-krstocks-range="6mo" onclick="setTabChartRange('krstocks', '6mo', '1d', this)">6개월</button>
-        <button class="tool-btn active" data-krstocks-range="1y" onclick="setTabChartRange('krstocks', '1y', '1d', this)">1년</button>
+        <button class="tool-btn active" data-krstocks-range="6mo" onclick="setTabChartRange('krstocks', '6mo', '1d', this)">6개월</button>
+        <button class="tool-btn" data-krstocks-range="1y" onclick="setTabChartRange('krstocks', '1y', '1d', this)">1년</button>
         <button class="tool-btn" data-krstocks-range="5y" onclick="setTabChartRange('krstocks', '5y', '1wk', this)">5년</button>
       </div>
     </div>
 
     <div class="chart-card">
-      <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · 삼성전자 · 캔들 · 1년</div>
+      <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · 삼성전자 · 캔들 · 6개월</div>
       <div id="tv-krstocks-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
     </div>
   </div>
@@ -1915,8 +1934,11 @@ async function loadStockData() {
     t.vIds.forEach(id => setSkeleton(id));
     t.cIds.forEach(id => setSkeleton(id));
   });
-  ['kospi-v','kr-kospi-v','kosdaq-v','kr-kosdaq-v','btc-v'].forEach(id => setSkeleton(id));
-  ['kospi-c','kr-kospi-c','kosdaq-c','kr-kosdaq-c','btc-c'].forEach(id => setSkeleton(id));
+  ['kospi-v','kr-kospi-v'].forEach(id => setVal(id, 'Loading'));
+  ['kosdaq-v','kr-kosdaq-v'].forEach(id => setVal(id, 'Loading'));
+  ['kospi-c','kr-kospi-c','kosdaq-c','kr-kosdaq-c'].forEach(id => { const el=document.getElementById(id); if(el){ el.classList.remove('up','down','neutral','skeleton'); el.textContent='Loading'; el.classList.add('neutral'); }});
+  ['btc-v'].forEach(id => setSkeleton(id));
+  ['btc-c'].forEach(id => setSkeleton(id));
 
   await Promise.allSettled(tasks.map(async t => {
     const d = await fetchYahoo(t.key);
@@ -2210,13 +2232,13 @@ const chartState = {};
 const chartRequestSeq = {};
 const pendingHistoryRequests = {};
 let _activeChartSym = '^GSPC';
-let _mainChartRange = '1y';
+let _mainChartRange = '6mo';
 let _mainChartInterval = '1d';
 let _mainChartType = 'candlestick';
 
 const TAB_CHARTS = {
-  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'NVDA', range: '1y', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
-  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '005930.KS', range: '1y', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
+  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'NVDA', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
+  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '005930.KS', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
 };
 
 const MINI_CHARTS = {
@@ -2326,7 +2348,8 @@ function formatChartValue(value, sym) {
 function formatChartMetaHtml(sym, type, range) {
   const typeText = type === 'candlestick' ? '캔들' : '선';
   const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
-  return `Yahoo Finance · ${chartText(sym)} · ${typeText} · ${rangeMap[range] || range} · `
+  const source = isKoreaIndexSymbol(sym) ? 'Naver Finance' : 'Yahoo Finance';
+  return `${source} · ${chartText(sym)} · ${typeText} · ${rangeMap[range] || range} · `
     + `<span style="color:#ff7b72;font-weight:700">MA5</span> `
     + `<span style="color:#f2cc60;font-weight:700">MA20</span> `
     + `<span style="color:#3fb950;font-weight:700">MA60</span> `
