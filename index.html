@@ -905,6 +905,88 @@
     }
   }
 
+
+  /* ===== 모바일 전용 탭 2줄 배치 최적화 ===== */
+  @media (max-width: 600px) {
+    nav {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-auto-rows: minmax(42px, auto);
+      gap: 6px;
+      padding: 8px 10px !important;
+      overflow: visible !important;
+      align-items: stretch;
+    }
+    .tab {
+      min-width: 0;
+      white-space: normal;
+      line-height: 1.15;
+      justify-content: center;
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .mobile-row-1 { grid-row: 1; }
+    .mobile-row-2 { grid-row: 2; }
+    .tab.active {
+      color: var(--yellow);
+      border-color: rgba(227,168,37,0.6);
+      background: rgba(227,168,37,0.10);
+    }
+
+    /* 모바일 종목 탭: 긴 버튼 대신 그룹/종목 선택기 */
+    #sec-usstocks .stock-groups,
+    #sec-krstocks .stock-groups {
+      display: none !important;
+    }
+    .mobile-stock-picker {
+      display: block;
+      margin-bottom: 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .mobile-stock-picker-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .mobile-stock-picker-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--yellow);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .mobile-stock-picker select {
+      width: 100%;
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 10px 8px;
+      font-size: 12px;
+      font-family: var(--sans);
+    }
+    .mobile-stock-current {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+  }
+  @media (min-width: 601px) {
+    .mobile-stock-picker { display: none !important; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -928,10 +1010,10 @@
   <div class="tab mobile-row-1" onclick="showTab('us', this)">🇺🇸 <span class="tab-label-pc">미국</span><span class="tab-label-mobile">미국</span></div>
   <div class="tab mobile-row-1" onclick="showTab('kr', this)">🇰🇷 <span class="tab-label-pc">한국</span><span class="tab-label-mobile">한국</span></div>
   <div class="tab mobile-row-1" onclick="showTab('charts', this)">📈 <span class="tab-label-pc">종합차트</span><span class="tab-label-mobile">종합차트</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('usstocks', this)">🇺🇸 <span class="tab-label-pc">미국종목</span><span class="tab-label-mobile">미국종목</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('krstocks', this)">🇰🇷 <span class="tab-label-pc">한국종목</span><span class="tab-label-mobile">한국종목</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('liquidity', this)">💧 <span class="tab-label-pc">유동성</span><span class="tab-label-mobile">유동성</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션 변동성</span><span class="tab-label-mobile">옵션 변동성</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('usstocks', this)">🇺🇸 <span class="tab-label-pc">미국종목</span><span class="tab-label-mobile">미국종목</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('krstocks', this)">🇰🇷 <span class="tab-label-pc">한국종목</span><span class="tab-label-mobile">한국종목</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('liquidity', this)">💧 <span class="tab-label-pc">유동성</span><span class="tab-label-mobile">유동성</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션 변동성</span><span class="tab-label-mobile">옵션변동성</span></div>
 </nav>
 
 <main>
@@ -1561,6 +1643,10 @@
   <div class="section" id="sec-usstocks">
     <p class="section-title">US STOCKS</p>
     <p class="section-desc">미국 주요 종목 · Yahoo Finance 인터랙티브 차트</p>
+
+    <div class="mobile-stock-picker" id="usstocks-mobile-picker"></div>
+
+    <div class="mobile-stock-picker" id="krstocks-mobile-picker"></div>
 
     <div class="stock-groups">
 <div class="stock-group">
@@ -3131,8 +3217,110 @@ async function refreshAll() {
   updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
   const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
+
+function buildMobileStockPicker(tabKey) {
+  const root = document.getElementById(tabKey + '-mobile-picker');
+  const cfg = TAB_CHARTS[tabKey];
+  if (!root || !cfg) return;
+
+  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
+  const groups = [];
+  buttons.forEach(btn => {
+    const groupEl = btn.closest('.stock-group');
+    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
+    let group = groups.find(g => g.title === title);
+    if (!group) {
+      group = { title, items: [] };
+      groups.push(group);
+    }
+    const onclick = btn.getAttribute('onclick') || '';
+    const m = onclick.match(/'[^']+',\s*'([^']+)'/);
+    const sym = m ? m[1] : '';
+    group.items.push({ symbol: sym, label: btn.textContent.trim() });
+  });
+
+  const currentSymbol = cfg.symbol;
+  let currentGroupTitle = groups[0]?.title || '';
+  groups.forEach(g => {
+    if (g.items.some(item => item.symbol === currentSymbol)) currentGroupTitle = g.title;
+  });
+
+  root.innerHTML = `
+    <div class="mobile-stock-picker-row">
+      <div>
+        <span class="mobile-stock-picker-label">섹터</span>
+        <select id="${tabKey}-group-select"></select>
+      </div>
+      <div>
+        <span class="mobile-stock-picker-label">종목 선택</span>
+        <select id="${tabKey}-symbol-select"></select>
+      </div>
+    </div>
+    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
+  `;
+
+  const groupSel = document.getElementById(`${tabKey}-group-select`);
+  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
+  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
+
+  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
+  groupSel.value = currentGroupTitle;
+
+  function fillSymbols(groupTitle, selectedSymbol) {
+    const group = groups.find(g => g.title === groupTitle) || groups[0];
+    if (!group) return;
+    symbolSel.innerHTML = group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
+    const hasSelected = group.items.some(item => item.symbol === selectedSymbol);
+    symbolSel.value = hasSelected ? selectedSymbol : group.items[0]?.symbol || '';
+    const chosen = group.items.find(item => item.symbol === symbolSel.value);
+    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
+  }
+
+  fillSymbols(currentGroupTitle, currentSymbol);
+
+  groupSel.onchange = () => fillSymbols(groupSel.value, '');
+  symbolSel.onchange = () => {
+    const btn = buttons.find(b => (b.getAttribute('onclick') || '').includes(`'${symbolSel.value}'`));
+    switchTabStockChart(tabKey, symbolSel.value, btn || null);
+    const group = groups.find(g => g.title === groupSel.value);
+    const chosen = group?.items.find(item => item.symbol === symbolSel.value);
+    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
+  };
+}
+
+function syncMobileStockPicker(tabKey) {
+  const cfg = TAB_CHARTS[tabKey];
+  const root = document.getElementById(tabKey + '-mobile-picker');
+  if (!cfg || !root) return;
+  const groupSel = document.getElementById(`${tabKey}-group-select`);
+  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
+  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
+  if (!groupSel || !symbolSel) return;
+
+  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
+  let groupTitle = '';
+  let label = cfg.symbol;
+  buttons.forEach(btn => {
+    const onclick = btn.getAttribute('onclick') || '';
+    if (onclick.includes(`'${cfg.symbol}'`)) {
+      label = btn.textContent.trim();
+      groupTitle = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
+    }
+  });
+
+  if (groupTitle) {
+    if (groupSel.value !== groupTitle) {
+      groupSel.value = groupTitle;
+      groupSel.dispatchEvent(new Event('change'));
+    }
+    symbolSel.value = cfg.symbol;
+    currentEl.textContent = `${groupTitle} · ${label}`;
+  }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
-  Logger.log('System', '마켓 레이더 초기화', 'ok'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  Logger.log('System', '마켓 레이더 초기화', 'ok'); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 </script>
