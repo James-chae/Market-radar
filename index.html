@@ -677,24 +677,36 @@
 
   
 
-  /* 요청 반영: 차트 높이 보정 */
-  #tv_kospi, #tv_kosdaq { height: 330px !important; }
-  #tv_usdkrw { height: 390px !important; }
+  /* ── 차트 높이 구조: PC / 모바일 완전 분리 ── */
+  .chart-h-main { height: 520px; }
+  .chart-h-stock { height: 520px; }
+  .chart-h-us { height: 280px; }
+  .chart-h-kr-index { height: 330px; }
+  .chart-h-kr-fx { height: 390px; }
+  .chart-h-macro { height: 260px; }
+  .chart-h-liquidity { height: 220px; }
+  .chart-h-option { height: 280px; }
+  .chart-h-sector { height: 150px; }
+
+  .sector-mini-card { min-height: 192px; }
 
   @media (max-width: 768px) {
-    #tv_us_sp500, #tv_us_ndx, #tv_macro_dxy, #tv_macro_gold, #tv_vix_chart,
-    #tv_kospi, #tv_kosdaq, #liq_tv_gold, #liq_tv_dxy, #liq_tv_btc, #liq_tv_sp {
-      height: 330px !important;
-    }
-    .sector-mini-card #sector_XLK, .sector-mini-card #sector_XLF, .sector-mini-card #sector_XLE, .sector-mini-card #sector_XLV, .sector-mini-card #sector_XLI, .sector-mini-card #sector_XLY {
-      height: 330px !important;
-    }
+    .chart-h-main,
+    .chart-h-stock { height: 347px; }
+
+    .chart-h-us,
+    .chart-h-kr-index,
+    .chart-h-macro,
+    .chart-h-liquidity,
+    .chart-h-option,
+    .chart-h-sector { height: 330px; }
+
+    .chart-h-kr-fx { height: 390px; }
+
     .sector-mini-card { min-height: 372px; }
-    #tv-main-chart, #tv-usstocks-chart, #tv-krstocks-chart {
-      height: 347px !important;
-    }
   }
-.stock-section-subdesc {
+
+  .stock-section-subdesc {
     font-size: 11px;
     color: var(--text3);
     font-family: var(--mono);
@@ -737,7 +749,6 @@
     .tab-label-pc { display: inline; }
     .tab-label-mobile { display: none; }
   }
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -938,14 +949,14 @@
           <div class="chart-title">S&P 500 차트</div>
           <div class="chart-sub">SP:SPX · 일봉</div>
         </div>
-        <div id="tv_us_sp500" class="yf-chart" style="height:280px"></div>
+        <div id="tv_us_sp500" class="yf-chart chart-h-us"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">나스닥 100 차트</div>
           <div class="chart-sub">NASDAQ:NDX · 일봉</div>
         </div>
-        <div id="tv_us_ndx" class="yf-chart" style="height:280px"></div>
+        <div id="tv_us_ndx" class="yf-chart chart-h-us"></div>
       </div>
     </div>
   </div>
@@ -989,14 +1000,14 @@
           <div class="chart-title">KOSPI 차트</div>
           <div class="chart-sub">KOSPI · Naver Finance</div>
         </div>
-        <div id="tv_kospi" class="yf-chart" style="height:300px"></div>
+        <div id="tv_kospi" class="yf-chart chart-h-kr-index"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">KOSDAQ 차트</div>
           <div class="chart-sub">KOSDAQ · Naver Finance</div>
         </div>
-        <div id="tv_kosdaq" class="yf-chart" style="height:300px"></div>
+        <div id="tv_kosdaq" class="yf-chart chart-h-kr-index"></div>
       </div>
     </div>
 
@@ -1006,7 +1017,7 @@
         <div class="chart-title">원달러 환율 차트</div>
         <div class="chart-sub">FX:USDKRW · 일봉</div>
       </div>
-      <div id="tv_usdkrw" class="yf-chart" style="height:260px"></div>
+      <div id="tv_usdkrw" class="yf-chart chart-h-kr-fx"></div>
     </div>
   </div>
   <!-- ══════════════ 4. 매크로 ══════════════ -->
@@ -1078,14 +1089,14 @@
           <div class="chart-title">달러 인덱스 (DXY)</div>
           <div class="chart-sub">TVC:DXY · 일봉</div>
         </div>
-        <div id="tv_macro_dxy" class="yf-chart" style="height:260px"></div>
+        <div id="tv_macro_dxy" class="yf-chart chart-h-macro"></div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
           <div class="chart-title">금 (Gold)</div>
           <div class="chart-sub">XAUUSD · 일봉</div>
         </div>
-        <div id="tv_macro_gold" class="yf-chart" style="height:260px"></div>
+        <div id="tv_macro_gold" class="yf-chart chart-h-macro"></div>
       </div>
     </div>
   </div>
@@ -1136,22 +1147,22 @@
           <div class="chart-sub">주요 유동성 관련 자산 추이</div>
         </div>
       </div>
-      <div class="liquidity-mini-grid" style="padding:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="liquidity-mini-grid" style="padding:12px;">
         <div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">금 (안전자산 / 유동성 프록시)</div>
-          <div id="liq_tv_gold" class="yf-chart" style="height:220px"></div>
+          <div id="liq_tv_gold" class="yf-chart chart-h-liquidity"></div>
         </div>
         <div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">달러 인덱스 (DXY)</div>
-          <div id="liq_tv_dxy" class="yf-chart" style="height:220px"></div>
+          <div id="liq_tv_dxy" class="yf-chart chart-h-liquidity"></div>
         </div>
         <div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">비트코인 (위험자산 유동성 지표)</div>
-          <div id="liq_tv_btc" class="yf-chart" style="height:220px"></div>
+          <div id="liq_tv_btc" class="yf-chart chart-h-liquidity"></div>
         </div>
         <div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">S&P 500 (유동성 반영 주가)</div>
-          <div id="liq_tv_sp" class="yf-chart" style="height:220px"></div>
+          <div id="liq_tv_sp" class="yf-chart chart-h-liquidity"></div>
         </div>
       </div>
     </div>
@@ -1196,7 +1207,7 @@
         <div class="chart-title">VIX 공포지수 차트</div>
         <div class="chart-sub">CBOE Volatility Index · 일봉</div>
       </div>
-      <div id="tv_vix_chart" class="yf-chart" style="height:280px"></div>
+      <div id="tv_vix_chart" class="yf-chart chart-h-option"></div>
     </div>
   </div>
   <!-- ══════════════ 7. 차트 ══════════════ -->
@@ -1266,7 +1277,7 @@
 
     <div class="chart-card">
       <div class="lw-chart-meta" id="main-chart-meta">Yahoo Finance · 캔들 · 6개월</div>
-      <div id="tv-main-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
+      <div id="tv-main-chart" class="lw-chart-host chart-h-main" style="position:relative;z-index:10;"></div>
     </div>
   </div>
 
@@ -1310,7 +1321,7 @@
 
     <div class="chart-card">
       <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · NVIDIA · 캔들 · 6개월</div>
-      <div id="tv-usstocks-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
+      <div id="tv-usstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
   </div>
 
@@ -1361,7 +1372,7 @@
 
     <div class="chart-card">
       <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · 삼성전자 · 캔들 · 6개월</div>
-      <div id="tv-krstocks-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
+      <div id="tv-krstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
   </div>
 
@@ -2674,7 +2685,7 @@ function initYahooSectorOverview() {
     sectors.forEach(item => {
       const card = document.createElement('div');
       card.className = 'sector-mini-card';
-      card.innerHTML = `<div class="sector-mini-head">${item.label}</div><div id="sector_${item.symbol}" class="lw-chart-host" style="height:150px"></div>`;
+      card.innerHTML = `<div class="sector-mini-head">${item.label}</div><div id="sector_${item.symbol}" class="lw-chart-host chart-h-sector"></div>`;
       grid.appendChild(card);
     });
     c.dataset.loaded = '1';
