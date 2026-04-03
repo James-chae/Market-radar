@@ -2413,28 +2413,61 @@ function buildChart(containerId, mode='line', sym='') {
   host.style.width = '100%';
   host.style.height = '100%';
   container.appendChild(host);
+
+  const precision = getSymbolPricePrecision(sym, containerId);
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
   const chart = LightweightCharts.createChart(host, {
     width: Math.max(container.clientWidth, 280),
     height: Math.max(container.clientHeight, 180),
     layout: { background: { color: '#0d1117' }, textColor: '#d0d7de', fontFamily: 'JetBrains Mono, monospace' },
     grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.06)' } },
     rightPriceScale: { borderColor: 'rgba(255,255,255,0.10)' },
+    localization: {
+      priceFormatter: (price) => Number(price).toLocaleString('ko-KR', {
+        minimumFractionDigits: precision,
+        maximumFractionDigits: precision,
+      }),
+    },
     timeScale: { borderColor: 'rgba(255,255,255,0.10)', timeVisible: true, secondsVisible: false, rightOffset: 2, barSpacing: mode === 'candlestick' ? 8 : 6 },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(88,166,255,0.35)', width: 1 }, horzLine: { color: 'rgba(88,166,255,0.35)', width: 1 } },
-    handleScroll: { mouseWheel: !window.matchMedia('(max-width: 768px)').matches, pressedMouseMove: !window.matchMedia('(max-width: 768px)').matches, horzTouchDrag: false, vertTouchDrag: false },
-    handleScale: { axisPressedMouseMove: !window.matchMedia('(max-width: 768px)').matches, mouseWheel: !window.matchMedia('(max-width: 768px)').matches, pinch: false },
+    handleScroll: { mouseWheel: !isMobile, pressedMouseMove: !isMobile, horzTouchDrag: false, vertTouchDrag: false },
+    handleScale: { axisPressedMouseMove: !isMobile, mouseWheel: !isMobile, pinch: false },
   });
+
   let series;
   if (mode === 'candlestick') {
     series = chart.addSeries(LightweightCharts.CandlestickSeries, {
       upColor: '#f85149', downColor: '#4A9EFF', borderUpColor: '#f85149', borderDownColor: '#4A9EFF', wickUpColor: '#f85149', wickDownColor: '#4A9EFF', priceLineVisible: true, lastValueVisible: true,
+      priceFormat: { type: 'price', precision, minMove: precision > 0 ? (precision === 1 ? 0.1 : 0.01) : 1 },
     });
   } else {
     series = chart.addSeries(LightweightCharts.AreaSeries, {
       lineWidth: 2, lineColor: '#58a6ff', topColor: 'rgba(88,166,255,0.28)', bottomColor: 'rgba(88,166,255,0.03)', priceLineVisible: true, lastValueVisible: true,
+      priceFormat: { type: 'price', precision, minMove: precision > 0 ? (precision === 1 ? 0.1 : 0.01) : 1 },
     });
   }
-  chartState[containerId] = { ...(chartState[containerId] || {}), chart, series, mode, host };
+
+  const maDefs = [
+    { period: 5, color: '#ffcc00', width: 1.5 },
+    { period: 20, color: '#ff7b72', width: 1.5 },
+    { period: 60, color: '#7ee787', width: 1.5 },
+    { period: 120, color: '#79c0ff', width: 1.5 },
+  ];
+  const maSeries = maDefs.map(def => ({
+    period: def.period,
+    series: chart.addSeries(LightweightCharts.LineSeries, {
+      color: def.color,
+      lineWidth: def.width,
+      lastValueVisible: false,
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
+      pointMarkersVisible: false,
+      priceFormat: { type: 'price', precision, minMove: precision > 0 ? (precision === 1 ? 0.1 : 0.01) : 1 },
+    }),
+  }));
+
+  chartState[containerId] = { ...(chartState[containerId] || {}), chart, series, maSeries, mode, host, precision };
   return chartState[containerId];
 }
 function applyChartData(containerId, data, sym, mode='line') {
