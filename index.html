@@ -3662,6 +3662,130 @@ async function updateUSStockSignals() {
   if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('usstocks');
 }
 
+
+function formatEok(value) {
+  if (value == null || !isFinite(value)) return '--';
+  return `${Math.round(value).toLocaleString('ko-KR')}억`;
+}
+
+function ensureKRStockGroupTitles() {
+  document.querySelectorAll('#sec-krstocks .stock-group-title').forEach(el => {
+    if (!el.dataset.baseTitle) {
+      el.dataset.baseTitle = el.textContent.trim();
+    }
+  });
+}
+
+function renderKRStockGroupTitle(el, amountEok=0, rank=0) {
+  if (!el) return;
+  const base = el.dataset.baseTitle || el.textContent.trim();
+  const crown = rank === 1 ? '👑👑👑' : rank === 2 ? '👑👑' : '';
+  el.innerHTML = `
+    <span class="title-left">
+      ${crown ? `<span class="crown">${crown}</span>` : ''}
+      <span class="title-main">${base}</span>
+    </span>
+    <span class="title-amt">${formatEok(amountEok)}</span>
+  `;
+}
+
+function updateKRStockSectorTotals(sectorTotals) {
+  const groups = Array.from(document.querySelectorAll('#sec-krstocks .stock-group'));
+  const ranked = groups.map(group => {
+    const titleEl = group.querySelector('.stock-group-title');
+    const base = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '';
+    const amount = Number(sectorTotals?.[base] || 0);
+    return { group, titleEl, base, amount };
+  }).sort((a, b) => b.amount - a.amount);
+
+  const top1 = ranked[0]?.amount > 0 ? ranked[0].base : '';
+  const top2 = ranked[1]?.amount > 0 ? ranked[1].base : '';
+
+  groups.forEach(group => group.classList.remove('sector-rank-1', 'sector-rank-2'));
+
+  ranked.forEach(item => {
+    let rank = 0;
+    if (item.base === top1) rank = 1;
+    else if (item.base === top2) rank = 2;
+    if (rank === 1) item.group.classList.add('sector-rank-1');
+    if (rank === 2) item.group.classList.add('sector-rank-2');
+    renderKRStockGroupTitle(item.titleEl, item.amount, rank);
+  });
+}
+
+function ensureStockButtonMarkup() {
+  document.querySelectorAll('.us-stock-btn, .kr-stock-btn').forEach(btn => {
+    const raw = btn.dataset.baseLabel || btn.textContent.trim();
+    btn.dataset.baseLabel = raw;
+    btn.innerHTML = `<span class="stock-btn-label">${raw}</span><span class="stock-btn-pct">--</span>`;
+  });
+}
+
+function setStockButtonSignal(btn, state, pctText='--') {
+  if (!btn) return;
+  btn.classList.remove('sig-up', 'sig-down', 'sig-flat');
+  const pctEl = btn.querySelector('.stock-btn-pct');
+  if (state === 'up') btn.classList.add('sig-up');
+  else if (state === 'down') btn.classList.add('sig-down');
+  else if (state === 'flat') btn.classList.add('sig-flat');
+
+  if (pctEl) {
+    pctEl.classList.remove('up', 'down', 'flat');
+    pctEl.textContent = pctText || '--';
+    if (state === 'up') pctEl.classList.add('up');
+    else if (state === 'down') pctEl.classList.add('down');
+    else pctEl.classList.add('flat');
+  }
+}
+
+function getButtonPctInfo(btn) {
+  if (!btn) return { text: '--', cls: 'flat' };
+  const pctEl = btn.querySelector('.stock-btn-pct');
+  const text = pctEl ? pctEl.textContent.trim() : '--';
+  let cls = 'flat';
+  if (pctEl?.classList.contains('up')) cls = 'up';
+  else if (pctEl?.classList.contains('down')) cls = 'down';
+  return { text, cls };
+}
+
+function setMobileCurrentText(el, groupTitle, label, btn=null) {
+  if (!el) return;
+  const pct = getButtonPctInfo(btn);
+  el.innerHTML = `${groupTitle} · ${label} <span class="pct ${pct.cls}">${pct.text}</span>`;
+}
+
+async function fetchNaverKRStockSignalsDetailed(symbols) {
+  const krSymbols = Array.from(new Set(
+    (symbols || [])
+      .filter(sym => /\.(KS|KQ)$/.test(sym))
+      .map(sym => sym.split('.')[0])
+  ));
+  if (!krSymbols.length) return {};
+
+  const cacheKey = 'naver_stock_signals_detail_' + krSymbols.join('_');
+  const cached = Cache.get(cacheKey, (CONFIG.KR_STOCK_SIGNAL_CACHE_MS || 300000));
+  if (cached) return cached;
+
+  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
+  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 15000);
+  const rows = data?.result?.areas?.[0]?.datas || [];
+  const out = {};
+  rows.forEach(item => {
+    const code = String(item.cd || '').trim();
+    const pct = Number(item.cr);
+    const amountRaw = Number(item.aq);
+    if (!code || !isFinite(pct)) return;
+    const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+    const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
+    const amountEok = isFinite(amountRaw) ? (amountRaw / 100000000) : null;
+    const amountText = amountEok != null ? formatEok(amountEok) : '--';
+    out[code + '.KS'] = { state, pctText, amountEok, amountText };
+    out[code + '.KQ'] = { state, pctText, amountEok, amountText };
+  });
+  Cache.set(cacheKey, out);
+  return out;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
