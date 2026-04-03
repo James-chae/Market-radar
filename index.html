@@ -1172,6 +1172,48 @@
     font-weight: 700;
   }
 
+
+  .news-list {
+    display: grid;
+    gap: 10px;
+  }
+  .news-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    background: rgba(255,255,255,0.02);
+    transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  }
+  .news-item:hover {
+    border-color: rgba(227,168,37,0.55);
+    background: rgba(227,168,37,0.06);
+    transform: translateY(-1px);
+  }
+  .news-title {
+    color: var(--text2);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .news-source {
+    color: var(--yellow);
+    font-family: var(--mono);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  @media (max-width: 600px) {
+    .news-item {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .news-title { font-size: 12px; }
+    .news-source { font-size: 10px; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -1192,14 +1234,15 @@
 
 <nav>
   <div class="tab mobile-row-1 active" onclick="showTab('overview', this)">📊 <span class="tab-label-pc">전체</span><span class="tab-label-mobile">전체시장</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('us', this)">🇺🇸 <span class="tab-label-pc">미국</span><span class="tab-label-mobile">미국</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('kr', this)">🇰🇷 <span class="tab-label-pc">한국</span><span class="tab-label-mobile">한국</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('us', this)">🇺🇸 <span class="tab-label-pc">미국</span><span class="tab-label-mobile">미국시장</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('kr', this)">🇰🇷 <span class="tab-label-pc">한국</span><span class="tab-label-mobile">한국시장</span></div>
   <div class="tab mobile-row-1" onclick="showTab('charts', this)">📈 <span class="tab-label-pc">종합차트</span><span class="tab-label-mobile">종합차트</span></div>
 
+  <div class="tab mobile-row-2" onclick="showTab('usstocks', this)">🇺🇸 <span class="tab-label-pc">미국종목</span><span class="tab-label-mobile">미국종목</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('krstocks', this)">🇰🇷 <span class="tab-label-pc">한국종목</span><span class="tab-label-mobile">한국종목</span></div>
   <div class="tab mobile-row-2" onclick="showTab('liquidity', this)">💧 <span class="tab-label-pc">유동성</span><span class="tab-label-mobile">유동성</span></div>
 
-  <div class="tab mobile-row-3" onclick="showTab('usstocks', this)">🇺🇸 <span class="tab-label-pc">미국종목</span><span class="tab-label-mobile">미국종목</span></div>
-  <div class="tab mobile-row-3" onclick="showTab('krstocks', this)">🇰🇷 <span class="tab-label-pc">한국종목</span><span class="tab-label-mobile">한국종목</span></div>
+  <div class="tab mobile-row-3" onclick="showTab('news', this)">📰 <span class="tab-label-pc">뉴스</span><span class="tab-label-mobile">뉴스</span></div>
   <div class="tab mobile-row-3" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션변동성</span><span class="tab-label-mobile">옵션변동성</span></div>
 </nav>
 
@@ -2076,6 +2119,45 @@
       <div id="tv-krstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
   </div>
+
+
+  <!-- ══════════════ 10. 뉴스 ══════════════ -->
+  <div class="section" id="sec-news">
+    <!-- [뉴스] 글로벌/미국 증시에 영향이 큰 핵심 뉴스 제목만 표시 / 제목 클릭 시 새 창 이동 -->
+    <p class="section-title">NEWS</p>
+    <p class="section-desc">시장 영향도가 큰 글로벌 / 미국 증시 뉴스 모니터</p>
+    <div class="data-note">
+      <span class="badge"><strong>표시</strong> 제목 + 출처</span>
+      <span class="badge"><strong>동작</strong> 클릭 시 새 창 이동</span>
+      <span class="badge"><strong>추천 기준</strong> 금리 · 지정학 · 빅테크 · 정책 · 원자재</span>
+    </div>
+
+    <div class="chart-card" style="padding:14px 16px">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--yellow);margin-bottom:10px">
+        추천 구성: 영향도 높은 뉴스만 5~10개 노출 · 제목 + 출처만 표시 · 클릭 시 원문 새 창 열기
+      </div>
+
+      <div class="news-list">
+        <a class="news-item" href="https://www.reuters.com/" target="_blank" rel="noopener noreferrer">
+          <span class="news-title">[예시] 연준 금리 경로 재조정 가능성 확대</span>
+          <span class="news-source">Reuters</span>
+        </a>
+        <a class="news-item" href="https://www.bloomberg.com/" target="_blank" rel="noopener noreferrer">
+          <span class="news-title">[예시] 미 국채금리 급등과 기술주 밸류에이션 압박</span>
+          <span class="news-source">Bloomberg</span>
+        </a>
+        <a class="news-item" href="https://www.cnbc.com/" target="_blank" rel="noopener noreferrer">
+          <span class="news-title">[예시] AI 대형주 실적 가이던스가 지수 방향성에 미치는 영향</span>
+          <span class="news-source">CNBC</span>
+        </a>
+        <a class="news-item" href="https://www.wsj.com/" target="_blank" rel="noopener noreferrer">
+          <span class="news-title">[예시] 유가 상승과 기대 인플레이션 재자극</span>
+          <span class="news-source">WSJ</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
 
 </main>
 
