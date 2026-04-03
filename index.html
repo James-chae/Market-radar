@@ -992,6 +992,39 @@
     .mobile-stock-picker { display: none !important; }
   }
 
+
+  /* 한국종목 TAB: Naver 당일 상승/하락 시그널 점 */
+  .kr-stock-btn {
+    position: relative;
+    padding-left: 16px !important;
+  }
+  .kr-stock-btn::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.18);
+    opacity: 0;
+  }
+  .kr-stock-btn.sig-up::before {
+    background: #f85149;
+    opacity: 1;
+    box-shadow: 0 0 0 1px rgba(248,81,73,0.12);
+  }
+  .kr-stock-btn.sig-down::before {
+    background: #4A9EFF;
+    opacity: 1;
+    box-shadow: 0 0 0 1px rgba(74,158,255,0.12);
+  }
+  .kr-stock-btn.sig-flat::before {
+    background: #9aa4af;
+    opacity: 0.9;
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -1766,7 +1799,7 @@
 <div class="stock-group">
       <div class="stock-group-title">2. 자동차</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '005380.KS', this)">현대차</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000270.KS', this)">기아</button>
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '005380.KS', this)">현대차</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000270.KS', this)">기아</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '307950.KS', this)">현대오토에버</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '012330.KS', this)">현대모비스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '086280.KS', this)">현대글로비스</button>
       </div>
     </div>
 <div class="stock-group">
@@ -1778,7 +1811,7 @@
 <div class="stock-group">
       <div class="stock-group-title">4. 에너지</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '267260.KS', this)">HD현대일렉트릭</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '010120.KS', this)">LS ELECTRIC</button>
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '267260.KS', this)">HD현대일렉트릭</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '010120.KS', this)">LS ELECTRIC</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '006260.KS', this)">LS</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '103590.KS', this)">일진전기</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '062040.KS', this)">산일전기</button>
       </div>
     </div>
 <div class="stock-group">
@@ -1790,13 +1823,13 @@
 <div class="stock-group">
       <div class="stock-group-title">6. 방산</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '012450.KS', this)">한화에어로스페이스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '079550.KS', this)">LIG넥스원</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '064350.KS', this)">현대로템</button>
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '012450.KS', this)">한화에어로스페이스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '079550.KS', this)">LIG넥스원</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '064350.KS', this)">현대로템</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '272210.KS', this)">한화시스템</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '047810.KS', this)">한국항공우주</button>
       </div>
     </div>
 <div class="stock-group">
       <div class="stock-group-title">7. 헬스케어</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '207940.KS', this)">삼성바이오로직스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '068270.KS', this)">셀트리온</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '196170.KQ', this)">알테오젠</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '141080.KQ', this)">리가켐바이오</button>
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '207940.KS', this)">삼성바이오로직스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '068270.KS', this)">셀트리온</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '196170.KQ', this)">알테오젠</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '141080.KQ', this)">리가켐바이오</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000250.KQ', this)">삼천당제약</button>
       </div>
     </div>
 <div class="stock-group">
@@ -1818,9 +1851,9 @@
       </div>
     </div>
 <div class="stock-group">
-      <div class="stock-group-title">11. 통신</div>
+      <div class="stock-group-title">11. 통신외</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '017670.KS', this)">SK텔레콤</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '030200.KS', this)">KT</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '032640.KS', this)">LG U+</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '035420.KS', this)">NAVER</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '035720.KS', this)">카카오</button>
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '017670.KS', this)">SK텔레콤</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '030200.KS', this)">KT</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '032640.KS', this)">LG U+</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '035420.KS', this)">NAVER</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '035720.KS', this)">카카오</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '352820.KS', this)">하이브</button>
       </div>
     </div>
     </div>
@@ -2718,15 +2751,15 @@ const CHART_META = {
   '091230.KS': { label: 'TIGER 반도체', decimals: 0 }, '091160.KS': { label: 'KODEX 반도체', decimals: 0 }, '305720.KS': { label: 'KODEX 2차전지산업', decimals: 0 },
   '0080G0.KS': { label: 'KODEX 방산TOP10', decimals: 0 }, '400570.KS': { label: 'TIGER 원자력·우주항공', decimals: 0 },
   '005930.KS': { label: '삼성전자', decimals: 0 }, '000660.KS': { label: 'SK하이닉스', decimals: 0 }, '042700.KS': { label: '한미반도체', decimals: 0 }, '357780.KQ': { label: '솔브레인', decimals: 0 }, '000990.KS': { label: 'DB하이텍', decimals: 0 },
-  '039030.KQ': { label: '이오테크닉스', decimals: 0 }, '036930.KQ': { label: '주성엔지니어링', decimals: 0 }, '005380.KS': { label: '현대차', decimals: 0 }, '000270.KS': { label: '기아', decimals: 0 },
-  '329180.KS': { label: 'HD현대중공업', decimals: 0 }, '010140.KS': { label: '삼성중공업', decimals: 0 }, '042660.KS': { label: '한화오션', decimals: 0 }, '267260.KS': { label: 'HD현대일렉트릭', decimals: 0 }, '010120.KS': { label: 'LS ELECTRIC', decimals: 0 },
+  '039030.KQ': { label: '이오테크닉스', decimals: 0 }, '036930.KQ': { label: '주성엔지니어링', decimals: 0 }, '005380.KS': { label: '현대차', decimals: 0 }, '000270.KS': { label: '기아', decimals: 0 }, '307950.KS': { label: '현대오토에버', decimals: 0 }, '012330.KS': { label: '현대모비스', decimals: 0 }, '086280.KS': { label: '현대글로비스', decimals: 0 },
+  '329180.KS': { label: 'HD현대중공업', decimals: 0 }, '010140.KS': { label: '삼성중공업', decimals: 0 }, '042660.KS': { label: '한화오션', decimals: 0 }, '267260.KS': { label: 'HD현대일렉트릭', decimals: 0 }, '010120.KS': { label: 'LS ELECTRIC', decimals: 0 }, '006260.KS': { label: 'LS', decimals: 0 }, '103590.KS': { label: '일진전기', decimals: 0 }, '062040.KS': { label: '산일전기', decimals: 0 },
   '034020.KS': { label: '두산에너빌리티', decimals: 0 }, '015760.KS': { label: '한국전력', decimals: 0 }, '052690.KS': { label: '한전기술', decimals: 0 }, '051600.KS': { label: '한전KPS', decimals: 0 },
-  '012450.KS': { label: '한화에어로스페이스', decimals: 0 }, '079550.KS': { label: 'LIG넥스원', decimals: 0 }, '064350.KS': { label: '현대로템', decimals: 0 }, '207940.KS': { label: '삼성바이오로직스', decimals: 0 },
-  '068270.KS': { label: '셀트리온', decimals: 0 }, '196170.KQ': { label: '알테오젠', decimals: 0 }, '141080.KQ': { label: '리가켐바이오', decimals: 0 }, '373220.KS': { label: 'LG에너지솔루션', decimals: 0 },
+  '012450.KS': { label: '한화에어로스페이스', decimals: 0 }, '079550.KS': { label: 'LIG넥스원', decimals: 0 }, '064350.KS': { label: '현대로템', decimals: 0 }, '272210.KS': { label: '한화시스템', decimals: 0 }, '047810.KS': { label: '한국항공우주', decimals: 0 }, '207940.KS': { label: '삼성바이오로직스', decimals: 0 },
+  '068270.KS': { label: '셀트리온', decimals: 0 }, '196170.KQ': { label: '알테오젠', decimals: 0 }, '141080.KQ': { label: '리가켐바이오', decimals: 0 }, '000250.KQ': { label: '삼천당제약', decimals: 0 }, '373220.KS': { label: 'LG에너지솔루션', decimals: 0 },
   '006400.KS': { label: '삼성SDI', decimals: 0 }, '003670.KS': { label: '포스코퓨처엠', decimals: 0 }, '086520.KQ': { label: '에코프로', decimals: 0 }, '247540.KQ': { label: '에코프로비엠', decimals: 0 },
   '006800.KS': { label: '미래에셋증권', decimals: 0 }, '099320.KQ': { label: '쎄트렉아이', decimals: 0 }, '001430.KS': { label: '세아베스틸지주', decimals: 0 }, '295310.KQ': { label: '에이치브이엠', decimals: 0 },
   '347700.KQ': { label: '스피어', decimals: 0 }, '105560.KS': { label: 'KB금융', decimals: 0 }, '055550.KS': { label: '신한지주', decimals: 0 }, '086790.KS': { label: '하나금융지주', decimals: 0 },
-  '017670.KS': { label: 'SK텔레콤', decimals: 0 }, '030200.KS': { label: 'KT', decimals: 0 }, '032640.KS': { label: 'LG U+', decimals: 0 }, '035420.KS': { label: 'NAVER', decimals: 0 }, '035720.KQ': { label: '카카오', decimals: 0 },
+  '017670.KS': { label: 'SK텔레콤', decimals: 0 }, '030200.KS': { label: 'KT', decimals: 0 }, '032640.KS': { label: 'LG U+', decimals: 0 }, '035420.KS': { label: 'NAVER', decimals: 0 }, '035720.KQ': { label: '카카오', decimals: 0 }, '352820.KS': { label: '하이브', decimals: 0 },
   'XLK': { label: 'XLK · 기술', decimals: 2 }, 'XLF': { label: 'XLF · 금융', decimals: 2 }, 'XLE': { label: 'XLE · 에너지', decimals: 2 },
   'XLV': { label: 'XLV · 헬스케어', decimals: 2 }, 'XLI': { label: 'XLI · 산업재', decimals: 2 }, 'XLY': { label: 'XLY · 경기소비재', decimals: 2 },
 };
@@ -3221,7 +3254,7 @@ function closeConsole() { document.getElementById('error-console').classList.rem
 async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
+  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals()]);
   updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
   const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
@@ -3372,6 +3405,61 @@ function syncMobileStockPicker(tabKey) {
   if (currentEl) currentEl.textContent = `${foundGroup} · ${foundLabel}`;
 }
 
+
+
+async function fetchNaverKRStockSignals(symbols) {
+  const krSymbols = Array.from(new Set(
+    (symbols || [])
+      .filter(sym => /\.(KS|KQ)$/.test(sym))
+      .map(sym => sym.split('.')[0])
+  ));
+  if (!krSymbols.length) return {};
+
+  const cacheKey = 'naver_stock_signals_' + krSymbols.join('_');
+  const cached = Cache.get(cacheKey, 120000);
+  if (cached) return cached;
+
+  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
+  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 15000);
+  const rows = data?.result?.areas?.[0]?.datas || [];
+  const out = {};
+  rows.forEach(item => {
+    const code = String(item.cd || '').trim();
+    const change = Number(item.cv);
+    if (!code) return;
+    out[code + '.KS'] = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+    out[code + '.KQ'] = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+  });
+  Cache.set(cacheKey, out);
+  return out;
+}
+
+async function updateKRStockSignals() {
+  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
+  if (!buttons.length) return;
+
+  const symbols = buttons.map(btn => {
+    const onclick = btn.getAttribute('onclick') || '';
+    return extractSymbolFromOnclick(onclick);
+  }).filter(Boolean);
+
+  let signals = {};
+  try {
+    signals = await fetchNaverKRStockSignals(symbols);
+  } catch (e) {
+    Logger.log('NaverStockSignals', e.message || 'signal load failed', 'warn');
+    return;
+  }
+
+  buttons.forEach(btn => {
+    btn.classList.remove('sig-up', 'sig-down', 'sig-flat');
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    const state = signals[sym];
+    if (state === 'up') btn.classList.add('sig-up');
+    else if (state === 'down') btn.classList.add('sig-down');
+    else if (state === 'flat') btn.classList.add('sig-flat');
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok'); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
