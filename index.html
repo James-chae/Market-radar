@@ -2385,7 +2385,26 @@ function getChartColors(up) {
   return up ? { line: '#f85149', areaTop: 'rgba(248,81,73,0.28)', areaBottom: 'rgba(248,81,73,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' }
             : { line: '#4A9EFF', areaTop: 'rgba(74,158,255,0.24)', areaBottom: 'rgba(74,158,255,0.03)', candleUp: '#f85149', candleDown: '#4A9EFF' };
 }
-function buildChart(containerId, mode='line') {
+function getSymbolPricePrecision(sym, containerId='') {
+  if (containerId.includes('usstocks') || /^[A-Z.-]+$/.test(sym) && !sym.includes('=') && !sym.startsWith('^') && !sym.endsWith('.KS') && !sym.endsWith('.KQ')) return 1;
+  if (containerId.includes('krstocks') || /\.(KS|KQ)$/.test(sym)) return 0;
+  if (sym === 'BTC-USD' || sym === 'ETH-USD') return 0;
+  if (sym === 'DX-Y.NYB') return 1;
+  return 2;
+}
+function calcSMA(data, period) {
+  const out = [];
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) {
+    sum += data[i].close;
+    if (i >= period) sum -= data[i - period].close;
+    if (i >= period - 1) {
+      out.push({ time: data[i].time, value: +(sum / period).toFixed(6) });
+    }
+  }
+  return out;
+}
+function buildChart(containerId, mode='line', sym='') {
   const container = document.getElementById(containerId);
   if (!container || !window.LightweightCharts) return null;
   container.innerHTML = '';
@@ -2422,7 +2441,7 @@ function applyChartData(containerId, data, sym, mode='line') {
   const container = document.getElementById(containerId);
   if (!container) return;
   let state = chartState[containerId];
-  if (!state || state.mode !== mode || !state.chart || !state.series) state = buildChart(containerId, mode);
+  if (!state || state.mode !== mode || !state.chart || !state.series || state.sym !== sym) state = buildChart(containerId, mode, sym);
   if (!state) return;
   const first = data[0]?.close ?? 0, last = data[data.length - 1]?.close ?? 0;
   const up = last >= first;
@@ -2433,6 +2452,11 @@ function applyChartData(containerId, data, sym, mode='line') {
   } else {
     state.series.applyOptions({ lineColor: colors.line, topColor: colors.areaTop, bottomColor: colors.areaBottom });
     state.series.setData(data.map(({ time, value }) => ({ time, value })));
+  }
+  if (state.maSeries?.length) {
+    state.maSeries.forEach(({ period, series }) => {
+      series.setData(calcSMA(data, period));
+    });
   }
   state.chart.timeScale().fitContent();
   state.data = data;
@@ -2492,7 +2516,7 @@ function updateMainChartMeta() {
   if (!el) return;
   const typeText = _mainChartType === 'candlestick' ? '캔들' : '선';
   const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
-  el.textContent = `Yahoo Finance · ${chartText(_activeChartSym)} · ${typeText} · ${rangeMap[_mainChartRange] || _mainChartRange}`;
+  el.textContent = `Yahoo Finance · ${chartText(_activeChartSym)} · ${typeText} · ${rangeMap[_mainChartRange] || _mainChartRange} · MA 5/20/60/120`;
 }
 function syncMainToolbar() {
   document.querySelectorAll('[data-chart-type]').forEach(btn => btn.classList.toggle('active', btn.dataset.chartType === _mainChartType));
@@ -2519,7 +2543,7 @@ function updateTabChartMeta(tabKey) {
   if (!el) return;
   const typeText = cfg.type === 'candlestick' ? '캔들' : '선';
   const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
-  el.textContent = `Yahoo Finance · ${chartText(cfg.symbol)} · ${typeText} · ${rangeMap[cfg.range] || cfg.range}`;
+  el.textContent = `Yahoo Finance · ${chartText(cfg.symbol)} · ${typeText} · ${rangeMap[cfg.range] || cfg.range} · MA 5/20/60/120`;
 }
 function syncTabChartToolbar(tabKey) {
   const cfg = TAB_CHARTS[tabKey];
