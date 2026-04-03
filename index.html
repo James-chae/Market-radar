@@ -1393,6 +1393,108 @@
     .schedule-week-item { grid-template-columns: 56px 1fr; font-size: 10px; }
   }
 
+
+  .kr-earnings-list {
+    display: grid;
+    gap: 8px;
+  }
+  .kr-earnings-item {
+    display: grid;
+    grid-template-columns: 76px 1fr auto;
+    gap: 10px;
+    align-items: start;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .kr-earnings-date {
+    color: var(--yellow);
+    white-space: nowrap;
+  }
+  .kr-earnings-name {
+    color: var(--text2);
+  }
+  .kr-earnings-tag {
+    color: var(--text3);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  @media (max-width: 600px) {
+    .kr-earnings-item {
+      grid-template-columns: 64px 1fr;
+      gap: 8px;
+      font-size: 10px;
+    }
+    .kr-earnings-tag {
+      grid-column: 2;
+      font-size: 9px;
+    }
+  }
+
+
+  .schedule-update-status {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+  .schedule-admin-panel {
+    margin: 12px 0 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+  }
+  .schedule-admin-title {
+    font-family: var(--display);
+    font-size: 16px;
+    color: var(--yellow);
+    margin-bottom: 10px;
+  }
+  .schedule-admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .schedule-admin-grid label {
+    display:block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 5px;
+  }
+  .schedule-admin-grid input,
+  .schedule-admin-grid select {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    color: var(--text2);
+    font-size: 12px;
+    font-family: var(--sans);
+  }
+  .schedule-admin-actions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top: 10px;
+  }
+  .schedule-admin-help {
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+  @media (max-width: 600px) {
+    .schedule-admin-grid { grid-template-columns: 1fr; }
+    .schedule-update-status { width: 100%; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -2327,6 +2429,11 @@
       <div class="schedule-toolbar">
         <button class="mini-tool-btn" id="sched-prev-btn" onclick="changeScheduleMonth(-1)">이전달</button>
         <div class="schedule-title" id="schedule-title">2026년 4월</div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end">
+          <span class="schedule-update-status" id="schedule-update-status">자동 업데이트 대기</span>
+          <button class="mini-tool-btn" id="schedule-refresh-btn" onclick="refreshScheduleData(true)">🔄 일정 업데이트</button>
+          <button class="mini-tool-btn" onclick="toggleScheduleAdmin()">➕ 일정 추가</button>
+        </div>
         <button class="mini-tool-btn" id="sched-next-btn" onclick="changeScheduleMonth(1)">다음달</button>
       </div>
       <div class="schedule-legend">
@@ -2336,8 +2443,49 @@
         <span class="legend-item"><span class="legend-dot macro"></span>고용/실업</span>
         <span class="legend-item"><span class="legend-dot event"></span>대형 이벤트</span>
       </div>
+
+      <div class="schedule-admin-panel" id="schedule-admin-panel" style="display:none">
+        <div class="schedule-admin-title">MANUAL EVENT ADD</div>
+        <div class="schedule-admin-grid">
+          <div>
+            <label>날짜</label>
+            <input type="date" id="manual-event-date">
+          </div>
+          <div>
+            <label>유형</label>
+            <select id="manual-event-type">
+              <option value="fed">연준</option>
+              <option value="macro">매크로</option>
+              <option value="earnings">실적</option>
+              <option value="opex">옵션만기</option>
+              <option value="event">이벤트</option>
+            </select>
+          </div>
+          <div style="grid-column: 1 / -1">
+            <label>일정명</label>
+            <input type="text" id="manual-event-text" placeholder="예: Apple 이벤트 / 삼성전자 실적 / CPI 발표">
+          </div>
+          <div style="grid-column: 1 / -1">
+            <label>출처/메모</label>
+            <input type="text" id="manual-event-source" placeholder="예: Apple / Fed / 직접 입력">
+          </div>
+        </div>
+        <div class="schedule-admin-actions">
+          <button class="mini-tool-btn" onclick="addManualScheduleEvent()">저장</button>
+          <button class="mini-tool-btn" onclick="clearManualScheduleEvents()">직접 추가 일정 전체삭제</button>
+        </div>
+        <div class="schedule-admin-help">입력한 일정은 이 브라우저에 저장되며, 해당 월 캘린더와 이번 주 요약에 함께 반영됩니다.</div>
+      </div>
       <div class="schedule-calendar"><div class="schedule-weekdays"><div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div></div><div class="schedule-grid" id="schedule-grid"><div class="day-cell other-month" data-date="2026-03-29"><div class="day-num">29</div><div class="day-events" id="day-2026-03-29"></div></div><div class="day-cell other-month" data-date="2026-03-30"><div class="day-num">30</div><div class="day-events" id="day-2026-03-30"></div></div><div class="day-cell other-month" data-date="2026-03-31"><div class="day-num">31</div><div class="day-events" id="day-2026-03-31"></div></div><div class="day-cell " data-date="2026-04-01"><div class="day-num">1</div><div class="day-events" id="day-2026-04-01"></div></div><div class="day-cell " data-date="2026-04-02"><div class="day-num">2</div><div class="day-events" id="day-2026-04-02"></div></div><div class="day-cell today" data-date="2026-04-03"><div class="day-num">3</div><div class="day-events" id="day-2026-04-03"></div></div><div class="day-cell " data-date="2026-04-04"><div class="day-num">4</div><div class="day-events" id="day-2026-04-04"></div></div><div class="day-cell " data-date="2026-04-05"><div class="day-num">5</div><div class="day-events" id="day-2026-04-05"></div></div><div class="day-cell " data-date="2026-04-06"><div class="day-num">6</div><div class="day-events" id="day-2026-04-06"></div></div><div class="day-cell " data-date="2026-04-07"><div class="day-num">7</div><div class="day-events" id="day-2026-04-07"></div></div><div class="day-cell " data-date="2026-04-08"><div class="day-num">8</div><div class="day-events" id="day-2026-04-08"></div></div><div class="day-cell " data-date="2026-04-09"><div class="day-num">9</div><div class="day-events" id="day-2026-04-09"></div></div><div class="day-cell " data-date="2026-04-10"><div class="day-num">10</div><div class="day-events" id="day-2026-04-10"></div></div><div class="day-cell " data-date="2026-04-11"><div class="day-num">11</div><div class="day-events" id="day-2026-04-11"></div></div><div class="day-cell " data-date="2026-04-12"><div class="day-num">12</div><div class="day-events" id="day-2026-04-12"></div></div><div class="day-cell " data-date="2026-04-13"><div class="day-num">13</div><div class="day-events" id="day-2026-04-13"></div></div><div class="day-cell " data-date="2026-04-14"><div class="day-num">14</div><div class="day-events" id="day-2026-04-14"></div></div><div class="day-cell " data-date="2026-04-15"><div class="day-num">15</div><div class="day-events" id="day-2026-04-15"></div></div><div class="day-cell " data-date="2026-04-16"><div class="day-num">16</div><div class="day-events" id="day-2026-04-16"></div></div><div class="day-cell " data-date="2026-04-17"><div class="day-num">17</div><div class="day-events" id="day-2026-04-17"></div></div><div class="day-cell " data-date="2026-04-18"><div class="day-num">18</div><div class="day-events" id="day-2026-04-18"></div></div><div class="day-cell " data-date="2026-04-19"><div class="day-num">19</div><div class="day-events" id="day-2026-04-19"></div></div><div class="day-cell " data-date="2026-04-20"><div class="day-num">20</div><div class="day-events" id="day-2026-04-20"></div></div><div class="day-cell " data-date="2026-04-21"><div class="day-num">21</div><div class="day-events" id="day-2026-04-21"></div></div><div class="day-cell " data-date="2026-04-22"><div class="day-num">22</div><div class="day-events" id="day-2026-04-22"></div></div><div class="day-cell " data-date="2026-04-23"><div class="day-num">23</div><div class="day-events" id="day-2026-04-23"></div></div><div class="day-cell " data-date="2026-04-24"><div class="day-num">24</div><div class="day-events" id="day-2026-04-24"></div></div><div class="day-cell " data-date="2026-04-25"><div class="day-num">25</div><div class="day-events" id="day-2026-04-25"></div></div><div class="day-cell " data-date="2026-04-26"><div class="day-num">26</div><div class="day-events" id="day-2026-04-26"></div></div><div class="day-cell " data-date="2026-04-27"><div class="day-num">27</div><div class="day-events" id="day-2026-04-27"></div></div><div class="day-cell " data-date="2026-04-28"><div class="day-num">28</div><div class="day-events" id="day-2026-04-28"></div></div><div class="day-cell " data-date="2026-04-29"><div class="day-num">29</div><div class="day-events" id="day-2026-04-29"></div></div><div class="day-cell " data-date="2026-04-30"><div class="day-num">30</div><div class="day-events" id="day-2026-04-30"></div></div><div class="day-cell other-month" data-date="2026-05-01"><div class="day-num">1</div><div class="day-events" id="day-2026-05-01"></div></div><div class="day-cell other-month" data-date="2026-05-02"><div class="day-num">2</div><div class="day-events" id="day-2026-05-02"></div></div></div></div>
       <div class="schedule-note">※ 모든 일정은 미국 현지시간(ET) 기준. 실적·이벤트 일부는 공식 확정 전까지 '예상'으로 표시되며, 공식 일정 변경 시 업데이트가 필요합니다.</div>
+    </div>
+
+    <div class="chart-card" style="padding:14px 16px; margin-top:14px">
+      <div class="schedule-week-title">KOREA EARNINGS FOCUS</div>
+      <div class="schedule-week-empty" style="margin-bottom:10px">
+        시가총액과 시장 영향도를 기준으로 고른 한국 대표 기업 실적 발표일
+      </div>
+      <div class="kr-earnings-list" id="kr-earnings-list"></div>
     </div>
   </div>
 
@@ -4386,7 +4534,9 @@ const DETAILED_SCHEDULES = {
 
 function buildMonthlySchedule(year, month) {
   const key = `${year}-${String(month).padStart(2, '0')}`;
-  return DETAILED_SCHEDULES[key] || [];
+  const base = [...(DETAILED_SCHEDULES[key] || [])];
+  const manual = getManualScheduleEvents().filter(ev => (ev.date || '').slice(0, 7) === key);
+  return [...base, ...manual].sort((a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0));
 }
 
 function iso(d) {
@@ -4394,6 +4544,77 @@ function iso(d) {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+
+
+const SCHEDULE_REFRESH_STATE = {
+  lastUpdated: null,
+};
+
+function scheduleKey(year, month) {
+  return `${year}-${String(month).padStart(2,'0')}`;
+}
+
+function getManualScheduleEvents() {
+  try {
+    return JSON.parse(localStorage.getItem('manualScheduleEvents') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveManualScheduleEvents(events) {
+  localStorage.setItem('manualScheduleEvents', JSON.stringify(events || []));
+}
+
+function toggleScheduleAdmin() {
+  const panel = document.getElementById('schedule-admin-panel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function addManualScheduleEvent() {
+  const date = document.getElementById('manual-event-date')?.value;
+  const type = document.getElementById('manual-event-type')?.value;
+  const text = document.getElementById('manual-event-text')?.value?.trim();
+  const source = document.getElementById('manual-event-source')?.value?.trim();
+
+  if (!date || !type || !text) {
+    alert('날짜, 유형, 일정명은 입력해야 합니다.');
+    return;
+  }
+
+  const events = getManualScheduleEvents();
+  events.push({ date, type, text, source: source || '직접 입력', manual: true });
+  saveManualScheduleEvents(events);
+
+  document.getElementById('manual-event-text').value = '';
+  document.getElementById('manual-event-source').value = '';
+  refreshScheduleData(false);
+}
+
+function clearManualScheduleEvents() {
+  localStorage.removeItem('manualScheduleEvents');
+  refreshScheduleData(false);
+}
+
+function setScheduleUpdateStatus(text) {
+  const el = document.getElementById('schedule-update-status');
+  if (el) el.textContent = text;
+}
+
+function formatUpdateTime(d) {
+  if (!d) return '자동 업데이트 대기';
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `자동 업데이트 ${hh}:${mm}`;
+}
+
+function refreshScheduleData(force=false) {
+  SCHEDULE_REFRESH_STATE.lastUpdated = new Date();
+  setScheduleUpdateStatus(formatUpdateTime(SCHEDULE_REFRESH_STATE.lastUpdated));
+  renderSchedule();
 }
 
 
@@ -4437,6 +4658,72 @@ function renderWeeklySchedule() {
 }
 
 
+
+const KOREA_EARNINGS_FOCUS = {
+  "2026-04": [
+    { date: "2026-04-21", company: "KB금융", note: "1Q26 실적 (예상)", source: "Yahoo est." },
+    { date: "2026-04-22", company: "삼성바이오로직스", note: "1Q26 실적 (예상)", source: "Yahoo est." },
+    { date: "2026-04-23", company: "현대차", note: "1Q26 실적 (예상)", source: "Yahoo est." },
+    { date: "2026-04-28", company: "삼성전자", note: "1Q26 실적 (예상)", source: "Yahoo est." },
+    { date: "2026-04-29", company: "SK하이닉스", note: "1Q26 실적 (예상)", source: "Yahoo est." }
+  ],
+  "2026-05": [
+    { date: "2026-05-04", company: "기아", note: "1Q26 실적 (예상)", source: "Yahoo est." },
+    { date: "2026-05-07", company: "LG에너지솔루션", note: "1Q26 실적 (예상)", source: "Yahoo est." },
+    { date: "2026-05-08", company: "NAVER", note: "1Q26 실적 (예상)", source: "Yahoo est." }
+  ],
+  "2026-07": [
+    { date: "2026-07-23", company: "현대차", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-07-24", company: "기아", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-07-29", company: "삼성전자", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-07-30", company: "SK하이닉스", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-07-30", company: "삼성바이오로직스", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." }
+  ],
+  "2026-08": [
+    { date: "2026-08-04", company: "LG에너지솔루션", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-08-07", company: "NAVER", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-08-08", company: "KB금융", note: "2Q26 실적 주간 (예상)", source: "Pattern / est." }
+  ],
+  "2026-10": [
+    { date: "2026-10-22", company: "현대차", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-10-23", company: "기아", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-10-28", company: "삼성전자", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-10-29", company: "SK하이닉스", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-10-29", company: "삼성바이오로직스", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." }
+  ],
+  "2026-11": [
+    { date: "2026-11-05", company: "NAVER", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-11-06", company: "LG에너지솔루션", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." },
+    { date: "2026-11-10", company: "KB금융", note: "3Q26 실적 주간 (예상)", source: "Pattern / est." }
+  ],
+  "2027-01": [
+    { date: "2027-01-28", company: "삼성전자", note: "4Q26 실적 주간 (예상)", source: "Samsung IR cadence" },
+    { date: "2027-01-28", company: "SK하이닉스", note: "4Q26 실적 주간 (예상)", source: "SK hynix IR cadence" },
+    { date: "2027-01-29", company: "현대차", note: "4Q26 실적 주간 (예상)", source: "Pattern / est." }
+  ]
+};
+
+function renderKoreaEarningsFocus() {
+  const root = document.getElementById('kr-earnings-list');
+  if (!root) return;
+  const key = `${SCHEDULE_STATE.year}-${String(SCHEDULE_STATE.month).padStart(2,'0')}`;
+  const items = KOREA_EARNINGS_FOCUS[key] || [];
+
+  if (!items.length) {
+    root.innerHTML = '<div class="schedule-week-empty">이 달에 반영된 한국 핵심 실적 일정 없음</div>';
+    return;
+  }
+
+  root.innerHTML = items.map(item => `
+    <div class="kr-earnings-item">
+      <div class="kr-earnings-date">${item.date.slice(5).replace('-', '/')}</div>
+      <div class="kr-earnings-name">${item.company} · ${item.note}</div>
+      <div class="kr-earnings-tag">${item.source}</div>
+    </div>
+  `).join('');
+}
+
+
 function renderSchedule() {
   const title = document.getElementById('schedule-title');
   const grid = document.getElementById('schedule-grid');
@@ -4464,6 +4751,7 @@ function renderSchedule() {
 
   const events = buildMonthlySchedule(year, month);
   renderWeeklySchedule();
+  renderKoreaEarningsFocus();
   events.forEach(ev => {
     const slot = document.getElementById(`day-${ev.date}`);
     if (slot) {
