@@ -210,8 +210,8 @@
 
   .card-label {
     font-size: 11px;
-    font-weight: 700;
-    color: #f0c94a;
+    font-weight: 600;
+    color: #d0d7de;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -251,8 +251,8 @@
     margin-top: 4px;
   }
 
-  .up { color: #ff5b5b; }
-  .down { color: #4A9EFF; }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
   .neutral { color: #d0d7de; }
 
   /* 로딩 스켈레톤 */
@@ -362,8 +362,8 @@
   }
   .chart-title {
     font-size: 13px;
-    font-weight: 600;
-    color: #f0c94a;
+    font-weight: 500;
+    color: var(--text);
   }
   .chart-sub {
     font-size: 11px;
@@ -428,7 +428,7 @@
     border-radius: var(--radius2);
   }
   .banner-item { text-align: center; }
-  .banner-label { font-size: 10px; color: #f0c94a; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+  .banner-label { font-size: 10px; color: #d0d7de; text-transform: uppercase; letter-spacing: 0.5px; }
   .banner-val { font-family: var(--mono); font-size: 15px; font-weight: 600; margin-top: 2px; }
 
   /* ── 오류 콘솔 (개발자용) ── */
@@ -504,7 +504,7 @@
   .sector-mini-head {
     padding: 8px 10px;
     font-size: 10px;
-    color: #f0c94a;
+    color: var(--text3);
     font-family: var(--mono);
     border-bottom: 1px solid var(--border);
   }
@@ -1063,14 +1063,14 @@
       .chart-btn.active, .tool-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
       .chart-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
       .toolbar-group { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-      .toolbar-label { font-family: var(--mono); font-size: 11px; color: #f0c94a; margin-right:2px; font-weight: 700; }
+      .toolbar-label { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-right:2px; }
       .lw-chart-host { width:100%; height:100%; position:relative; }
       .lw-chart-error, .lw-chart-loading { height:100%; display:flex; align-items:center; justify-content:center; color:var(--text3); font-family:var(--mono); font-size:12px; }
       .lw-chart-meta { padding: 10px 14px 0; font-family: var(--mono); font-size: 11px; color: var(--text3); }
 
       .mini-chart-shell { display:flex; flex-direction:column; height:100%; }
       .mini-toolbar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 12px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
-      .mini-toolbar .mini-label { font-family: var(--mono); font-size: 10px; color: #f0c94a; margin-right: 2px; font-weight: 700; }
+      .mini-toolbar .mini-label { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-right: 2px; }
       .mini-tool-btn {
         background: var(--bg3); border: 1px solid var(--border);
         color: #d0d7de; padding: 4px 8px; border-radius: 4px;
@@ -1244,6 +1244,169 @@ async function fetchYahoo(sym) {
   return null;
 }
 
+
+
+function getNaverProxyUrls(url) {
+  return [
+    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  ];
+}
+
+async function fetchJSONViaProxies(urls, src, timeout=12000) {
+  for (let i = 0; i < urls.length; i++) {
+    try {
+      const r = await fetchWithTimeout(urls[i], timeout);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const raw = await r.json();
+      const data = raw && raw.contents ? JSON.parse(raw.contents) : raw;
+      Logger.log(src, `프록시${i + 1} 성공`, 'ok');
+      return data;
+    } catch (e) {
+      const isLast = i === urls.length - 1;
+      Logger.log(src, `프록시${i + 1} 실패: ${e.message}`, isLast ? 'error' : 'warn');
+    }
+  }
+  return null;
+}
+
+async function fetchTextViaProxies(urls, src, timeout=12000) {
+  for (let i = 0; i < urls.length; i++) {
+    try {
+      const r = await fetchWithTimeout(urls[i], timeout);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      let text = await r.text();
+      if (text && text.trim().startsWith('{"contents":')) {
+        try {
+          const j = JSON.parse(text);
+          if (j.contents) text = j.contents;
+        } catch (_) {}
+      }
+      Logger.log(src, `프록시${i + 1} 성공`, 'ok');
+      return text;
+    } catch (e) {
+      const isLast = i === urls.length - 1;
+      Logger.log(src, `프록시${i + 1} 실패: ${e.message}`, isLast ? 'error' : 'warn');
+    }
+  }
+  return null;
+}
+
+function isKoreaIndexSymbol(sym) {
+  return sym === '^KS11' || sym === '^KQ11';
+}
+
+function koreaIndexCodeFromSymbol(sym) {
+  return sym === '^KS11' ? 'KOSPI' : sym === '^KQ11' ? 'KOSDAQ' : null;
+}
+
+async function fetchNaverKRIndexRealtime(indexCode) {
+  const cacheKey = `naver_rt_${indexCode}`;
+  const cached = Cache.get(cacheKey, 60000);
+  if (cached) return cached;
+  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_INDEX:KOSPI,KOSDAQ,KPI200';
+  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), `NaverRealtime/${indexCode}`, 12000);
+  const datas = data?.result?.areas?.[0]?.datas || [];
+  const item = datas.find(x => x.cd === indexCode);
+  if (!item) return null;
+  const price = Number(item.nv) / 100;
+  const change = Number(item.cv) / 100;
+  const changePct = Number(item.cr);
+  const result = {
+    price,
+    prev: price - change,
+    change,
+    changePct,
+    open: Number(item.ov) / 100,
+    high: Number(item.hv) / 100,
+    low: Number(item.lv) / 100,
+    marketStatus: item.ms || '',
+  };
+  Cache.set(cacheKey, result);
+  return result;
+}
+
+function parseNaverSiseJson(text) {
+  if (!text) return [];
+  let cleaned = String(text).trim();
+  cleaned = cleaned.replace(/^\uFEFF/, '').replace(/;\s*$/, '');
+  let rows;
+  try {
+    rows = JSON.parse(cleaned);
+  } catch (_) {
+    rows = Function(`return (${cleaned})`)();
+  }
+  if (!Array.isArray(rows) || rows.length < 2) return [];
+  const out = [];
+  for (const row of rows.slice(1)) {
+    if (!Array.isArray(row) || row.length < 5) continue;
+    const rawTime = String(row[0]).trim();
+    const open = Number(row[1]);
+    const high = Number(row[2]);
+    const low = Number(row[3]);
+    const close = Number(row[4]);
+    if ([open, high, low, close].some(v => !isFinite(v))) continue;
+    let time;
+    if (/^\d{12}$/.test(rawTime)) {
+      const y = Number(rawTime.slice(0,4));
+      const m = Number(rawTime.slice(4,6));
+      const d = Number(rawTime.slice(6,8));
+      const hh = Number(rawTime.slice(8,10));
+      const mm = Number(rawTime.slice(10,12));
+      time = Math.floor(Date.UTC(y, m - 1, d, hh, mm, 0) / 1000);
+    } else if (/^\d{8}$/.test(rawTime)) {
+      time = { year: Number(rawTime.slice(0,4)), month: Number(rawTime.slice(4,6)), day: Number(rawTime.slice(6,8)) };
+    } else {
+      continue;
+    }
+    out.push({ rawTime, time, open, high, low, close, value: close });
+  }
+  return out;
+}
+
+function formatYYYYMMDD(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}${m}${d}`;
+}
+
+function getNaverHistoryUrl(indexCode, range='6mo', interval='1d') {
+  if (interval === '15m' || interval === '5m' || range === '5d') {
+    const count = interval === '5m' ? 390 : 130;
+    return `https://api.finance.naver.com/siseJson.naver?symbol=${indexCode}&requestType=0&count=${count}&timeframe=minute`;
+  }
+  const end = new Date();
+  const start = new Date();
+  if (range === '1mo') start.setMonth(start.getMonth() - 1);
+  else if (range === '3mo') start.setMonth(start.getMonth() - 3);
+  else if (range === '6mo') start.setMonth(start.getMonth() - 6);
+  else if (range === '1y') start.setFullYear(start.getFullYear() - 1);
+  else if (range === '5y') start.setFullYear(start.getFullYear() - 5);
+  else start.setMonth(start.getMonth() - 6);
+  return `https://api.finance.naver.com/siseJson.naver?symbol=${indexCode}&requestType=1&startTime=${formatYYYYMMDD(start)}&endTime=${formatYYYYMMDD(end)}&timeframe=day`;
+}
+
+async function fetchNaverKRIndexHistory(indexCode, range='6mo', interval='1d') {
+  const cacheKey = `naver_hist_${indexCode}_${range}_${interval}`;
+  const cached = Cache.get(cacheKey, 1800000);
+  if (cached) return cached;
+  if (pendingHistoryRequests[cacheKey]) return pendingHistoryRequests[cacheKey];
+  pendingHistoryRequests[cacheKey] = (async () => {
+    const url = getNaverHistoryUrl(indexCode, range, interval);
+    const text = await fetchTextViaProxies(getNaverProxyUrls(url), `NaverHistory/${indexCode}`, 15000);
+    const rows = parseNaverSiseJson(text);
+    if (!rows.length) return null;
+    Cache.set(cacheKey, rows);
+    return rows;
+  })();
+  try {
+    return await pendingHistoryRequests[cacheKey];
+  } finally {
+    delete pendingHistoryRequests[cacheKey];
+  }
+}
 // Binance API (BTC - CORS 허용)
 async function fetchBinance(sym='BTCUSDT') {
   const cached = Cache.get('binance_' + sym);
@@ -1477,24 +1640,23 @@ async function loadStockData() {
     { key: '%5ENDX',    vIds: ['ndx-v','us-ndx-v'],         cIds: ['ndx-c','us-ndx-c'],         fmt: v => fmt(v,2) },
     { key: '%5EDJI',    vIds: ['us-dji-v'],                  cIds: ['us-dji-c'],                  fmt: v => fmt(v,2) },
     { key: '%5ERUT',    vIds: ['us-rut-v'],                  cIds: ['us-rut-c'],                  fmt: v => fmt(v,2) },
-    { key: '%5EKS11',   vIds: ['kospi-v','kr-kospi-v'],      cIds: ['kospi-c','kr-kospi-c'],      fmt: v => fmt(v,2) },
-    { key: '%5EKQ11',   vIds: ['kosdaq-v','kr-kosdaq-v'],    cIds: ['kosdaq-c','kr-kosdaq-c'],    fmt: v => fmt(v,2) },
-    { key: 'KRW%3DX',  vIds: ['usdkrw-v','kr-usdkrw-v'],   cIds: ['usdkrw-c','kr-usdkrw-c'],   fmt: v => fmt(v,2) },
+    { key: 'KRW%3DX',   vIds: ['usdkrw-v','kr-usdkrw-v'],    cIds: ['usdkrw-c','kr-usdkrw-c'],    fmt: v => fmt(v,2) },
     { key: '005930.KS', vIds: ['kr-samsung-v'],              cIds: ['kr-samsung-c'],              fmt: v => fmt(v,0)+'원' },
-    { key: 'GC%3DF',   vIds: ['gold-v','mac-gold-v','opt-gold-v'], cIds: ['gold-c','mac-gold-c','opt-gold-c'], fmt: v => '$'+fmt(v,2) },
-    { key: 'CL%3DF',   vIds: ['oil-v','mac-oil-v'],         cIds: ['oil-c','mac-oil-c'],         fmt: v => '$'+fmt(v,2) },
-    { key: 'DX-Y.NYB', vIds: ['dxy-v','mac-dxy-v'],         cIds: ['dxy-c','mac-dxy-c'],         fmt: v => fmt(v,3) },
-    { key: 'JPY%3DX',  vIds: ['mac-jpyusd-v'],              cIds: ['mac-jpyusd-c'],              fmt: v => fmt(v,3) },
-    { key: 'HG%3DF',   vIds: ['mac-copper-v'],              cIds: ['mac-copper-c'],              fmt: v => '$'+fmt(v,4) },
-    { key: '%5EVIX',   vIds: ['vix-v','opt-vix-v'],         cIds: ['vix-c','opt-vix-c'],         fmt: v => fmt(v,2) },
-    { key: '%5EVVIX',  vIds: ['opt-vvix-v'],                cIds: ['opt-vvix-c'],                fmt: v => fmt(v,2) },
+    { key: 'GC%3DF',    vIds: ['gold-v','mac-gold-v','opt-gold-v'], cIds: ['gold-c','mac-gold-c','opt-gold-c'], fmt: v => '$'+fmt(v,2) },
+    { key: 'CL%3DF',    vIds: ['oil-v','mac-oil-v'],         cIds: ['oil-c','mac-oil-c'],         fmt: v => '$'+fmt(v,2) },
+    { key: 'DX-Y.NYB',  vIds: ['dxy-v','mac-dxy-v'],         cIds: ['dxy-c','mac-dxy-c'],         fmt: v => fmt(v,3) },
+    { key: 'JPY%3DX',   vIds: ['mac-jpyusd-v'],              cIds: ['mac-jpyusd-c'],              fmt: v => fmt(v,3) },
+    { key: 'HG%3DF',    vIds: ['mac-copper-v'],              cIds: ['mac-copper-c'],              fmt: v => '$'+fmt(v,4) },
+    { key: '%5EVIX',    vIds: ['vix-v','opt-vix-v'],         cIds: ['vix-c','opt-vix-c'],         fmt: v => fmt(v,2) },
+    { key: '%5EVVIX',   vIds: ['opt-vvix-v'],                cIds: ['opt-vvix-c'],                fmt: v => fmt(v,2) },
   ];
 
-  // 모두 스켈레톤 처리
   tasks.forEach(t => {
     t.vIds.forEach(id => setSkeleton(id));
     t.cIds.forEach(id => setSkeleton(id));
   });
+  ['kospi-v','kr-kospi-v','kosdaq-v','kr-kosdaq-v','btc-v'].forEach(id => setSkeleton(id));
+  ['kospi-c','kr-kospi-c','kosdaq-c','kr-kosdaq-c','btc-c'].forEach(id => setSkeleton(id));
 
   await Promise.allSettled(tasks.map(async t => {
     const d = await fetchYahoo(t.key);
@@ -1506,16 +1668,46 @@ async function loadStockData() {
     t.vIds.forEach(id => setVal(id, t.fmt(d.price)));
     t.cIds.forEach(id => setChange(id, d.change, d.changePct));
 
-    // 특수 처리
     if (t.key === '%5EVIX') updateVIX(d.price);
-    if (t.key === '%5EKS11') updateDrawdown('kr-kospi-dd', d.price, d.high52);
-    if (t.key === '%5EKQ11') updateDrawdown('kr-kosdaq-dd', d.price, d.high52);
     if (t.key === '%5EGSPC') updateDrawdown('us-sp500-dd', d.price, d.high52);
     if (t.key === '%5ENDX')  updateDrawdown('us-ndx-dd', d.price, d.high52);
   }));
 
-  // BTC 별도 (Binance)
-  setSkeleton('btc-v', 'btc-c');
+  await Promise.allSettled([
+    (async () => {
+      const d = await fetchNaverKRIndexRealtime('KOSPI');
+      if (!d) {
+        ['kospi-v','kr-kospi-v'].forEach(id => setVal(id, 'ERR'));
+        ['kospi-c','kr-kospi-c'].forEach(id => setChange(id, null, null));
+        return;
+      }
+      Cache.set('%5EKS11', { ...d });
+      ['kospi-v','kr-kospi-v'].forEach(id => setVal(id, fmt(d.price, 2)));
+      ['kospi-c','kr-kospi-c'].forEach(id => setChange(id, d.change, d.changePct));
+      const hist = await fetchNaverKRIndexHistory('KOSPI', '1y', '1d');
+      if (hist?.length) {
+        const high52 = Math.max(...hist.map(x => x.high || x.close));
+        updateDrawdown('kr-kospi-dd', d.price, high52);
+      }
+    })(),
+    (async () => {
+      const d = await fetchNaverKRIndexRealtime('KOSDAQ');
+      if (!d) {
+        ['kosdaq-v','kr-kosdaq-v'].forEach(id => setVal(id, 'ERR'));
+        ['kosdaq-c','kr-kosdaq-c'].forEach(id => setChange(id, null, null));
+        return;
+      }
+      Cache.set('%5EKQ11', { ...d });
+      ['kosdaq-v','kr-kosdaq-v'].forEach(id => setVal(id, fmt(d.price, 2)));
+      ['kosdaq-c','kr-kosdaq-c'].forEach(id => setChange(id, d.change, d.changePct));
+      const hist = await fetchNaverKRIndexHistory('KOSDAQ', '1y', '1d');
+      if (hist?.length) {
+        const high52 = Math.max(...hist.map(x => x.high || x.close));
+        updateDrawdown('kr-kosdaq-dd', d.price, high52);
+      }
+    })(),
+  ]);
+
   const btc = await fetchBinance('BTCUSDT');
   if (btc) {
     setVal('btc-v', '$' + fmt(btc.price, 0));
@@ -1859,6 +2051,11 @@ function toBusinessDay(ts) {
   return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
 }
 async function fetchYahooHistory(sym, range='6mo', interval='1d') {
+  if (isKoreaIndexSymbol(sym)) {
+    const indexCode = koreaIndexCodeFromSymbol(sym);
+    return fetchNaverKRIndexHistory(indexCode, range, interval);
+  }
+
   const cacheKey = `hist_${sym}_${range}_${interval}`;
   const cached = Cache.get(cacheKey, 1800000);
   if (cached) return cached;
