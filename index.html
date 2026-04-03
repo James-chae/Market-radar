@@ -3221,6 +3221,166 @@ async function refreshAll() {
 
 
 
+
+function extractSymbolFromOnclick(onclickText) {
+  if (!onclickText) return '';
+  const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
+  return match ? match[1] : '';
+}
+
+function forceLoadTabChartSymbol(tabKey, symbol) {
+  const cfg = TAB_CHARTS[tabKey];
+  if (!cfg || !symbol) return;
+  cfg.symbol = symbol;
+  syncTabChartToolbar(tabKey);
+  updateTabChartMeta(tabKey);
+  loadLWChart(cfg.containerId, cfg.symbol, {
+    range: cfg.range,
+    interval: cfg.interval,
+    type: cfg.type,
+    force: true,
+  });
+}
+
+function buildMobileStockPicker(tabKey) {
+  const root = document.getElementById(tabKey + '-mobile-picker');
+  const cfg = TAB_CHARTS[tabKey];
+  if (!root || !cfg) return;
+
+  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
+  const groups = [];
+  buttons.forEach(btn => {
+    const groupEl = btn.closest('.stock-group');
+    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
+    let group = groups.find(g => g.title === title);
+    if (!group) {
+      group = { title, items: [] };
+      groups.push(group);
+    }
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    group.items.push({ symbol: sym, label: btn.textContent.trim() });
+  });
+
+  root.innerHTML = `
+    <div class="mobile-stock-picker-row">
+      <div>
+        <span class="mobile-stock-picker-label">섹터</span>
+        <select id="${tabKey}-group-select"></select>
+      </div>
+      <div>
+        <span class="mobile-stock-picker-label">종목 선택</span>
+        <select id="${tabKey}-symbol-select"></select>
+      </div>
+    </div>
+    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
+  `;
+
+  const groupSel = document.getElementById(`${tabKey}-group-select`);
+  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
+  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
+
+  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
+
+  function getGroup(groupTitle) {
+    return groups.find(g => g.title === groupTitle) || groups[0] || { title: '', items: [] };
+  }
+
+  function fillSymbols(groupTitle, selectedSymbol='') {
+    const group = getGroup(groupTitle);
+    symbolSel.innerHTML = group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
+    const nextSymbol = group.items.some(item => item.symbol === selectedSymbol)
+      ? selectedSymbol
+      : (group.items[0]?.symbol || '');
+    symbolSel.value = nextSymbol;
+    const chosen = group.items.find(item => item.symbol === nextSymbol);
+    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
+    symbolSel.dataset.currentSymbol = nextSymbol || '';
+    return nextSymbol;
+  }
+
+  groupSel.onchange = () => {
+    const firstSymbol = fillSymbols(groupSel.value, '');
+    if (firstSymbol) {
+      // 섹터 변경 시 첫 종목 차트를 즉시 강제 갱신
+      forceLoadTabChartSymbol(tabKey, firstSymbol);
+    }
+  };
+
+  symbolSel.onclick = () => {
+    // 첫번째 종목이 이미 선택된 상태에서도 사용자가 다시 눌렀을 때
+    // 현재 선택 종목 차트를 다시 강제 갱신
+    const chosenSymbol = symbolSel.value;
+    if (chosenSymbol) forceLoadTabChartSymbol(tabKey, chosenSymbol);
+  };
+
+  symbolSel.onchange = () => {
+    const chosenSymbol = symbolSel.value;
+    const group = getGroup(groupSel.value);
+    const chosen = group.items.find(item => item.symbol === chosenSymbol);
+    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
+    symbolSel.dataset.currentSymbol = chosenSymbol || '';
+    if (chosenSymbol) {
+      forceLoadTabChartSymbol(tabKey, chosenSymbol);
+    }
+  };
+
+  let currentGroupTitle = groups[0]?.title || '';
+  groups.forEach(g => {
+    if (g.items.some(item => item.symbol === cfg.symbol)) currentGroupTitle = g.title;
+  });
+  groupSel.value = currentGroupTitle;
+  fillSymbols(currentGroupTitle, cfg.symbol);
+}
+
+function syncMobileStockPicker(tabKey) {
+  const cfg = TAB_CHARTS[tabKey];
+  const root = document.getElementById(tabKey + '-mobile-picker');
+  if (!cfg || !root) return;
+
+  const groupSel = document.getElementById(`${tabKey}-group-select`);
+  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
+  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
+  if (!groupSel || !symbolSel || !currentEl) return;
+
+  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
+  const groups = {};
+  let groupTitle = '';
+  let label = cfg.symbol;
+
+  buttons.forEach(btn => {
+    const title = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    if (!groups[title]) groups[title] = [];
+    groups[title].push({ symbol: sym, label: btn.textContent.trim() });
+    if (sym === cfg.symbol) {
+      groupTitle = title;
+      label = btn.textContent.trim();
+    }
+  });
+
+  if (!groupTitle) return;
+
+  groupSel.value = groupTitle;
+  const items = groups[groupTitle] || [];
+  symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
+  symbolSel.value = cfg.symbol;
+  symbolSel.dataset.currentSymbol = cfg.symbol;
+  currentEl.textContent = `${groupTitle} · ${label}`;
+}
+
+function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
+function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
+async function refreshAll() {
+  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
+  Logger.log('System', '데이터 갱신 시작', 'ok');
+  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
+  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
+  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
+}
+
+
+
+
 function extractSymbolFromOnclick(onclickText) {
   if (!onclickText) return '';
   const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
