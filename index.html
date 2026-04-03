@@ -1105,6 +1105,16 @@
     .data-note .badge { font-size: 9px; padding: 5px 8px; }
   }
 
+
+  .mobile-stock-current .pct {
+    margin-left: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+  .mobile-stock-current .pct.up { color: #f85149; }
+  .mobile-stock-current .pct.down { color: #4A9EFF; }
+  .mobile-stock-current .pct.flat { color: #9aa4af; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -3451,7 +3461,7 @@ function buildMobileStockPicker(tabKey) {
       : (group.items[0]?.symbol || '');
     symbolSel.value = targetSymbol;
     const currentItem = group.items.find(item => item.symbol === targetSymbol);
-    currentEl.textContent = currentItem ? `${group.title} · ${currentItem.label}` : `${group.title}`;
+    setMobileCurrentText(currentEl, group.title, currentItem ? currentItem.label : '', currentItem ? currentItem.btn : null);
     symbolSel.dataset.lastValue = targetSymbol || '';
     return currentItem || null;
   }
@@ -3461,7 +3471,7 @@ function buildMobileStockPicker(tabKey) {
     const item = group.items.find(i => i.symbol === symbol);
     if (!item) return;
     switchTabStockChart(tabKey, item.symbol, item.btn);
-    currentEl.textContent = `${group.title} · ${item.label}`;
+    setMobileCurrentText(currentEl, group.title, item.label, item.btn);
     symbolSel.dataset.lastValue = item.symbol;
   }
 
@@ -3589,6 +3599,22 @@ async function updateKRStockSignals() {
 }
 
 
+
+function getButtonPctInfo(btn) {
+  if (!btn) return { text: '--', cls: 'flat' };
+  const pctEl = btn.querySelector('.stock-btn-pct');
+  const text = pctEl ? pctEl.textContent.trim() : '--';
+  let cls = 'flat';
+  if (pctEl?.classList.contains('up')) cls = 'up';
+  else if (pctEl?.classList.contains('down')) cls = 'down';
+  return { text, cls };
+}
+
+function setMobileCurrentText(el, groupTitle, label, btn=null) {
+  if (!el) return;
+  const pct = getButtonPctInfo(btn);
+  el.innerHTML = `${groupTitle} · ${label} <span class="pct ${pct.cls}">${pct.text}</span>`;
+}
 function ensureStockButtonMarkup() {
   document.querySelectorAll('.us-stock-btn, .kr-stock-btn').forEach(btn => {
     const raw = btn.dataset.baseLabel || btn.textContent.trim();
@@ -3661,6 +3687,7 @@ async function updateKRStockSignals() {
     const info = signals[sym];
     setStockButtonSignal(btn, info?.state || 'flat', info?.pctText || '--');
   });
+  if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
 }
 
 async function updateUSStockSignals() {
@@ -3686,6 +3713,7 @@ async function updateUSStockSignals() {
     const info = results[sym];
     setStockButtonSignal(btn, info?.state || 'flat', info?.pctText || '--');
   });
+  if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('usstocks');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
