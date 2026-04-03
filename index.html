@@ -2255,6 +2255,12 @@ function ensureMiniChartUI(containerId) {
     <button class="mini-tool-btn" data-mini-range="1y" data-mini-interval="1d">1년</button>
   `;
 
+  const meta = document.createElement('div');
+  meta.id = containerId + '__meta';
+  meta.className = 'lw-chart-meta';
+  meta.style.padding = '8px 12px 0';
+  meta.style.fontSize = '10px';
+
   const host = document.createElement('div');
   host.id = containerId + '__host';
   host.className = 'lw-chart-host';
@@ -2262,6 +2268,7 @@ function ensureMiniChartUI(containerId) {
   host.style.minHeight = '180px';
 
   shell.appendChild(toolbar);
+  shell.appendChild(meta);
   shell.appendChild(host);
   container.innerHTML = '';
   container.appendChild(shell);
@@ -2284,12 +2291,19 @@ function ensureMiniChartUI(containerId) {
   syncMiniToolbar(containerId);
 }
 
+function updateMiniChartMeta(containerId) {
+  const cfg = MINI_CHARTS[containerId];
+  const el = document.getElementById(containerId + '__meta');
+  if (!cfg || !el) return;
+  el.innerHTML = formatChartMetaHtml(cfg.sym, cfg.type, cfg.range);
+}
 function syncMiniToolbar(containerId) {
   const container = document.getElementById(containerId);
   const cfg = MINI_CHARTS[containerId];
   if (!container || !cfg) return;
   container.querySelectorAll('[data-mini-type]').forEach(btn => btn.classList.toggle('active', btn.dataset.miniType === cfg.type));
   container.querySelectorAll('[data-mini-range]').forEach(btn => btn.classList.toggle('active', btn.dataset.miniRange === cfg.range));
+  updateMiniChartMeta(containerId);
 }
 
 async function loadMiniChart(containerId, force=false) {
@@ -2307,6 +2321,16 @@ function formatChartValue(value, sym) {
   const meta = CHART_META[sym] || {};
   const decimals = meta.decimals ?? 2;
   return (meta.prefix || '') + Number(value).toLocaleString('ko-KR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + (meta.suffix || '');
+}
+
+function formatChartMetaHtml(sym, type, range) {
+  const typeText = type === 'candlestick' ? '캔들' : '선';
+  const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
+  return `Yahoo Finance · ${chartText(sym)} · ${typeText} · ${rangeMap[range] || range} · `
+    + `<span style="color:#ff7b72;font-weight:700">MA5</span> `
+    + `<span style="color:#f2cc60;font-weight:700">MA20</span> `
+    + `<span style="color:#3fb950;font-weight:700">MA60</span> `
+    + `<span style="color:#4A9EFF;font-weight:700">MA120</span>`;
 }
 function getYahooChartUrls(sym, range='6mo', interval='1d') {
   const encoded = encodeURIComponent(sym);
@@ -2449,10 +2473,10 @@ function buildChart(containerId, mode='line', sym='') {
   }
 
   const maDefs = [
-    { period: 5, color: '#ffcc00', width: 1.5 },
-    { period: 20, color: '#ff7b72', width: 1.5 },
-    { period: 60, color: '#7ee787', width: 1.5 },
-    { period: 120, color: '#79c0ff', width: 1.5 },
+    { period: 5, color: '#ff7b72', width: 1.5 },
+    { period: 20, color: '#f2cc60', width: 1.5 },
+    { period: 60, color: '#3fb950', width: 1.5 },
+    { period: 120, color: '#4A9EFF', width: 1.5 },
   ];
   const maSeries = maDefs.map(def => ({
     period: def.period,
@@ -2547,9 +2571,7 @@ async function loadLWChart(containerId, sym, options={}) {
 function updateMainChartMeta() {
   const el = document.getElementById('main-chart-meta');
   if (!el) return;
-  const typeText = _mainChartType === 'candlestick' ? '캔들' : '선';
-  const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
-  el.textContent = `Yahoo Finance · ${chartText(_activeChartSym)} · ${typeText} · ${rangeMap[_mainChartRange] || _mainChartRange} · MA 5/20/60/120`;
+  el.innerHTML = formatChartMetaHtml(_activeChartSym, _mainChartType, _mainChartRange);
 }
 function syncMainToolbar() {
   document.querySelectorAll('[data-chart-type]').forEach(btn => btn.classList.toggle('active', btn.dataset.chartType === _mainChartType));
@@ -2574,9 +2596,7 @@ function updateTabChartMeta(tabKey) {
   if (!cfg) return;
   const el = document.getElementById(cfg.metaId);
   if (!el) return;
-  const typeText = cfg.type === 'candlestick' ? '캔들' : '선';
-  const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
-  el.textContent = `Yahoo Finance · ${chartText(cfg.symbol)} · ${typeText} · ${rangeMap[cfg.range] || cfg.range} · MA 5/20/60/120`;
+  el.innerHTML = formatChartMetaHtml(cfg.symbol, cfg.type, cfg.range);
 }
 function syncTabChartToolbar(tabKey) {
   const cfg = TAB_CHARTS[tabKey];
