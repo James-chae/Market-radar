@@ -671,6 +671,54 @@
     .sector-grid { grid-template-columns: repeat(3, 1fr); }
     .card-value { font-size: 22px; }
   }
+
+
+  .tab-label-mobile { display: none; }
+
+  .stock-section-subdesc {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 600px) {
+    nav {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 4px;
+      padding: 8px 12px;
+      overflow: visible;
+    }
+    .tab {
+      min-width: 0;
+      justify-content: center;
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tab.active {
+      color: var(--yellow);
+      border-color: rgba(227,168,37,0.6);
+      background: rgba(227,168,37,0.10);
+    }
+    .mobile-row-1 { grid-row: 1; grid-column: span 1; }
+    .mobile-row-2 { grid-row: 2; grid-column: span 2; }
+    .tab-label-pc { display: none; }
+    .tab-label-mobile { display: inline; }
+  }
+
+  @media (min-width: 601px) {
+    .tab-label-pc { display: inline; }
+    .tab-label-mobile { display: none; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -690,13 +738,15 @@
 </header>
 
 <nav>
-  <div class="tab active" onclick="showTab('overview', this)">📊 전체</div>
-  <div class="tab" onclick="showTab('us', this)">🇺🇸 미국</div>
-  <div class="tab" onclick="showTab('kr', this)">🇰🇷 한국</div>
-  <div class="tab" onclick="showTab('macro', this)">🌐 매크로</div>
-  <div class="tab" onclick="showTab('liquidity', this)">💧 유동성</div>
-  <div class="tab" onclick="showTab('options', this)">🎯 옵션·변동성</div>
-  <div class="tab" onclick="showTab('charts', this)">📈 차트</div>
+  <div class="tab mobile-row-1 active" onclick="showTab('overview', this)">📊 <span class="tab-label-pc">전체</span><span class="tab-label-mobile">전체시장</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('us', this)">🇺🇸 <span class="tab-label-pc">미국</span><span class="tab-label-mobile">미국</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('kr', this)">🇰🇷 <span class="tab-label-pc">한국</span><span class="tab-label-mobile">한국</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('macro', this)">🌐 <span class="tab-label-pc">매크로</span><span class="tab-label-mobile">매크로</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('liquidity', this)">💧 <span class="tab-label-pc">유동성</span><span class="tab-label-mobile">유동성</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션·변동성</span><span class="tab-label-mobile">옵션 변동성</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('charts', this)">📈 <span class="tab-label-pc">차트</span><span class="tab-label-mobile">차트</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('usstocks', this)">🇺🇸 <span class="tab-label-pc">미국 종목</span><span class="tab-label-mobile">미국 종목</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('krstocks', this)">🇰🇷 <span class="tab-label-pc">한국 종목</span><span class="tab-label-mobile">한국 종목</span></div>
 </nav>
 
 <main>
@@ -1198,6 +1248,101 @@
     <div class="chart-card">
       <div class="lw-chart-meta" id="main-chart-meta">Yahoo Finance · 캔들 · 1년</div>
       <div id="tv-main-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════ 8. 미국 종목 ══════════════ -->
+  <div class="section" id="sec-usstocks">
+    <p class="section-title">US STOCKS</p>
+    <p class="section-desc">미국 주요 종목 · Yahoo Finance 인터랙티브 차트</p>
+
+    <div class="stock-section-subdesc">NVIDIA, Apple, Alphabet, Microsoft, Amazon, Broadcom, Meta, Tesla, Berkshire Hathaway, Walmart</div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="chart-btn us-stock-btn active" onclick="switchTabStockChart('usstocks', 'NVDA', this)">NVIDIA</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AAPL', this)">Apple</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GOOGL', this)">Alphabet</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'MSFT', this)">Microsoft</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AMZN', this)">Amazon</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AVGO', this)">Broadcom</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'META', this)">Meta</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'TSLA', this)">Tesla</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'BRK-B', this)">Berkshire</button>
+      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'WMT', this)">Walmart</button>
+    </div>
+
+    <div class="chart-toolbar">
+      <div class="toolbar-group">
+        <span class="toolbar-label">형태</span>
+        <button class="tool-btn active" data-usstocks-type="candlestick" onclick="setTabChartType('usstocks', 'candlestick', this)">캔들</button>
+        <button class="tool-btn" data-usstocks-type="line" onclick="setTabChartType('usstocks', 'line', this)">선</button>
+      </div>
+      <div class="toolbar-group">
+        <span class="toolbar-label">기간</span>
+        <button class="tool-btn" data-usstocks-range="5d" onclick="setTabChartRange('usstocks', '5d', '15m', this)">5일</button>
+        <button class="tool-btn" data-usstocks-range="1mo" onclick="setTabChartRange('usstocks', '1mo', '1d', this)">1개월</button>
+        <button class="tool-btn" data-usstocks-range="3mo" onclick="setTabChartRange('usstocks', '3mo', '1d', this)">3개월</button>
+        <button class="tool-btn" data-usstocks-range="6mo" onclick="setTabChartRange('usstocks', '6mo', '1d', this)">6개월</button>
+        <button class="tool-btn active" data-usstocks-range="1y" onclick="setTabChartRange('usstocks', '1y', '1d', this)">1년</button>
+        <button class="tool-btn" data-usstocks-range="5y" onclick="setTabChartRange('usstocks', '5y', '1wk', this)">5년</button>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · NVIDIA · 캔들 · 1년</div>
+      <div id="tv-usstocks-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ 9. 한국 종목 ══════════════ -->
+  <div class="section" id="sec-krstocks">
+    <p class="section-title">KOREA STOCKS</p>
+    <p class="section-desc">한국 주요 종목 · Yahoo Finance 인터랙티브 차트</p>
+
+    <div class="stock-section-subdesc">삼성전자, SK하이닉스, 한미반도체, 현대차, 기아, 한화에어로스페이스, 현대로템, 삼성바이오로직스, 셀트리온, HD현대중공업, 삼성중공업, 두산에너빌리티, HD현대일렉트릭, LG에너지솔루션, 미래에셋증권, KB금융, 알테오젠, 리가켐바이오</div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="chart-btn kr-stock-btn active" onclick="switchTabStockChart('krstocks', '005930.KS', this)">삼성전자</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000660.KS', this)">SK하이닉스</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '042700.KS', this)">한미반도체</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '005380.KS', this)">현대차</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000270.KS', this)">기아</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '012450.KS', this)">한화에어로</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '064350.KS', this)">현대로템</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '207940.KS', this)">삼성바이오</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '068270.KS', this)">셀트리온</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '329180.KS', this)">HD현대중공업</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '010140.KS', this)">삼성중공업</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '034020.KS', this)">두산에너빌</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '267260.KS', this)">HD현대일렉</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '373220.KS', this)">LG에너지솔루션</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '006800.KS', this)">미래에셋증권</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '105560.KS', this)">KB금융</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '196170.KQ', this)">알테오젠</button>
+      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '141080.KQ', this)">리가켐바이오</button>
+    </div>
+
+    <div class="chart-toolbar">
+      <div class="toolbar-group">
+        <span class="toolbar-label">형태</span>
+        <button class="tool-btn active" data-krstocks-type="candlestick" onclick="setTabChartType('krstocks', 'candlestick', this)">캔들</button>
+        <button class="tool-btn" data-krstocks-type="line" onclick="setTabChartType('krstocks', 'line', this)">선</button>
+      </div>
+      <div class="toolbar-group">
+        <span class="toolbar-label">기간</span>
+        <button class="tool-btn" data-krstocks-range="5d" onclick="setTabChartRange('krstocks', '5d', '15m', this)">5일</button>
+        <button class="tool-btn" data-krstocks-range="1mo" onclick="setTabChartRange('krstocks', '1mo', '1d', this)">1개월</button>
+        <button class="tool-btn" data-krstocks-range="3mo" onclick="setTabChartRange('krstocks', '3mo', '1d', this)">3개월</button>
+        <button class="tool-btn" data-krstocks-range="6mo" onclick="setTabChartRange('krstocks', '6mo', '1d', this)">6개월</button>
+        <button class="tool-btn active" data-krstocks-range="1y" onclick="setTabChartRange('krstocks', '1y', '1d', this)">1년</button>
+        <button class="tool-btn" data-krstocks-range="5y" onclick="setTabChartRange('krstocks', '5y', '1wk', this)">5년</button>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · 삼성전자 · 캔들 · 1년</div>
+      <div id="tv-krstocks-chart" class="lw-chart-host" style="height:520px;position:relative;z-index:10;"></div>
     </div>
   </div>
 
@@ -2050,6 +2195,14 @@ const CHART_META = {
   '^KS11': { label: '코스피', decimals: 2 }, '^KQ11': { label: '코스닥', decimals: 2 }, 'KRW=X': { label: '원달러', decimals: 2 },
   'GC=F': { label: '금', decimals: 2, prefix: '$' }, 'CL=F': { label: 'WTI', decimals: 2, prefix: '$' }, 'BTC-USD': { label: '비트코인', decimals: 0, prefix: '$' },
   'ETH-USD': { label: '이더리움', decimals: 0, prefix: '$' }, 'DX-Y.NYB': { label: '달러인덱스', decimals: 3 }, '^VIX': { label: 'VIX', decimals: 2 },
+  'NVDA': { label: 'NVIDIA', decimals: 2, prefix: '$' }, 'AAPL': { label: 'Apple', decimals: 2, prefix: '$' }, 'GOOGL': { label: 'Alphabet', decimals: 2, prefix: '$' }, 'MSFT': { label: 'Microsoft', decimals: 2, prefix: '$' },
+  'AMZN': { label: 'Amazon', decimals: 2, prefix: '$' }, 'AVGO': { label: 'Broadcom', decimals: 2, prefix: '$' }, 'META': { label: 'Meta Platforms', decimals: 2, prefix: '$' }, 'TSLA': { label: 'Tesla', decimals: 2, prefix: '$' },
+  'BRK-B': { label: 'Berkshire Hathaway', decimals: 2, prefix: '$' }, 'WMT': { label: 'Walmart', decimals: 2, prefix: '$' },
+  '005930.KS': { label: '삼성전자', decimals: 0 }, '000660.KS': { label: 'SK하이닉스', decimals: 0 }, '042700.KS': { label: '한미반도체', decimals: 0 }, '005380.KS': { label: '현대차', decimals: 0 },
+  '000270.KS': { label: '기아', decimals: 0 }, '012450.KS': { label: '한화에어로스페이스', decimals: 0 }, '064350.KS': { label: '현대로템', decimals: 0 }, '207940.KS': { label: '삼성바이오로직스', decimals: 0 },
+  '068270.KS': { label: '셀트리온', decimals: 0 }, '329180.KS': { label: 'HD현대중공업', decimals: 0 }, '010140.KS': { label: '삼성중공업', decimals: 0 }, '034020.KS': { label: '두산에너빌리티', decimals: 0 },
+  '267260.KS': { label: 'HD현대일렉트릭', decimals: 0 }, '373220.KS': { label: 'LG에너지솔루션', decimals: 0 }, '006800.KS': { label: '미래에셋증권', decimals: 0 }, '105560.KS': { label: 'KB금융', decimals: 0 },
+  '196170.KQ': { label: '알테오젠', decimals: 0 }, '141080.KQ': { label: '리가켐바이오', decimals: 0 },
   'XLK': { label: 'XLK · 기술', decimals: 2 }, 'XLF': { label: 'XLF · 금융', decimals: 2 }, 'XLE': { label: 'XLE · 에너지', decimals: 2 },
   'XLV': { label: 'XLV · 헬스케어', decimals: 2 }, 'XLI': { label: 'XLI · 산업재', decimals: 2 }, 'XLY': { label: 'XLY · 경기소비재', decimals: 2 },
 };
@@ -2061,6 +2214,10 @@ let _mainChartRange = '1y';
 let _mainChartInterval = '1d';
 let _mainChartType = 'candlestick';
 
+const TAB_CHARTS = {
+  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'NVDA', range: '1y', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
+  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '005930.KS', range: '1y', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
+};
 
 const MINI_CHARTS = {
   'tv_us_sp500': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'candlestick' },
@@ -2354,6 +2511,59 @@ function setMainChartType(type, btn) {
   updateMainChartMeta();
   loadLWChart('tv-main-chart', _activeChartSym, { range: _mainChartRange, interval: _mainChartInterval, type, force: true });
 }
+
+function updateTabChartMeta(tabKey) {
+  const cfg = TAB_CHARTS[tabKey];
+  if (!cfg) return;
+  const el = document.getElementById(cfg.metaId);
+  if (!el) return;
+  const typeText = cfg.type === 'candlestick' ? '캔들' : '선';
+  const rangeMap = { '5d': '5일', '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년', '5y': '5년' };
+  el.textContent = `Yahoo Finance · ${chartText(cfg.symbol)} · ${typeText} · ${rangeMap[cfg.range] || cfg.range}`;
+}
+function syncTabChartToolbar(tabKey) {
+  const cfg = TAB_CHARTS[tabKey];
+  if (!cfg) return;
+  document.querySelectorAll(`[data-${tabKey}-type]`).forEach(btn => btn.classList.toggle('active', btn.dataset[`${tabKey}Type`] === cfg.type));
+  document.querySelectorAll(`[data-${tabKey}-range]`).forEach(btn => btn.classList.toggle('active', btn.dataset[`${tabKey}Range`] === cfg.range));
+  document.querySelectorAll(cfg.buttonSelector).forEach(btn => {
+    const onclick = btn.getAttribute('onclick') || '';
+    btn.classList.toggle('active', onclick.includes(`'${cfg.symbol}'`));
+  });
+}
+function loadTabChart(tabKey, force=false) {
+  const cfg = TAB_CHARTS[tabKey];
+  if (!cfg) return;
+  syncTabChartToolbar(tabKey);
+  updateTabChartMeta(tabKey);
+  loadLWChart(cfg.containerId, cfg.symbol, { range: cfg.range, interval: cfg.interval, type: cfg.type, force });
+}
+function switchTabStockChart(tabKey, sym, btn) {
+  const cfg = TAB_CHARTS[tabKey];
+  if (!cfg) return;
+  cfg.symbol = sym;
+  syncTabChartToolbar(tabKey);
+  updateTabChartMeta(tabKey);
+  loadTabChart(tabKey, true);
+}
+function setTabChartType(tabKey, type, btn) {
+  const cfg = TAB_CHARTS[tabKey];
+  if (!cfg) return;
+  cfg.type = type;
+  syncTabChartToolbar(tabKey);
+  updateTabChartMeta(tabKey);
+  loadTabChart(tabKey, true);
+}
+function setTabChartRange(tabKey, range, interval, btn) {
+  const cfg = TAB_CHARTS[tabKey];
+  if (!cfg) return;
+  cfg.range = range;
+  cfg.interval = interval;
+  syncTabChartToolbar(tabKey);
+  updateTabChartMeta(tabKey);
+  loadTabChart(tabKey, true);
+}
+
 function initYahooSectorOverview() {
   const c = document.getElementById('tv-sector');
   if (!c) return;
@@ -2398,6 +2608,8 @@ function initChartsForTab(name) {
   if (name === 'macro') { loadMiniChart('tv_macro_dxy'); loadMiniChart('tv_macro_gold'); }
   if (name === 'options') loadMiniChart('tv_vix_chart');
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
+  if (name === 'usstocks') loadTabChart('usstocks');
+  if (name === 'krstocks') loadTabChart('krstocks');
 }
 function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
 function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
@@ -2405,7 +2617,7 @@ async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } }
+  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
   const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
 document.addEventListener('DOMContentLoaded', () => {
