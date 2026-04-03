@@ -3219,6 +3219,142 @@ async function refreshAll() {
 }
 
 
+
+function extractSymbolFromOnclick(onclickText) {
+  if (!onclickText) return '';
+  const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
+  return match ? match[1] : '';
+}
+
+function buildMobileStockPicker(tabKey) {
+  const root = document.getElementById(tabKey + '-mobile-picker');
+  const cfg = TAB_CHARTS[tabKey];
+  if (!root || !cfg) return;
+
+  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
+  const groups = [];
+  buttons.forEach(btn => {
+    const groupEl = btn.closest('.stock-group');
+    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
+    let group = groups.find(g => g.title === title);
+    if (!group) {
+      group = { title, items: [] };
+      groups.push(group);
+    }
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    group.items.push({ symbol: sym, label: btn.textContent.trim() });
+  });
+
+  root.innerHTML = `
+    <div class="mobile-stock-picker-row">
+      <div>
+        <span class="mobile-stock-picker-label">섹터</span>
+        <select id="${tabKey}-group-select"></select>
+      </div>
+      <div>
+        <span class="mobile-stock-picker-label">종목 선택</span>
+        <select id="${tabKey}-symbol-select"></select>
+      </div>
+    </div>
+    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
+  `;
+
+  const groupSel = document.getElementById(`${tabKey}-group-select`);
+  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
+  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
+
+  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
+
+  function getGroupItems(groupTitle) {
+    return groups.find(g => g.title === groupTitle)?.items || [];
+  }
+
+  function renderSymbols(groupTitle, selectedSymbol='') {
+    const items = getGroupItems(groupTitle);
+    symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
+    const nextSymbol = items.some(item => item.symbol === selectedSymbol)
+      ? selectedSymbol
+      : (items[0]?.symbol || '');
+    symbolSel.value = nextSymbol;
+    const chosen = items.find(item => item.symbol === nextSymbol);
+    currentEl.textContent = chosen ? `${groupTitle} · ${chosen.label}` : '';
+    return nextSymbol;
+  }
+
+  function switchToSymbol(symbol) {
+    if (!symbol) return;
+    const btn = buttons.find(b => extractSymbolFromOnclick(b.getAttribute('onclick') || '') === symbol);
+    switchTabStockChart(tabKey, symbol, btn || null);
+  }
+
+  groupSel.onchange = () => {
+    const symbol = renderSymbols(groupSel.value, '');
+    switchToSymbol(symbol);
+  };
+
+  symbolSel.onchange = () => {
+    const chosenSymbol = symbolSel.value;
+    const chosen = getGroupItems(groupSel.value).find(item => item.symbol === chosenSymbol);
+    currentEl.textContent = chosen ? `${groupSel.value} · ${chosen.label}` : '';
+    switchToSymbol(chosenSymbol);
+  };
+
+  let currentGroupTitle = groups[0]?.title || '';
+  groups.forEach(g => {
+    if (g.items.some(item => item.symbol === cfg.symbol)) currentGroupTitle = g.title;
+  });
+  groupSel.value = currentGroupTitle;
+  renderSymbols(currentGroupTitle, cfg.symbol);
+}
+
+function syncMobileStockPicker(tabKey) {
+  const cfg = TAB_CHARTS[tabKey];
+  const root = document.getElementById(tabKey + '-mobile-picker');
+  if (!cfg || !root) return;
+
+  const groupSel = document.getElementById(`${tabKey}-group-select`);
+  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
+  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
+  if (!groupSel || !symbolSel || !currentEl) return;
+
+  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
+  let groupTitle = '';
+  let label = cfg.symbol;
+
+  buttons.forEach(btn => {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    if (sym === cfg.symbol) {
+      label = btn.textContent.trim();
+      groupTitle = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
+    }
+  });
+
+  if (!groupTitle) return;
+
+  if (groupSel.value !== groupTitle) {
+    groupSel.value = groupTitle;
+  }
+
+  const items = buttons
+    .filter(b => (b.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '') === groupTitle)
+    .map(b => ({ symbol: extractSymbolFromOnclick(b.getAttribute('onclick') || ''), label: b.textContent.trim() }));
+
+  symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
+  symbolSel.value = cfg.symbol;
+  currentEl.textContent = `${groupTitle} · ${label}`;
+}
+
+function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
+function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
+async function refreshAll() {
+  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
+  Logger.log('System', '데이터 갱신 시작', 'ok');
+  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
+  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
+  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
+}
+
+
 function buildMobileStockPicker(tabKey) {
   const root = document.getElementById(tabKey + '-mobile-picker');
   const cfg = TAB_CHARTS[tabKey];
