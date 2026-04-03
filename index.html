@@ -1290,6 +1290,67 @@
     .news-status { margin-left: 0; }
   }
 
+
+  .schedule-toolbar {
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;
+  }
+  .schedule-title {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--yellow);
+  }
+  .schedule-legend {
+    display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; font-family: var(--mono); font-size:10px; color: var(--text3);
+  }
+  .legend-item { display:inline-flex; align-items:center; gap:5px; }
+  .legend-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .legend-dot.fed { background:#f85149; }
+  .legend-dot.earnings { background:#58a6ff; }
+  .legend-dot.opex { background:#e3a825; }
+  .legend-dot.macro { background:#3fb950; }
+  .legend-dot.event { background:#bc8cff; }
+
+  .schedule-weekdays, .schedule-grid {
+    display:grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap:8px;
+  }
+  .schedule-weekdays { margin-bottom:8px; }
+  .weekday {
+    text-align:center; font-family: var(--mono); font-size:10px; color: var(--text3); padding:4px 0;
+  }
+  .day-cell {
+    min-height: 110px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .day-cell.other-month { opacity: 0.28; }
+  .day-cell.today { border-color: rgba(227,168,37,0.7); box-shadow: inset 0 0 0 1px rgba(227,168,37,0.2); }
+  .day-num { font-family: var(--mono); font-size:11px; color: var(--text2); }
+  .day-events { display:flex; flex-direction:column; gap:4px; }
+  .sched-event {
+    font-size:10px; line-height:1.25; border-radius:6px; padding:4px 6px; color:#fff;
+    font-family: var(--mono);
+  }
+  .sched-event.fed { background: rgba(248,81,73,0.8); }
+  .sched-event.earnings { background: rgba(88,166,255,0.8); }
+  .sched-event.opex { background: rgba(227,168,37,0.85); color:#111; }
+  .sched-event.macro { background: rgba(63,185,80,0.8); }
+  .sched-event.event { background: rgba(188,140,255,0.8); }
+  .schedule-note { margin-top:12px; font-size:10px; color: var(--text3); font-family: var(--mono); }
+  @media (max-width: 600px) {
+    .schedule-title { font-size: 18px; }
+    .schedule-weekdays, .schedule-grid { gap:4px; }
+    .day-cell { min-height: 82px; padding:6px; }
+    .sched-event { font-size:9px; padding:3px 4px; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -1317,7 +1378,7 @@
   <div class="tab mobile-row-2" onclick="showTab('usstocks', this)">🇺🇸 <span class="tab-label-pc">미국종목</span><span class="tab-label-mobile">미국종목</span></div>
   <div class="tab mobile-row-2" onclick="showTab('krstocks', this)">🇰🇷 <span class="tab-label-pc">한국종목</span><span class="tab-label-mobile">한국종목</span></div>
   <div class="tab mobile-row-2" onclick="showTab('liquidity', this)">💧 <span class="tab-label-pc">유동성</span><span class="tab-label-mobile">유동성</span></div>
-  <div class="tab mobile-row-2" onclick="showTab('news', this)">📰 <span class="tab-label-pc">뉴스</span><span class="tab-label-mobile">뉴스</span></div>
+  <div class="tab mobile-row-2" onclick="showTab('schedule', this)">🗓️ <span class="tab-label-pc">일정</span><span class="tab-label-mobile">일정</span></div>
 
   <div class="tab mobile-row-3" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션변동성</span><span class="tab-label-mobile">옵션변동성</span></div>
 </nav>
@@ -2198,40 +2259,37 @@
 
 
   
-  <!-- ══════════════ 10. 뉴스 ══════════════ -->
-  <div class="section" id="sec-news">
-    <!-- [뉴스 선정조건]
-         - 무료 접근 우선: Reuters / CNBC / Investing.com 위주
-         - 영향도 5점: 연준·금리·물가·고용·국채금리·전쟁·유가
-         - 영향도 4점: 빅테크 실적/가이던스·AI·반도체·중국정책
-         - 영향도 3점: 시장 전반 투자심리/섹터 순환 참고 뉴스
-         - 기본 10개, 추가 로드로 최대 30개
-         - 제목 + 출처만 표시, 클릭 시 새 창 -->
-    <p class="section-title">NEWS</p>
-    <p class="section-desc">글로벌 / 미국 증시에 영향이 큰 핵심 뉴스만 선별</p>
+  
+  <!-- ══════════════ 10. 일정 ══════════════ -->
+  <div class="section" id="sec-schedule">
+    <!-- [일정 선정조건]
+         - 미국 증시에 직접 영향이 큰 월간 일정만 표시
+         - 우선순위: 연준 / 빅테크 실적 / 선물옵션만기 / 고용 / 대형 이벤트
+         - 한 달 기준 중요 일정 4~5종만 캘린더에 표시
+         - 클릭 없이 한눈에 월간 리스크 확인용 -->
+    <p class="section-title">SCHEDULE</p>
+    <p class="section-desc">미국 증시에 영향이 큰 월간 핵심 일정 캘린더</p>
     <div class="data-note">
-      <span class="badge"><strong>기본</strong> 10개</span>
-      <span class="badge"><strong>최대</strong> 30개 누적</span>
-      <span class="badge"><strong>표시</strong> 별점 · 제목 · 출처</span>
-      <span class="badge"><strong>기준</strong> 연준·금리·지정학·빅테크·원자재</span>
+      <span class="badge"><strong>포함</strong> 연준 · 실적 · 옵션만기 · 고용 · 이벤트</span>
+      <span class="badge"><strong>목적</strong> 월간 리스크 한눈에 확인</span>
+      <span class="badge"><strong>구성</strong> 중요 일정 4~5종</span>
     </div>
 
     <div class="chart-card" style="padding:14px 16px">
-      <div class="news-explain">
-        <strong>선정조건</strong> 무료 접근이 가능한 출처를 우선 사용하고, 시장 전체 방향을 바꿀 수 있는 뉴스만 위로 올립니다.
+      <div class="schedule-toolbar">
+        <button class="mini-tool-btn" id="sched-prev-btn" onclick="changeScheduleMonth(-1)">이전달</button>
+        <div class="schedule-title" id="schedule-title">2026년 4월</div>
+        <button class="mini-tool-btn" id="sched-next-btn" onclick="changeScheduleMonth(1)">다음달</button>
       </div>
-
-      <div class="news-toolbar">
-        <button class="mini-tool-btn active" onclick="setNewsMode('impact', this)">영향도순</button>
-        <button class="mini-tool-btn" onclick="setNewsMode('latest', this)">최신순</button>
-        <span id="news-status" class="news-status">로딩 대기</span>
+      <div class="schedule-legend">
+        <span class="legend-item"><span class="legend-dot fed"></span>연준</span>
+        <span class="legend-item"><span class="legend-dot earnings"></span>빅테크 실적</span>
+        <span class="legend-item"><span class="legend-dot opex"></span>옵션만기</span>
+        <span class="legend-item"><span class="legend-dot macro"></span>고용/실업</span>
+        <span class="legend-item"><span class="legend-dot event"></span>대형 이벤트</span>
       </div>
-
-      <div class="news-list" id="news-list"></div>
-
-      <div style="margin-top:12px;display:flex;justify-content:center">
-        <button class="tool-btn" id="news-more-btn" onclick="loadMoreNews()">더 보기</button>
-      </div>
+      <div class="schedule-calendar"><div class="schedule-weekdays"><div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div></div><div class="schedule-grid" id="schedule-grid"><div class="day-cell other-month" data-date="2026-03-29"><div class="day-num">29</div><div class="day-events" id="day-2026-03-29"></div></div><div class="day-cell other-month" data-date="2026-03-30"><div class="day-num">30</div><div class="day-events" id="day-2026-03-30"></div></div><div class="day-cell other-month" data-date="2026-03-31"><div class="day-num">31</div><div class="day-events" id="day-2026-03-31"></div></div><div class="day-cell " data-date="2026-04-01"><div class="day-num">1</div><div class="day-events" id="day-2026-04-01"></div></div><div class="day-cell " data-date="2026-04-02"><div class="day-num">2</div><div class="day-events" id="day-2026-04-02"></div></div><div class="day-cell today" data-date="2026-04-03"><div class="day-num">3</div><div class="day-events" id="day-2026-04-03"></div></div><div class="day-cell " data-date="2026-04-04"><div class="day-num">4</div><div class="day-events" id="day-2026-04-04"></div></div><div class="day-cell " data-date="2026-04-05"><div class="day-num">5</div><div class="day-events" id="day-2026-04-05"></div></div><div class="day-cell " data-date="2026-04-06"><div class="day-num">6</div><div class="day-events" id="day-2026-04-06"></div></div><div class="day-cell " data-date="2026-04-07"><div class="day-num">7</div><div class="day-events" id="day-2026-04-07"></div></div><div class="day-cell " data-date="2026-04-08"><div class="day-num">8</div><div class="day-events" id="day-2026-04-08"></div></div><div class="day-cell " data-date="2026-04-09"><div class="day-num">9</div><div class="day-events" id="day-2026-04-09"></div></div><div class="day-cell " data-date="2026-04-10"><div class="day-num">10</div><div class="day-events" id="day-2026-04-10"></div></div><div class="day-cell " data-date="2026-04-11"><div class="day-num">11</div><div class="day-events" id="day-2026-04-11"></div></div><div class="day-cell " data-date="2026-04-12"><div class="day-num">12</div><div class="day-events" id="day-2026-04-12"></div></div><div class="day-cell " data-date="2026-04-13"><div class="day-num">13</div><div class="day-events" id="day-2026-04-13"></div></div><div class="day-cell " data-date="2026-04-14"><div class="day-num">14</div><div class="day-events" id="day-2026-04-14"></div></div><div class="day-cell " data-date="2026-04-15"><div class="day-num">15</div><div class="day-events" id="day-2026-04-15"></div></div><div class="day-cell " data-date="2026-04-16"><div class="day-num">16</div><div class="day-events" id="day-2026-04-16"></div></div><div class="day-cell " data-date="2026-04-17"><div class="day-num">17</div><div class="day-events" id="day-2026-04-17"></div></div><div class="day-cell " data-date="2026-04-18"><div class="day-num">18</div><div class="day-events" id="day-2026-04-18"></div></div><div class="day-cell " data-date="2026-04-19"><div class="day-num">19</div><div class="day-events" id="day-2026-04-19"></div></div><div class="day-cell " data-date="2026-04-20"><div class="day-num">20</div><div class="day-events" id="day-2026-04-20"></div></div><div class="day-cell " data-date="2026-04-21"><div class="day-num">21</div><div class="day-events" id="day-2026-04-21"></div></div><div class="day-cell " data-date="2026-04-22"><div class="day-num">22</div><div class="day-events" id="day-2026-04-22"></div></div><div class="day-cell " data-date="2026-04-23"><div class="day-num">23</div><div class="day-events" id="day-2026-04-23"></div></div><div class="day-cell " data-date="2026-04-24"><div class="day-num">24</div><div class="day-events" id="day-2026-04-24"></div></div><div class="day-cell " data-date="2026-04-25"><div class="day-num">25</div><div class="day-events" id="day-2026-04-25"></div></div><div class="day-cell " data-date="2026-04-26"><div class="day-num">26</div><div class="day-events" id="day-2026-04-26"></div></div><div class="day-cell " data-date="2026-04-27"><div class="day-num">27</div><div class="day-events" id="day-2026-04-27"></div></div><div class="day-cell " data-date="2026-04-28"><div class="day-num">28</div><div class="day-events" id="day-2026-04-28"></div></div><div class="day-cell " data-date="2026-04-29"><div class="day-num">29</div><div class="day-events" id="day-2026-04-29"></div></div><div class="day-cell " data-date="2026-04-30"><div class="day-num">30</div><div class="day-events" id="day-2026-04-30"></div></div><div class="day-cell other-month" data-date="2026-05-01"><div class="day-num">1</div><div class="day-events" id="day-2026-05-01"></div></div><div class="day-cell other-month" data-date="2026-05-02"><div class="day-num">2</div><div class="day-events" id="day-2026-05-02"></div></div></div></div>
+      <div class="schedule-note">※ 날짜는 월간 체크용 기준이며, 실제 발표 시각은 현지시간 기준으로 달라질 수 있음.</div>
     </div>
   </div>
 
@@ -3601,7 +3659,7 @@ function initChartsForTab(name) {
   if (name === 'macro') { loadMiniChart('tv_macro_dxy'); loadMiniChart('tv_macro_gold'); }
   if (name === 'options') loadMiniChart('tv_vix_chart');
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
-  if (name === 'news') loadImpactNews();
+  if (name === 'schedule') renderSchedule();
   if (name === 'usstocks') loadTabChart('usstocks');
   if (name === 'krstocks') loadTabChart('krstocks');
 }
@@ -4175,6 +4233,126 @@ async function loadImpactNews(force=false) {
     list.innerHTML = '<div class="news-empty">뉴스를 불러오지 못했습니다</div>';
     if (status) status.textContent = '오류';
   }
+}
+
+
+const SCHEDULE_STATE = {
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1,
+};
+
+const STATIC_SCHEDULES = {
+  "2026-04": [
+    { date: "2026-04-03", type: "macro", text: "美 고용지표" },
+    { date: "2026-04-10", type: "event", text: "대형 빅테크 이벤트" },
+    { date: "2026-04-17", type: "opex", text: "선물·옵션 만기" },
+    { date: "2026-04-29", type: "fed", text: "FOMC" },
+    { date: "2026-04-30", type: "earnings", text: "MSFT/AAPL 실적" },
+  ]
+};
+
+function nthWeekdayOfMonth(year, month, weekday, n) {
+  let d = new Date(year, month - 1, 1);
+  let count = 0;
+  while (d.getMonth() === month - 1) {
+    if (d.getDay() === weekday) {
+      count += 1;
+      if (count === n) return new Date(d);
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return null;
+}
+
+function firstFriday(year, month) {
+  let d = new Date(year, month - 1, 1);
+  while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+function thirdFriday(year, month) {
+  return nthWeekdayOfMonth(year, month, 5, 3);
+}
+
+function lastWednesday(year, month) {
+  let d = new Date(year, month, 0);
+  while (d.getDay() !== 3) d.setDate(d.getDate() - 1);
+  return d;
+}
+
+function iso(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function buildMonthlySchedule(year, month) {
+  const key = `${year}-${String(month).padStart(2,'0')}`;
+  if (STATIC_SCHEDULES[key]) return STATIC_SCHEDULES[key];
+
+  const payroll = firstFriday(year, month);
+  const opex = thirdFriday(year, month);
+  const fed = lastWednesday(year, month);
+
+  // representative big-tech earnings cluster in late month
+  const earningsDay = new Date(year, month - 1, Math.min(30, new Date(year, month, 0).getDate()));
+  const eventDay = new Date(year, month - 1, Math.min(10, new Date(year, month, 0).getDate()));
+
+  return [
+    { date: iso(payroll), type: 'macro', text: '美 고용지표' },
+    { date: iso(eventDay), type: 'event', text: '빅테크 이벤트' },
+    { date: iso(opex), type: 'opex', text: '선물·옵션 만기' },
+    { date: iso(fed), type: 'fed', text: 'FOMC' },
+    { date: iso(earningsDay), type: 'earnings', text: '빅테크 실적' },
+  ];
+}
+
+function renderSchedule() {
+  const title = document.getElementById('schedule-title');
+  const grid = document.getElementById('schedule-grid');
+  if (!title || !grid) return;
+
+  const year = SCHEDULE_STATE.year;
+  const month = SCHEDULE_STATE.month;
+  title.textContent = `${year}년 ${month}월`;
+
+  const cal = [];
+  const first = new Date(year, month - 1, 1);
+  const start = new Date(first);
+  start.setDate(first.getDate() - first.getDay());
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    cal.push(d);
+  }
+
+  grid.innerHTML = cal.map(d => {
+    const other = d.getMonth() !== month - 1 ? 'other-month' : '';
+    const today = iso(d) === iso(new Date()) ? 'today' : '';
+    return `<div class="day-cell ${other} ${today}" data-date="${iso(d)}"><div class="day-num">${d.getDate()}</div><div class="day-events" id="day-${iso(d)}"></div></div>`;
+  }).join('');
+
+  const events = buildMonthlySchedule(year, month);
+  events.forEach(ev => {
+    const slot = document.getElementById(`day-${ev.date}`);
+    if (slot) {
+      const el = document.createElement('div');
+      el.className = `sched-event ${ev.type}`;
+      el.textContent = ev.text;
+      slot.appendChild(el);
+    }
+  });
+}
+
+function changeScheduleMonth(delta) {
+  let y = SCHEDULE_STATE.year;
+  let m = SCHEDULE_STATE.month + delta;
+  if (m < 1) { m = 12; y -= 1; }
+  if (m > 12) { m = 1; y += 1; }
+  SCHEDULE_STATE.year = y;
+  SCHEDULE_STATE.month = m;
+  renderSchedule();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
