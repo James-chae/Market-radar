@@ -713,16 +713,18 @@
     margin-bottom: 10px;
   }
   .stock-groups {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 12px;
+    align-items: start;
   }
   .stock-group {
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 12px;
+    min-width: 0;
   }
   .stock-group-title {
     font-family: var(--mono);
@@ -735,6 +737,16 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+  }
+  @media (min-width: 1600px) {
+    .stock-groups {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 900px) {
+    .stock-groups {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 600px) {
