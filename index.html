@@ -1351,48 +1351,6 @@
     .sched-event { font-size:9px; padding:3px 4px; }
   }
 
-
-  .schedule-week-box {
-    margin: 0 0 14px;
-    padding: 12px 14px;
-    border: 1px solid rgba(227,168,37,0.28);
-    border-radius: 12px;
-    background: rgba(227,168,37,0.05);
-  }
-  .schedule-week-title {
-    font-family: var(--display);
-    font-size: 18px;
-    letter-spacing: 1px;
-    color: var(--yellow);
-    margin-bottom: 8px;
-  }
-  .schedule-week-list {
-    display: grid;
-    gap: 6px;
-  }
-  .schedule-week-item {
-    display: grid;
-    grid-template-columns: 64px 1fr;
-    gap: 10px;
-    align-items: start;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text2);
-  }
-  .schedule-week-date {
-    color: var(--yellow);
-    white-space: nowrap;
-  }
-  .schedule-week-empty {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-  }
-  @media (max-width: 600px) {
-    .schedule-week-title { font-size: 16px; }
-    .schedule-week-item { grid-template-columns: 56px 1fr; font-size: 10px; }
-  }
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -2319,11 +2277,6 @@
     </div>
 
     <div class="chart-card" style="padding:14px 16px">
-      <div class="schedule-week-box">
-        <div class="schedule-week-title">THIS WEEK</div>
-        <div class="schedule-week-list" id="schedule-week-list"></div>
-      </div>
-
       <div class="schedule-toolbar">
         <button class="mini-tool-btn" id="sched-prev-btn" onclick="changeScheduleMonth(-1)">이전달</button>
         <div class="schedule-title" id="schedule-title">2026년 4월</div>
@@ -4396,47 +4349,6 @@ function iso(d) {
   return `${y}-${m}-${day}`;
 }
 
-
-function renderWeeklySchedule() {
-  const box = document.getElementById('schedule-week-list');
-  if (!box) return;
-
-  const now = new Date();
-  const day = now.getDay();
-  const start = new Date(now);
-  start.setDate(now.getDate() - day); // Sunday start
-  start.setHours(0,0,0,0);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  end.setHours(23,59,59,999);
-
-  const monthKey = `${SCHEDULE_STATE.year}-${String(SCHEDULE_STATE.month).padStart(2, '0')}`;
-  const currentMonthEvents = buildMonthlySchedule(SCHEDULE_STATE.year, SCHEDULE_STATE.month);
-
-  const weekEvents = currentMonthEvents.filter(ev => {
-    const d = new Date(ev.date + 'T12:00:00');
-    return d >= start && d <= end;
-  }).sort((a,b) => (a.date > b.date) - (a.date < b.date));
-
-  if (!weekEvents.length) {
-    box.innerHTML = '<div class="schedule-week-empty">이번 주 핵심 일정 없음</div>';
-    return;
-  }
-
-  box.innerHTML = weekEvents.map(ev => {
-    const d = new Date(ev.date + 'T12:00:00');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `
-      <div class="schedule-week-item">
-        <div class="schedule-week-date">${mm}/${dd}</div>
-        <div>${ev.text}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-
 function renderSchedule() {
   const title = document.getElementById('schedule-title');
   const grid = document.getElementById('schedule-grid');
@@ -4463,7 +4375,6 @@ function renderSchedule() {
   }).join('');
 
   const events = buildMonthlySchedule(year, month);
-  renderWeeklySchedule();
   events.forEach(ev => {
     const slot = document.getElementById(`day-${ev.date}`);
     if (slot) {
