@@ -712,6 +712,30 @@
     font-family: var(--mono);
     margin-bottom: 10px;
   }
+  .stock-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .stock-group {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .stock-group-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--yellow);
+    margin-bottom: 8px;
+  }
+  .stock-group-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 
   @media (max-width: 600px) {
     nav {
@@ -825,7 +849,7 @@
       grid-template-columns: 1fr;
     }
     #sec-us .chart-h-us {
-      height: 420px;
+      height: 702px;
     }
 
     /* 한국 TAB: 코스피/코스닥 전체폭, 원달러 더 크게 */
@@ -1469,7 +1493,7 @@
       grid-template-columns: 1fr;
     }
     #sec-us .chart-h-us {
-      height: 420px;
+      height: 702px;
     }
 
     /* 한국 TAB: 코스피/코스닥 전체폭, 원달러 더 크게 */
@@ -1527,19 +1551,73 @@
     <p class="section-title">US STOCKS</p>
     <p class="section-desc">미국 주요 종목 · Yahoo Finance 인터랙티브 차트</p>
 
-    <div class="stock-section-subdesc">NVIDIA, Apple, Alphabet, Microsoft, Amazon, Broadcom, Meta, Tesla, Berkshire Hathaway, Walmart</div>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <button class="chart-btn us-stock-btn active" onclick="switchTabStockChart('usstocks', 'NVDA', this)">NVIDIA</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AAPL', this)">Apple</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GOOGL', this)">Alphabet</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'MSFT', this)">Microsoft</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AMZN', this)">Amazon</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AVGO', this)">Broadcom</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'META', this)">Meta</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'TSLA', this)">Tesla</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'BRK-B', this)">Berkshire</button>
-      <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'WMT', this)">Walmart</button>
+    <div class="stock-groups">
+<div class="stock-group">
+      <div class="stock-group-title">0. ETF</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn active" onclick="switchTabStockChart('usstocks', 'SPY', this)">SPY</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'VOO', this)">VOO</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'QQQ', this)">QQQ</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SOXX', this)">SOXX</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SOXL', this)">SOXL</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NLR', this)">NLR</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'URNM', this)">URNM</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'PPA', this)">PPA</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'ITA', this)">ITA</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">1. 시총</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NVDA', this)">NVIDIA</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AAPL', this)">Apple</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'MSFT', this)">Microsoft</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GOOGL', this)">Alphabet</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AVGO', this)">Broadcom</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'TSLA', this)">Tesla</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'META', this)">Meta</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'BRK-B', this)">Berkshire</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'WMT', this)">Walmart</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">2. 반도체</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'TSM', this)">TSMC</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AMD', this)">AMD</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AMAT', this)">AMAT</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'KLAC', this)">KLAC</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">3. AI</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'ORCL', this)">Oracle</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'PLTR', this)">Palantir</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AMZN', this)">Amazon</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">4. 통신</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NFLX', this)">Netflix</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'DIS', this)">Disney</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'T', this)">AT&T</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'VZ', this)">Verizon</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">5. 헬스케어</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'LLY', this)">Eli Lilly</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NVO', this)">Novo Nordisk</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'HIMS', this)">HIMS</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'UNH', this)">UnitedHealth</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'ABBV', this)">AbbVie</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'JNJ', this)">JNJ</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">6. Energy</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'ALB', this)">Albemarle</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'TSLA', this)">Tesla</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SQM', this)">SQM</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'LAC', this)">Lithium Americas</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">7. 원자력</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'CEG', this)">Constellation</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SMR', this)">NuScale</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'OKLO', this)">Oklo</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'CCJ', this)">Cameco</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'BWXT', this)">BWXT</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GEV', this)">GE Vernova</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'VST', this)">Vistra</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">8. 산업·방산</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'LMT', this)">Lockheed</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'RTX', this)">RTX</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NOC', this)">Northrop</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GD', this)">General Dynamics</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'IONQ', this)">IONQ</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'HON', this)">Honeywell</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">9. Financials</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'BRK-B', this)">Berkshire</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'JPM', this)">JPM</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GS', this)">Goldman Sachs</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'V', this)">Visa</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'MA', this)">Mastercard</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">10. Consumer Staples</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'WMT', this)">Walmart</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'PG', this)">P&G</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'KO', this)">Coca-Cola</button>
+      </div>
+    </div>
     </div>
 
     <div class="chart-toolbar">
@@ -1560,7 +1638,7 @@
     </div>
 
     <div class="chart-card">
-      <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · NVIDIA · 캔들 · 6개월</div>
+      <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · SPY · 캔들 · 6개월</div>
       <div id="tv-usstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
   </div>
@@ -1570,27 +1648,79 @@
     <p class="section-title">KOREA STOCKS</p>
     <p class="section-desc">한국 주요 종목 · Yahoo Finance 인터랙티브 차트</p>
 
-    <div class="stock-section-subdesc">삼성전자, SK하이닉스, 한미반도체, 현대차, 기아, 한화에어로스페이스, 현대로템, 삼성바이오로직스, 셀트리온, HD현대중공업, 삼성중공업, 두산에너빌리티, HD현대일렉트릭, LG에너지솔루션, 미래에셋증권, KB금융, 알테오젠, 리가켐바이오</div>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <button class="chart-btn kr-stock-btn active" onclick="switchTabStockChart('krstocks', '005930.KS', this)">삼성전자</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000660.KS', this)">SK하이닉스</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '042700.KS', this)">한미반도체</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '005380.KS', this)">현대차</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000270.KS', this)">기아</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '012450.KS', this)">한화에어로</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '064350.KS', this)">현대로템</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '207940.KS', this)">삼성바이오</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '068270.KS', this)">셀트리온</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '329180.KS', this)">HD현대중공업</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '010140.KS', this)">삼성중공업</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '034020.KS', this)">두산에너빌</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '267260.KS', this)">HD현대일렉</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '373220.KS', this)">LG에너지솔루션</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '006800.KS', this)">미래에셋증권</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '105560.KS', this)">KB금융</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '196170.KQ', this)">알테오젠</button>
-      <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '141080.KQ', this)">리가켐바이오</button>
+    <div class="stock-groups">
+<div class="stock-group">
+      <div class="stock-group-title">0. ETF</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn active" onclick="switchTabStockChart('krstocks', '091230.KS', this)">TIGER 반도체</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '091160.KS', this)">KODEX 반도체</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '305720.KS', this)">KODEX 2차전지산업</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '0080G0.KS', this)">KODEX 방산TOP10</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '400570.KS', this)">TIGER 원자력·우주항공</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">1. 반도체</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '005930.KS', this)">삼성전자</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000660.KS', this)">SK하이닉스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '042700.KS', this)">한미반도체</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '357780.KQ', this)">솔브레인</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000990.KS', this)">DB하이텍</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '039030.KQ', this)">이오테크닉스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '036930.KQ', this)">주성엔지니어링</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">2. 자동차</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '005380.KS', this)">현대차</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000270.KS', this)">기아</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">3. 조선</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '329180.KS', this)">HD현대중공업</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '010140.KS', this)">삼성중공업</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '042660.KS', this)">한화오션</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">4. 에너지</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '267260.KS', this)">HD현대일렉트릭</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '010120.KS', this)">LS ELECTRIC</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">5. 원자력</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '034020.KS', this)">두산에너빌리티</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '015760.KS', this)">한국전력</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '052690.KS', this)">한전기술</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '051600.KS', this)">한전KPS</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">6. 방산</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '012450.KS', this)">한화에어로스페이스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '079550.KS', this)">LIG넥스원</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '064350.KS', this)">현대로템</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">7. 헬스케어</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '207940.KS', this)">삼성바이오로직스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '068270.KS', this)">셀트리온</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '196170.KQ', this)">알테오젠</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '141080.KQ', this)">리가켐바이오</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">8. 2차전지</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '373220.KS', this)">LG에너지솔루션</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '006400.KS', this)">삼성SDI</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '003670.KS', this)">포스코퓨처엠</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '086520.KQ', this)">에코프로</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '247540.KQ', this)">에코프로비엠</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">9. 우주</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '006800.KS', this)">미래에셋증권</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '099320.KQ', this)">쎄트렉아이</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '001430.KS', this)">세아베스틸지주</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '295310.KQ', this)">에이치브이엠</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '347700.KQ', this)">스피어</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">10. 금융</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '105560.KS', this)">KB금융</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '055550.KS', this)">신한지주</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '086790.KS', this)">하나금융지주</button>
+      </div>
+    </div>
+<div class="stock-group">
+      <div class="stock-group-title">11. 통신</div>
+      <div class="stock-group-buttons">
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '017670.KS', this)">SK텔레콤</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '030200.KS', this)">KT</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '032640.KS', this)">LG U+</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '035420.KS', this)">NAVER</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '035720.KS', this)">카카오</button>
+      </div>
+    </div>
     </div>
 
     <div class="chart-toolbar">
@@ -1611,7 +1741,7 @@
     </div>
 
     <div class="chart-card">
-      <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · 삼성전자 · 캔들 · 6개월</div>
+      <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · TIGER 반도체 · 캔들 · 6개월</div>
       <div id="tv-krstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
   </div>
@@ -2468,14 +2598,33 @@ const CHART_META = {
   '^KS11': { label: '코스피', decimals: 2 }, '^KQ11': { label: '코스닥', decimals: 2 }, 'KRW=X': { label: '원달러', decimals: 2 },
   'GC=F': { label: '금', decimals: 2, prefix: '$' }, 'CL=F': { label: 'WTI', decimals: 2, prefix: '$' }, 'BTC-USD': { label: '비트코인', decimals: 0, prefix: '$' },
   'ETH-USD': { label: '이더리움', decimals: 0, prefix: '$' }, 'DX-Y.NYB': { label: '달러인덱스', decimals: 3 }, '^VIX': { label: 'VIX', decimals: 2 },
+  'SPY': { label: 'SPY', decimals: 2, prefix: '$' }, 'VOO': { label: 'VOO', decimals: 2, prefix: '$' }, 'QQQ': { label: 'QQQ', decimals: 2, prefix: '$' },
+  'SOXX': { label: 'SOXX', decimals: 2, prefix: '$' }, 'SOXL': { label: 'SOXL', decimals: 2, prefix: '$' }, 'NLR': { label: 'NLR', decimals: 2, prefix: '$' },
+  'URNM': { label: 'URNM', decimals: 2, prefix: '$' }, 'PPA': { label: 'PPA', decimals: 2, prefix: '$' }, 'ITA': { label: 'ITA', decimals: 2, prefix: '$' },
   'NVDA': { label: 'NVIDIA', decimals: 2, prefix: '$' }, 'AAPL': { label: 'Apple', decimals: 2, prefix: '$' }, 'GOOGL': { label: 'Alphabet', decimals: 2, prefix: '$' }, 'MSFT': { label: 'Microsoft', decimals: 2, prefix: '$' },
   'AMZN': { label: 'Amazon', decimals: 2, prefix: '$' }, 'AVGO': { label: 'Broadcom', decimals: 2, prefix: '$' }, 'META': { label: 'Meta Platforms', decimals: 2, prefix: '$' }, 'TSLA': { label: 'Tesla', decimals: 2, prefix: '$' },
-  'BRK-B': { label: 'Berkshire Hathaway', decimals: 2, prefix: '$' }, 'WMT': { label: 'Walmart', decimals: 2, prefix: '$' },
-  '005930.KS': { label: '삼성전자', decimals: 0 }, '000660.KS': { label: 'SK하이닉스', decimals: 0 }, '042700.KS': { label: '한미반도체', decimals: 0 }, '005380.KS': { label: '현대차', decimals: 0 },
-  '000270.KS': { label: '기아', decimals: 0 }, '012450.KS': { label: '한화에어로스페이스', decimals: 0 }, '064350.KS': { label: '현대로템', decimals: 0 }, '207940.KS': { label: '삼성바이오로직스', decimals: 0 },
-  '068270.KS': { label: '셀트리온', decimals: 0 }, '329180.KS': { label: 'HD현대중공업', decimals: 0 }, '010140.KS': { label: '삼성중공업', decimals: 0 }, '034020.KS': { label: '두산에너빌리티', decimals: 0 },
-  '267260.KS': { label: 'HD현대일렉트릭', decimals: 0 }, '373220.KS': { label: 'LG에너지솔루션', decimals: 0 }, '006800.KS': { label: '미래에셋증권', decimals: 0 }, '105560.KS': { label: 'KB금융', decimals: 0 },
-  '196170.KQ': { label: '알테오젠', decimals: 0 }, '141080.KQ': { label: '리가켐바이오', decimals: 0 },
+  'BRK-B': { label: 'Berkshire Hathaway', decimals: 2, prefix: '$' }, 'WMT': { label: 'Walmart', decimals: 2, prefix: '$' }, 'TSM': { label: 'TSMC', decimals: 2, prefix: '$' }, 'AMD': { label: 'AMD', decimals: 2, prefix: '$' },
+  'AMAT': { label: 'Applied Materials', decimals: 2, prefix: '$' }, 'KLAC': { label: 'KLA', decimals: 2, prefix: '$' }, 'ORCL': { label: 'Oracle', decimals: 2, prefix: '$' }, 'PLTR': { label: 'Palantir', decimals: 2, prefix: '$' },
+  'NFLX': { label: 'Netflix', decimals: 2, prefix: '$' }, 'DIS': { label: 'Disney', decimals: 2, prefix: '$' }, 'T': { label: 'AT&T', decimals: 2, prefix: '$' }, 'VZ': { label: 'Verizon', decimals: 2, prefix: '$' },
+  'LLY': { label: 'Eli Lilly', decimals: 2, prefix: '$' }, 'NVO': { label: 'Novo Nordisk', decimals: 2, prefix: '$' }, 'HIMS': { label: 'Hims & Hers', decimals: 2, prefix: '$' }, 'UNH': { label: 'UnitedHealth', decimals: 2, prefix: '$' },
+  'ABBV': { label: 'AbbVie', decimals: 2, prefix: '$' }, 'JNJ': { label: 'Johnson & Johnson', decimals: 2, prefix: '$' }, 'ALB': { label: 'Albemarle', decimals: 2, prefix: '$' }, 'SQM': { label: 'SQM', decimals: 2, prefix: '$' },
+  'LAC': { label: 'Lithium Americas', decimals: 2, prefix: '$' }, 'CEG': { label: 'Constellation Energy', decimals: 2, prefix: '$' }, 'SMR': { label: 'NuScale Power', decimals: 2, prefix: '$' }, 'OKLO': { label: 'Oklo', decimals: 2, prefix: '$' },
+  'CCJ': { label: 'Cameco', decimals: 2, prefix: '$' }, 'BWXT': { label: 'BWX Technologies', decimals: 2, prefix: '$' }, 'GEV': { label: 'GE Vernova', decimals: 2, prefix: '$' }, 'VST': { label: 'Vistra', decimals: 2, prefix: '$' },
+  'LMT': { label: 'Lockheed Martin', decimals: 2, prefix: '$' }, 'RTX': { label: 'RTX', decimals: 2, prefix: '$' }, 'NOC': { label: 'Northrop Grumman', decimals: 2, prefix: '$' }, 'GD': { label: 'General Dynamics', decimals: 2, prefix: '$' },
+  'IONQ': { label: 'IONQ', decimals: 2, prefix: '$' }, 'HON': { label: 'Honeywell', decimals: 2, prefix: '$' }, 'JPM': { label: 'JPMorgan Chase', decimals: 2, prefix: '$' }, 'GS': { label: 'Goldman Sachs', decimals: 2, prefix: '$' },
+  'V': { label: 'Visa', decimals: 2, prefix: '$' }, 'MA': { label: 'Mastercard', decimals: 2, prefix: '$' }, 'PG': { label: 'Procter & Gamble', decimals: 2, prefix: '$' }, 'KO': { label: 'Coca-Cola', decimals: 2, prefix: '$' },
+  '091230.KS': { label: 'TIGER 반도체', decimals: 0 }, '091160.KS': { label: 'KODEX 반도체', decimals: 0 }, '305720.KS': { label: 'KODEX 2차전지산업', decimals: 0 },
+  '0080G0.KS': { label: 'KODEX 방산TOP10', decimals: 0 }, '400570.KS': { label: 'TIGER 원자력·우주항공', decimals: 0 },
+  '005930.KS': { label: '삼성전자', decimals: 0 }, '000660.KS': { label: 'SK하이닉스', decimals: 0 }, '042700.KS': { label: '한미반도체', decimals: 0 }, '357780.KQ': { label: '솔브레인', decimals: 0 }, '000990.KS': { label: 'DB하이텍', decimals: 0 },
+  '039030.KQ': { label: '이오테크닉스', decimals: 0 }, '036930.KQ': { label: '주성엔지니어링', decimals: 0 }, '005380.KS': { label: '현대차', decimals: 0 }, '000270.KS': { label: '기아', decimals: 0 },
+  '329180.KS': { label: 'HD현대중공업', decimals: 0 }, '010140.KS': { label: '삼성중공업', decimals: 0 }, '042660.KS': { label: '한화오션', decimals: 0 }, '267260.KS': { label: 'HD현대일렉트릭', decimals: 0 }, '010120.KS': { label: 'LS ELECTRIC', decimals: 0 },
+  '034020.KS': { label: '두산에너빌리티', decimals: 0 }, '015760.KS': { label: '한국전력', decimals: 0 }, '052690.KS': { label: '한전기술', decimals: 0 }, '051600.KS': { label: '한전KPS', decimals: 0 },
+  '012450.KS': { label: '한화에어로스페이스', decimals: 0 }, '079550.KS': { label: 'LIG넥스원', decimals: 0 }, '064350.KS': { label: '현대로템', decimals: 0 }, '207940.KS': { label: '삼성바이오로직스', decimals: 0 },
+  '068270.KS': { label: '셀트리온', decimals: 0 }, '196170.KQ': { label: '알테오젠', decimals: 0 }, '141080.KQ': { label: '리가켐바이오', decimals: 0 }, '373220.KS': { label: 'LG에너지솔루션', decimals: 0 },
+  '006400.KS': { label: '삼성SDI', decimals: 0 }, '003670.KS': { label: '포스코퓨처엠', decimals: 0 }, '086520.KQ': { label: '에코프로', decimals: 0 }, '247540.KQ': { label: '에코프로비엠', decimals: 0 },
+  '006800.KS': { label: '미래에셋증권', decimals: 0 }, '099320.KQ': { label: '쎄트렉아이', decimals: 0 }, '001430.KS': { label: '세아베스틸지주', decimals: 0 }, '295310.KQ': { label: '에이치브이엠', decimals: 0 },
+  '347700.KQ': { label: '스피어', decimals: 0 }, '105560.KS': { label: 'KB금융', decimals: 0 }, '055550.KS': { label: '신한지주', decimals: 0 }, '086790.KS': { label: '하나금융지주', decimals: 0 },
+  '017670.KS': { label: 'SK텔레콤', decimals: 0 }, '030200.KS': { label: 'KT', decimals: 0 }, '032640.KS': { label: 'LG U+', decimals: 0 }, '035420.KS': { label: 'NAVER', decimals: 0 }, '035720.KQ': { label: '카카오', decimals: 0 },
   'XLK': { label: 'XLK · 기술', decimals: 2 }, 'XLF': { label: 'XLF · 금융', decimals: 2 }, 'XLE': { label: 'XLE · 에너지', decimals: 2 },
   'XLV': { label: 'XLV · 헬스케어', decimals: 2 }, 'XLI': { label: 'XLI · 산업재', decimals: 2 }, 'XLY': { label: 'XLY · 경기소비재', decimals: 2 },
 };
@@ -2488,8 +2637,8 @@ let _mainChartInterval = '1d';
 let _mainChartType = 'candlestick';
 
 const TAB_CHARTS = {
-  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'NVDA', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
-  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '005930.KS', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
+  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'SPY', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
+  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '091230.KS', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
 };
 
 const MINI_CHARTS = {
