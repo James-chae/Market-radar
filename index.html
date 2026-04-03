@@ -1148,6 +1148,30 @@
     box-shadow: inset 0 0 0 1px rgba(227,168,37,0.22);
   }
 
+
+  /* 한국 종목 거래대금 색상/배치 조정 */
+  #sec-krstocks .stock-group-title .title-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  #sec-krstocks .stock-group-title .title-amt {
+    font-size: 10px;
+    color: var(--yellow) !important;
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+  .kr-stock-btn .stock-btn-pct .amt {
+    color: var(--yellow) !important;
+    font-weight: 700;
+  }
+  .mobile-stock-current .pct .amt {
+    color: var(--yellow) !important;
+    font-weight: 700;
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -3626,7 +3650,7 @@ async function updateKRStockSignals() {
   buttons.forEach(btn => {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
     const info = signals[sym];
-    const pctText = info ? `${info.pctText} · ${info.amountText}` : '--';
+    const pctText = info ? `${info.pctText} · <span class="amt">${info.amountText}</span>` : '--';
     setStockButtonSignal(btn, info?.state || 'flat', pctText);
 
     const titleEl = btn.closest('.stock-group')?.querySelector('.stock-group-title');
@@ -3699,8 +3723,8 @@ function renderKRStockGroupTitle(el, amountEok=0, rank=0) {
     <span class="title-left">
       ${crown ? `<span class="crown">${crown}</span>` : ''}
       <span class="title-main">${base}</span>
+      <span class="title-amt">${formatEok(amountEok)}</span>
     </span>
-    <span class="title-amt">${formatEok(amountEok)}</span>
   `;
 }
 
@@ -3711,10 +3735,14 @@ function updateKRStockSectorTotals(sectorTotals) {
     const base = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '';
     const amount = Number(sectorTotals?.[base] || 0);
     return { group, titleEl, base, amount };
-  }).sort((a, b) => b.amount - a.amount);
+  });
 
-  const top1 = ranked[0]?.amount > 0 ? ranked[0].base : '';
-  const top2 = ranked[1]?.amount > 0 ? ranked[1].base : '';
+  const rankedForTop = ranked
+    .filter(item => item.base !== '0. ETF')
+    .sort((a, b) => b.amount - a.amount);
+
+  const top1 = rankedForTop[0]?.amount > 0 ? rankedForTop[0].base : '';
+  const top2 = rankedForTop[1]?.amount > 0 ? rankedForTop[1].base : '';
 
   groups.forEach(group => group.classList.remove('sector-rank-1', 'sector-rank-2'));
 
@@ -3746,7 +3774,7 @@ function setStockButtonSignal(btn, state, pctText='--') {
 
   if (pctEl) {
     pctEl.classList.remove('up', 'down', 'flat');
-    pctEl.textContent = pctText || '--';
+    pctEl.innerHTML = pctText || '--';
     if (state === 'up') pctEl.classList.add('up');
     else if (state === 'down') pctEl.classList.add('down');
     else pctEl.classList.add('flat');
@@ -3756,7 +3784,7 @@ function setStockButtonSignal(btn, state, pctText='--') {
 function getButtonPctInfo(btn) {
   if (!btn) return { text: '--', cls: 'flat' };
   const pctEl = btn.querySelector('.stock-btn-pct');
-  const text = pctEl ? pctEl.textContent.trim() : '--';
+  const text = pctEl ? pctEl.innerHTML : '--';
   let cls = 'flat';
   if (pctEl?.classList.contains('up')) cls = 'up';
   else if (pctEl?.classList.contains('down')) cls = 'down';
