@@ -3604,6 +3604,8 @@ async function fetchNaverKRStockSignals(symbols) {
     out[code + '.KQ'] = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
   });
   Cache.set(cacheKey, out);
+  const firstKey = Object.keys(out)[0];
+  if (firstKey) Logger.log('NaverStockSignals', `sample ${firstKey}: ${out[firstKey].amountText}`, 'ok');
   return out;
 }
 
@@ -3665,7 +3667,20 @@ async function updateUSStockSignals() {
 
 function formatEok(value) {
   if (value == null || !isFinite(value)) return '--';
-  return `${Math.round(value).toLocaleString('ko-KR')}억`;
+  if (value >= 100) return `${Math.round(value).toLocaleString('ko-KR')}억`;
+  if (value >= 1) return `${value.toFixed(1)}억`;
+  return `${value.toFixed(2)}억`;
+}
+
+function normalizeNaverAmountToEok(amountRaw) {
+  if (amountRaw == null || !isFinite(amountRaw)) return null;
+  // Heuristic:
+  // - very large numbers are likely KRW -> convert to 억원
+  // - mid-size numbers may already be 백만원/천만원 scale, keep safer branch
+  // - small numbers are likely already 억원-like display values
+  if (amountRaw >= 100000000) return amountRaw / 100000000;   // KRW -> 억원
+  if (amountRaw >= 10000) return amountRaw / 100;             // 만원-like -> 억원
+  return amountRaw;                                           // already compact amount
 }
 
 function ensureKRStockGroupTitles() {
@@ -3777,7 +3792,7 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
     if (!code || !isFinite(pct)) return;
     const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
     const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-    const amountEok = isFinite(amountRaw) ? (amountRaw / 100000000) : null;
+    const amountEok = normalizeNaverAmountToEok(amountRaw);
     const amountText = amountEok != null ? formatEok(amountEok) : '--';
     out[code + '.KS'] = { state, pctText, amountEok, amountText };
     out[code + '.KQ'] = { state, pctText, amountEok, amountText };
