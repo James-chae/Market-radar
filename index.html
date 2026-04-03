@@ -3147,6 +3147,9 @@ function switchTabStockChart(tabKey, sym, btn) {
   syncTabChartToolbar(tabKey);
   updateTabChartMeta(tabKey);
   loadTabChart(tabKey, true);
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    syncMobileStockPicker(tabKey);
+  }
 }
 function setTabChartType(tabKey, type, btn) {
   const cfg = TAB_CHARTS[tabKey];
@@ -3229,6 +3232,7 @@ async function refreshAll() {
 
 
 
+
 function extractSymbolFromOnclick(onclickText) {
   if (!onclickText) return '';
   const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
@@ -3251,10 +3255,8 @@ function buildMobileStockPicker(tabKey) {
       group = { title, items: [] };
       groups.push(group);
     }
-    const onclick = btn.getAttribute('onclick') || '';
-    const m = onclick.match(/'[^']+',\s*'([^']+)'/);
-    const sym = m ? m[1] : '';
-    group.items.push({ symbol: sym, label: btn.textContent.trim(), btn: btn });
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    group.items.push({ symbol: sym, label: btn.textContent.trim(), btn });
   });
 
   root.innerHTML = `
@@ -3277,18 +3279,21 @@ function buildMobileStockPicker(tabKey) {
 
   groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
 
-  function getGroup(groupTitle) {
-    return groups.find(g => g.title === groupTitle) || groups[0] || { title: '', items: [] };
+  function getGroup(title) {
+    return groups.find(g => g.title === title) || groups[0] || { title: '', items: [] };
   }
 
-  function setBlankSymbolOptions(groupTitle) {
+  function renderSymbolOptions(groupTitle, selectedSymbol='') {
     const group = getGroup(groupTitle);
-    symbolSel.innerHTML =
-      `<option value="" selected>-- 종목 선택 --</option>` +
-      group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-    symbolSel.value = '';
-    symbolSel.dataset.lastValue = '';
-    currentEl.textContent = `${group.title} · 종목 선택`;
+    symbolSel.innerHTML = group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
+    const targetSymbol = group.items.some(item => item.symbol === selectedSymbol)
+      ? selectedSymbol
+      : (group.items[0]?.symbol || '');
+    symbolSel.value = targetSymbol;
+    const currentItem = group.items.find(item => item.symbol === targetSymbol);
+    currentEl.textContent = currentItem ? `${group.title} · ${currentItem.label}` : `${group.title}`;
+    symbolSel.dataset.lastValue = targetSymbol || '';
+    return currentItem || null;
   }
 
   function updateChartAndUI(symbol) {
@@ -3301,46 +3306,30 @@ function buildMobileStockPicker(tabKey) {
   }
 
   groupSel.onchange = () => {
-    setBlankSymbolOptions(groupSel.value);
+    const firstItem = renderSymbolOptions(groupSel.value, '');
+    if (firstItem) {
+      updateChartAndUI(firstItem.symbol);
+    }
   };
 
   symbolSel.onchange = () => {
     const chosenSymbol = symbolSel.value;
-    if (!chosenSymbol) return;
-    updateChartAndUI(chosenSymbol);
+    if (chosenSymbol) updateChartAndUI(chosenSymbol);
   };
 
+  // 같은 첫 종목을 다시 눌러도 재갱신되게 유지
   symbolSel.onclick = () => {
     if (symbolSel.value && symbolSel.dataset.lastValue === symbolSel.value) {
       updateChartAndUI(symbolSel.value);
     }
-    symbolSel.dataset.lastValue = symbolSel.value || '';
   };
 
-  // 초기 로드 시에는 현재 차트 심볼이 속한 섹터/종목을 그대로 표시
   let startGroup = groups[0]?.title || '';
-  let startItem = null;
   groups.forEach(g => {
-    const found = g.items.find(i => i.symbol === cfg.symbol);
-    if (found) {
-      startGroup = g.title;
-      startItem = found;
-    }
+    if (g.items.some(i => i.symbol === cfg.symbol)) startGroup = g.title;
   });
   groupSel.value = startGroup;
-  const group = getGroup(startGroup);
-  symbolSel.innerHTML =
-    `<option value="" selected>-- 종목 선택 --</option>` +
-    group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-  if (startItem) {
-    symbolSel.value = startItem.symbol;
-    currentEl.textContent = `${group.title} · ${startItem.label}`;
-    symbolSel.dataset.lastValue = startItem.symbol;
-  } else {
-    symbolSel.value = '';
-    currentEl.textContent = `${group.title} · 종목 선택`;
-    symbolSel.dataset.lastValue = '';
-  }
+  renderSymbolOptions(startGroup, cfg.symbol);
 }
 
 function syncMobileStockPicker(tabKey) {
@@ -3348,14 +3337,15 @@ function syncMobileStockPicker(tabKey) {
   const groupSel = document.getElementById(`${tabKey}-group-select`);
   const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
   const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-  if (!groupSel || !symbolSel) return;
+  if (!cfg || !groupSel || !symbolSel) return;
 
   const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
   let foundGroup = '';
   let foundLabel = '';
 
   buttons.forEach(btn => {
-    if ((btn.getAttribute('onclick') || '').includes(`'${cfg.symbol}'`)) {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    if (sym === cfg.symbol) {
       foundGroup = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
       foundLabel = btn.textContent.trim();
     }
@@ -3365,845 +3355,21 @@ function syncMobileStockPicker(tabKey) {
 
   if (groupSel.value !== foundGroup) {
     groupSel.value = foundGroup;
-    const group = Array.from(document.querySelectorAll('.stock-group'))
-      .find(el => el.querySelector('.stock-group-title')?.textContent.trim() === foundGroup);
-    if (group) {
-      const items = Array.from(group.querySelectorAll(cfg.buttonSelector)).map(b => {
-        const m = (b.getAttribute('onclick') || '').match(/'[^']+',\s*'([^']+)'/);
-        const sym = m ? m[1] : '';
-        return `<option value="${sym}">${b.textContent.trim()}</option>`;
-      });
-      symbolSel.innerHTML = `<option value="" selected>-- 종목 선택 --</option>` + items.join('');
-    }
-  }
-  symbolSel.value = cfg.symbol;
-  symbolSel.dataset.lastValue = cfg.symbol;
-  if (currentEl) currentEl.textContent = `${foundGroup} · ${foundLabel}`;
-}
-
-function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
-function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
-async function refreshAll() {
-  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
-  Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
-  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
-}
-
-
-
-
-
-
-function extractSymbolFromOnclick(onclickText) {
-  if (!onclickText) return '';
-  const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
-  return match ? match[1] : '';
-}
-
-function buildMobileStockPicker(tabKey) {
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  const cfg = TAB_CHARTS[tabKey];
-  if (!root || !cfg) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = [];
-
-  // 1. 섹터 및 종목 데이터 구조화
-  buttons.forEach(btn => {
-    const groupEl = btn.closest('.stock-group');
-    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    let group = groups.find(g => g.title === title);
-    if (!group) {
-      group = { title, items: [] };
-      groups.push(group);
-    }
-    const onclick = btn.getAttribute('onclick') || '';
-    const m = onclick.match(/'[^']+',\s*'([^']+)'/);
-    const sym = m ? m[1] : '';
-    group.items.push({ symbol: sym, label: btn.textContent.trim(), btn: btn });
-  });
-
-  // 2. 초기 UI 렌더링
-  root.innerHTML = `
-    <div class="mobile-stock-picker-row">
-      <div>
-        <span class="mobile-stock-picker-label">섹터</span>
-        <select id="${tabKey}-group-select"></select>
-      </div>
-      <div>
-        <span class="mobile-stock-picker-label">종목 선택</span>
-        <select id="${tabKey}-symbol-select"></select>
-      </div>
-    </div>
-    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
-  `;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-
-  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
-
-  // 3. 핵심 로직: 종목 변경 및 차트 업데이트
-  function updateChartAndUI(symbol) {
-    const group = groups.find(g => g.title === groupSel.value);
-    const item = group?.items.find(i => i.symbol === symbol);
-    if (item) {
-      switchTabStockChart(tabKey, item.symbol, item.btn);
-      currentEl.textContent = `${group.title} · ${item.label}`;
-      symbolSel.dataset.lastValue = item.symbol;
-    }
-  }
-
-  function fillSymbols(groupTitle, selectedSymbol) {
-    const group = groups.find(g => g.title === groupTitle) || groups[0];
-    symbolSel.innerHTML = group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-
-    const targetSymbol = selectedSymbol || group.items[0]?.symbol;
-    symbolSel.value = targetSymbol;
-    updateChartAndUI(targetSymbol);
-  }
-
-  // 섹터 변경 시
-  groupSel.onchange = () => fillSymbols(groupSel.value, '');
-
-  // 종목 변경 시
-  symbolSel.onchange = () => updateChartAndUI(symbolSel.value);
-
-  // 첫 번째 종목 재선택 대응
-  symbolSel.onclick = () => {
-    if (symbolSel.dataset.lastValue === symbolSel.value) {
-      updateChartAndUI(symbolSel.value);
-    }
-    symbolSel.dataset.lastValue = symbolSel.value;
-  };
-
-  // 초기 로드 실행
-  let startGroup = groups[0]?.title || '';
-  groups.forEach(g => { if (g.items.some(i => i.symbol === cfg.symbol)) startGroup = g.title; });
-  groupSel.value = startGroup;
-  fillSymbols(startGroup, cfg.symbol);
-}
-
-function syncMobileStockPicker(tabKey) {
-  const cfg = TAB_CHARTS[tabKey];
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-  if (!groupSel || !symbolSel) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  let foundGroup = '';
-  let foundLabel = '';
-
-  buttons.forEach(btn => {
-    if ((btn.getAttribute('onclick') || '').includes(`'${cfg.symbol}'`)) {
-      foundGroup = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
-      foundLabel = btn.textContent.trim();
-    }
-  });
-
-  if (foundGroup && groupSel.value !== foundGroup) {
-    groupSel.value = foundGroup;
-    const group = Array.from(document.querySelectorAll('.stock-group'))
-      .find(el => el.querySelector('.stock-group-title')?.textContent.trim() === foundGroup);
-    if (group) {
-      const items = Array.from(group.querySelectorAll(cfg.buttonSelector)).map(b => {
-        const m = (b.getAttribute('onclick') || '').match(/'[^']+',\s*'([^']+)'/);
-        const sym = m ? m[1] : '';
-        return `<option value="${sym}">${b.textContent.trim()}</option>`;
+    const groupEl = Array.from(document.querySelectorAll('.stock-group')).find(el =>
+      el.querySelector('.stock-group-title')?.textContent?.trim() === foundGroup
+    );
+    if (groupEl) {
+      const items = Array.from(groupEl.querySelectorAll(cfg.buttonSelector)).map(btn => {
+        const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+        return `<option value="${sym}">${btn.textContent.trim()}</option>`;
       });
       symbolSel.innerHTML = items.join('');
     }
   }
+
   symbolSel.value = cfg.symbol;
   symbolSel.dataset.lastValue = cfg.symbol;
-  if (currentEl && foundGroup) currentEl.textContent = `${foundGroup} · ${foundLabel}`;
-}
-
-function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
-function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
-async function refreshAll() {
-  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
-  Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
-  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
-}
-
-
-
-
-
-function extractSymbolFromOnclick(onclickText) {
-  if (!onclickText) return '';
-  const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
-  return match ? match[1] : '';
-}
-
-function forceLoadTabChartSymbol(tabKey, symbol) {
-  const cfg = TAB_CHARTS[tabKey];
-  if (!cfg || !symbol) return;
-  cfg.symbol = symbol;
-  syncTabChartToolbar(tabKey);
-  updateTabChartMeta(tabKey);
-  loadLWChart(cfg.containerId, cfg.symbol, {
-    range: cfg.range,
-    interval: cfg.interval,
-    type: cfg.type,
-    force: true,
-  });
-}
-
-function buildMobileStockPicker(tabKey) {
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  const cfg = TAB_CHARTS[tabKey];
-  if (!root || !cfg) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = [];
-  buttons.forEach(btn => {
-    const groupEl = btn.closest('.stock-group');
-    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    let group = groups.find(g => g.title === title);
-    if (!group) {
-      group = { title, items: [] };
-      groups.push(group);
-    }
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    group.items.push({ symbol: sym, label: btn.textContent.trim() });
-  });
-
-  root.innerHTML = `
-    <div class="mobile-stock-picker-row">
-      <div>
-        <span class="mobile-stock-picker-label">섹터</span>
-        <select id="${tabKey}-group-select"></select>
-      </div>
-      <div>
-        <span class="mobile-stock-picker-label">종목 선택</span>
-        <select id="${tabKey}-symbol-select"></select>
-      </div>
-    </div>
-    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
-  `;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-
-  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
-
-  function getGroup(groupTitle) {
-    return groups.find(g => g.title === groupTitle) || groups[0] || { title: '', items: [] };
-  }
-
-  function fillSymbols(groupTitle, selectedSymbol='') {
-    const group = getGroup(groupTitle);
-    symbolSel.innerHTML = group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-    const nextSymbol = group.items.some(item => item.symbol === selectedSymbol)
-      ? selectedSymbol
-      : (group.items[0]?.symbol || '');
-    symbolSel.value = nextSymbol;
-    const chosen = group.items.find(item => item.symbol === nextSymbol);
-    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
-    symbolSel.dataset.currentSymbol = nextSymbol || '';
-    return nextSymbol;
-  }
-
-  groupSel.onchange = () => {
-    const firstSymbol = fillSymbols(groupSel.value, '');
-    if (firstSymbol) {
-      // 섹터 변경 시 첫 종목 차트를 즉시 강제 갱신
-      forceLoadTabChartSymbol(tabKey, firstSymbol);
-    }
-  };
-
-  symbolSel.onclick = () => {
-    // 첫번째 종목이 이미 선택된 상태에서도 사용자가 다시 눌렀을 때
-    // 현재 선택 종목 차트를 다시 강제 갱신
-    const chosenSymbol = symbolSel.value;
-    if (chosenSymbol) forceLoadTabChartSymbol(tabKey, chosenSymbol);
-  };
-
-  symbolSel.onchange = () => {
-    const chosenSymbol = symbolSel.value;
-    const group = getGroup(groupSel.value);
-    const chosen = group.items.find(item => item.symbol === chosenSymbol);
-    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
-    symbolSel.dataset.currentSymbol = chosenSymbol || '';
-    if (chosenSymbol) {
-      forceLoadTabChartSymbol(tabKey, chosenSymbol);
-    }
-  };
-
-  let currentGroupTitle = groups[0]?.title || '';
-  groups.forEach(g => {
-    if (g.items.some(item => item.symbol === cfg.symbol)) currentGroupTitle = g.title;
-  });
-  groupSel.value = currentGroupTitle;
-  fillSymbols(currentGroupTitle, cfg.symbol);
-}
-
-function syncMobileStockPicker(tabKey) {
-  const cfg = TAB_CHARTS[tabKey];
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  if (!cfg || !root) return;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-  if (!groupSel || !symbolSel || !currentEl) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = {};
-  let groupTitle = '';
-  let label = cfg.symbol;
-
-  buttons.forEach(btn => {
-    const title = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    if (!groups[title]) groups[title] = [];
-    groups[title].push({ symbol: sym, label: btn.textContent.trim() });
-    if (sym === cfg.symbol) {
-      groupTitle = title;
-      label = btn.textContent.trim();
-    }
-  });
-
-  if (!groupTitle) return;
-
-  groupSel.value = groupTitle;
-  const items = groups[groupTitle] || [];
-  symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-  symbolSel.value = cfg.symbol;
-  symbolSel.dataset.currentSymbol = cfg.symbol;
-  currentEl.textContent = `${groupTitle} · ${label}`;
-}
-
-function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
-function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
-async function refreshAll() {
-  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
-  Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
-  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
-}
-
-
-
-
-function extractSymbolFromOnclick(onclickText) {
-  if (!onclickText) return '';
-  const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
-  return match ? match[1] : '';
-}
-
-function setTabChartSymbolDirect(tabKey, symbol) {
-  const cfg = TAB_CHARTS[tabKey];
-  if (!cfg || !symbol) return;
-  cfg.symbol = symbol;
-  syncTabChartToolbar(tabKey);
-  updateTabChartMeta(tabKey);
-  loadTabChart(tabKey, true);
-}
-
-function buildMobileStockPicker(tabKey) {
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  const cfg = TAB_CHARTS[tabKey];
-  if (!root || !cfg) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = [];
-  buttons.forEach(btn => {
-    const groupEl = btn.closest('.stock-group');
-    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    let group = groups.find(g => g.title === title);
-    if (!group) {
-      group = { title, items: [] };
-      groups.push(group);
-    }
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    group.items.push({ symbol: sym, label: btn.textContent.trim() });
-  });
-
-  root.innerHTML = `
-    <div class="mobile-stock-picker-row">
-      <div>
-        <span class="mobile-stock-picker-label">섹터</span>
-        <select id="${tabKey}-group-select"></select>
-      </div>
-      <div>
-        <span class="mobile-stock-picker-label">종목 선택</span>
-        <select id="${tabKey}-symbol-select"></select>
-      </div>
-    </div>
-    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
-  `;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-
-  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
-
-  function getGroup(groupTitle) {
-    return groups.find(g => g.title === groupTitle) || groups[0] || { title: '', items: [] };
-  }
-
-  function fillSymbols(groupTitle, selectedSymbol='') {
-    const group = getGroup(groupTitle);
-    symbolSel.innerHTML = group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-    const nextSymbol = group.items.some(item => item.symbol === selectedSymbol)
-      ? selectedSymbol
-      : (group.items[0]?.symbol || '');
-    symbolSel.value = nextSymbol;
-    const chosen = group.items.find(item => item.symbol === nextSymbol);
-    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
-    return nextSymbol;
-  }
-
-  groupSel.onchange = () => {
-    const firstSymbol = fillSymbols(groupSel.value, '');
-    if (firstSymbol) {
-      setTabChartSymbolDirect(tabKey, firstSymbol);
-    }
-  };
-
-  symbolSel.onchange = () => {
-    const chosenSymbol = symbolSel.value;
-    const group = getGroup(groupSel.value);
-    const chosen = group.items.find(item => item.symbol === chosenSymbol);
-    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
-    if (chosenSymbol) {
-      setTabChartSymbolDirect(tabKey, chosenSymbol);
-    }
-  };
-
-  let currentGroupTitle = groups[0]?.title || '';
-  groups.forEach(g => {
-    if (g.items.some(item => item.symbol === cfg.symbol)) currentGroupTitle = g.title;
-  });
-  groupSel.value = currentGroupTitle;
-  fillSymbols(currentGroupTitle, cfg.symbol);
-}
-
-function syncMobileStockPicker(tabKey) {
-  const cfg = TAB_CHARTS[tabKey];
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  if (!cfg || !root) return;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-  if (!groupSel || !symbolSel || !currentEl) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = {};
-  let groupTitle = '';
-  let label = cfg.symbol;
-
-  buttons.forEach(btn => {
-    const title = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    if (!groups[title]) groups[title] = [];
-    groups[title].push({ symbol: sym, label: btn.textContent.trim() });
-    if (sym === cfg.symbol) {
-      groupTitle = title;
-      label = btn.textContent.trim();
-    }
-  });
-
-  if (!groupTitle) return;
-
-  groupSel.value = groupTitle;
-  const items = groups[groupTitle] || [];
-  symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-  symbolSel.value = cfg.symbol;
-  currentEl.textContent = `${groupTitle} · ${label}`;
-}
-
-function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
-function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
-async function refreshAll() {
-  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
-  Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
-  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
-}
-
-
-
-function extractSymbolFromOnclick(onclickText) {
-  if (!onclickText) return '';
-  const match = onclickText.match(/switchTabStockChart\(\s*'[^']+'\s*,\s*'([^']+)'/);
-  return match ? match[1] : '';
-}
-
-function buildMobileStockPicker(tabKey) {
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  const cfg = TAB_CHARTS[tabKey];
-  if (!root || !cfg) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = [];
-  buttons.forEach(btn => {
-    const groupEl = btn.closest('.stock-group');
-    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    let group = groups.find(g => g.title === title);
-    if (!group) {
-      group = { title, items: [] };
-      groups.push(group);
-    }
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    group.items.push({ symbol: sym, label: btn.textContent.trim() });
-  });
-
-  root.innerHTML = `
-    <div class="mobile-stock-picker-row">
-      <div>
-        <span class="mobile-stock-picker-label">섹터</span>
-        <select id="${tabKey}-group-select"></select>
-      </div>
-      <div>
-        <span class="mobile-stock-picker-label">종목 선택</span>
-        <select id="${tabKey}-symbol-select"></select>
-      </div>
-    </div>
-    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
-  `;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-
-  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
-
-  function getGroupItems(groupTitle) {
-    return groups.find(g => g.title === groupTitle)?.items || [];
-  }
-
-  function renderSymbols(groupTitle, selectedSymbol='') {
-    const items = getGroupItems(groupTitle);
-    symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-    const nextSymbol = items.some(item => item.symbol === selectedSymbol)
-      ? selectedSymbol
-      : (items[0]?.symbol || '');
-    symbolSel.value = nextSymbol;
-    const chosen = items.find(item => item.symbol === nextSymbol);
-    currentEl.textContent = chosen ? `${groupTitle} · ${chosen.label}` : '';
-    return nextSymbol;
-  }
-
-  function switchToSymbol(symbol) {
-    if (!symbol) return;
-    const btn = buttons.find(b => extractSymbolFromOnclick(b.getAttribute('onclick') || '') === symbol);
-    switchTabStockChart(tabKey, symbol, btn || null);
-  }
-
-  groupSel.onchange = () => {
-    const symbol = renderSymbols(groupSel.value, '');
-    switchToSymbol(symbol);
-  };
-
-  symbolSel.onchange = () => {
-    const chosenSymbol = symbolSel.value;
-    const chosen = getGroupItems(groupSel.value).find(item => item.symbol === chosenSymbol);
-    currentEl.textContent = chosen ? `${groupSel.value} · ${chosen.label}` : '';
-    switchToSymbol(chosenSymbol);
-  };
-
-  let currentGroupTitle = groups[0]?.title || '';
-  groups.forEach(g => {
-    if (g.items.some(item => item.symbol === cfg.symbol)) currentGroupTitle = g.title;
-  });
-  groupSel.value = currentGroupTitle;
-  renderSymbols(currentGroupTitle, cfg.symbol);
-}
-
-function syncMobileStockPicker(tabKey) {
-  const cfg = TAB_CHARTS[tabKey];
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  if (!cfg || !root) return;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-  if (!groupSel || !symbolSel || !currentEl) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  let groupTitle = '';
-  let label = cfg.symbol;
-
-  buttons.forEach(btn => {
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    if (sym === cfg.symbol) {
-      label = btn.textContent.trim();
-      groupTitle = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
-    }
-  });
-
-  if (!groupTitle) return;
-
-  if (groupSel.value !== groupTitle) {
-    groupSel.value = groupTitle;
-  }
-
-  const items = buttons
-    .filter(b => (b.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '') === groupTitle)
-    .map(b => ({ symbol: extractSymbolFromOnclick(b.getAttribute('onclick') || ''), label: b.textContent.trim() }));
-
-  symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-  symbolSel.value = cfg.symbol;
-  currentEl.textContent = `${groupTitle} · ${label}`;
-}
-
-function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
-function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
-async function refreshAll() {
-  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
-  Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
-  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
-}
-
-
-function buildMobileStockPicker(tabKey) {
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  const cfg = TAB_CHARTS[tabKey];
-  if (!root || !cfg) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = [];
-  buttons.forEach(btn => {
-    const groupEl = btn.closest('.stock-group');
-    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    let group = groups.find(g => g.title === title);
-    if (!group) {
-      group = { title, items: [] };
-      groups.push(group);
-    }
-    const onclick = btn.getAttribute('onclick') || '';
-    const m = onclick.match(/'[^']+',\s*'([^']+)'/);
-    const sym = m ? m[1] : '';
-    group.items.push({ symbol: sym, label: btn.textContent.trim() });
-  });
-
-  root.innerHTML = `
-    <div class="mobile-stock-picker-row">
-      <div>
-        <span class="mobile-stock-picker-label">섹터</span>
-        <select id="${tabKey}-group-select"></select>
-      </div>
-      <div>
-        <span class="mobile-stock-picker-label">종목 선택</span>
-        <select id="${tabKey}-symbol-select"></select>
-      </div>
-    </div>
-    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
-  `;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-
-  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
-
-  function getGroupItems(groupTitle) {
-    return groups.find(g => g.title === groupTitle)?.items || [];
-  }
-
-  function renderSymbols(groupTitle, selectedSymbol='') {
-    const items = getGroupItems(groupTitle);
-    symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-    const nextSymbol = items.some(item => item.symbol === selectedSymbol)
-      ? selectedSymbol
-      : (items[0]?.symbol || '');
-    symbolSel.value = nextSymbol;
-    const chosen = items.find(item => item.symbol === nextSymbol);
-    currentEl.textContent = chosen ? `${groupTitle} · ${chosen.label}` : '';
-    return nextSymbol;
-  }
-
-  function switchToSymbol(symbol) {
-    if (!symbol) return;
-    const btn = buttons.find(b => (b.getAttribute('onclick') || '').includes(`'${symbol}'`));
-    switchTabStockChart(tabKey, symbol, btn || null);
-  }
-
-  groupSel.onchange = () => {
-    const symbol = renderSymbols(groupSel.value, '');
-    switchToSymbol(symbol);
-  };
-
-  symbolSel.onchange = () => {
-    const chosenSymbol = symbolSel.value;
-    const chosen = getGroupItems(groupSel.value).find(item => item.symbol === chosenSymbol);
-    currentEl.textContent = chosen ? `${groupSel.value} · ${chosen.label}` : '';
-    switchToSymbol(chosenSymbol);
-  };
-
-  let currentGroupTitle = groups[0]?.title || '';
-  groups.forEach(g => {
-    if (g.items.some(item => item.symbol === cfg.symbol)) currentGroupTitle = g.title;
-  });
-  groupSel.value = currentGroupTitle;
-  renderSymbols(currentGroupTitle, cfg.symbol);
-}
-
-function syncMobileStockPicker(tabKey) {
-  const cfg = TAB_CHARTS[tabKey];
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  if (!cfg || !root) return;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-  if (!groupSel || !symbolSel || !currentEl) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  let groupTitle = '';
-  let label = cfg.symbol;
-
-  buttons.forEach(btn => {
-    const onclick = btn.getAttribute('onclick') || '';
-    if (onclick.includes(`'${cfg.symbol}'`)) {
-      label = btn.textContent.trim();
-      groupTitle = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
-    }
-  });
-
-  if (!groupTitle) return;
-
-  if (groupSel.value !== groupTitle) {
-    groupSel.value = groupTitle;
-    const items = buttons
-      .filter(b => (b.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '') == groupTitle)
-      .map(b => {
-        const onclick = b.getAttribute('onclick') || '';
-        const m = onclick.match(/'[^']+',\s*'([^']+)'/);
-        return { symbol: m[1], label: b.textContent.trim() };
-      });
-    symbolSel.innerHTML = items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-  }
-
-  symbolSel.value = cfg.symbol;
-  currentEl.textContent = `${groupTitle} · ${label}`;
-}
-
-function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
-function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
-async function refreshAll() {
-  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
-  Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData()]);
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
-  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
-}
-
-function buildMobileStockPicker(tabKey) {
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  const cfg = TAB_CHARTS[tabKey];
-  if (!root || !cfg) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  const groups = [];
-  buttons.forEach(btn => {
-    const groupEl = btn.closest('.stock-group');
-    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
-    let group = groups.find(g => g.title === title);
-    if (!group) {
-      group = { title, items: [] };
-      groups.push(group);
-    }
-    const onclick = btn.getAttribute('onclick') || '';
-    const m = onclick.match(/'[^']+',\s*'([^']+)'/);
-    const sym = m ? m[1] : '';
-    group.items.push({ symbol: sym, label: btn.textContent.trim() });
-  });
-
-  const currentSymbol = cfg.symbol;
-  let currentGroupTitle = groups[0]?.title || '';
-  groups.forEach(g => {
-    if (g.items.some(item => item.symbol === currentSymbol)) currentGroupTitle = g.title;
-  });
-
-  root.innerHTML = `
-    <div class="mobile-stock-picker-row">
-      <div>
-        <span class="mobile-stock-picker-label">섹터</span>
-        <select id="${tabKey}-group-select"></select>
-      </div>
-      <div>
-        <span class="mobile-stock-picker-label">종목 선택</span>
-        <select id="${tabKey}-symbol-select"></select>
-      </div>
-    </div>
-    <div class="mobile-stock-current" id="${tabKey}-mobile-current"></div>
-  `;
-
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-
-  groupSel.innerHTML = groups.map(g => `<option value="${g.title}">${g.title}</option>`).join('');
-  groupSel.value = currentGroupTitle;
-
-  function fillSymbols(groupTitle, selectedSymbol) {
-    const group = groups.find(g => g.title === groupTitle) || groups[0];
-    if (!group) return;
-    symbolSel.innerHTML = group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
-    const hasSelected = group.items.some(item => item.symbol === selectedSymbol);
-    symbolSel.value = hasSelected ? selectedSymbol : group.items[0]?.symbol || '';
-    const chosen = group.items.find(item => item.symbol === symbolSel.value);
-    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
-  }
-
-  fillSymbols(currentGroupTitle, currentSymbol);
-
-  groupSel.onchange = () => fillSymbols(groupSel.value, '');
-  symbolSel.onchange = () => {
-    const btn = buttons.find(b => (b.getAttribute('onclick') || '').includes(`'${symbolSel.value}'`));
-    switchTabStockChart(tabKey, symbolSel.value, btn || null);
-    const group = groups.find(g => g.title === groupSel.value);
-    const chosen = group?.items.find(item => item.symbol === symbolSel.value);
-    currentEl.textContent = chosen ? `${group.title} · ${chosen.label}` : '';
-  };
-}
-
-function syncMobileStockPicker(tabKey) {
-  const cfg = TAB_CHARTS[tabKey];
-  const root = document.getElementById(tabKey + '-mobile-picker');
-  if (!cfg || !root) return;
-  const groupSel = document.getElementById(`${tabKey}-group-select`);
-  const symbolSel = document.getElementById(`${tabKey}-symbol-select`);
-  const currentEl = document.getElementById(`${tabKey}-mobile-current`);
-  if (!groupSel || !symbolSel) return;
-
-  const buttons = Array.from(document.querySelectorAll(cfg.buttonSelector));
-  let groupTitle = '';
-  let label = cfg.symbol;
-  buttons.forEach(btn => {
-    const onclick = btn.getAttribute('onclick') || '';
-    if (onclick.includes(`'${cfg.symbol}'`)) {
-      label = btn.textContent.trim();
-      groupTitle = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
-    }
-  });
-
-  if (groupTitle) {
-    if (groupSel.value !== groupTitle) {
-      groupSel.value = groupTitle;
-      groupSel.dispatchEvent(new Event('change'));
-    }
-    symbolSel.value = cfg.symbol;
-    currentEl.textContent = `${groupTitle} · ${label}`;
-  }
+  if (currentEl) currentEl.textContent = `${foundGroup} · ${foundLabel}`;
 }
 
 
