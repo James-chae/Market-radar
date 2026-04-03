@@ -548,6 +548,121 @@
     pointer-events: none;
   }
 
+
+  .liquidity-mini-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  body.console-open #error-console {
+    display: block;
+  }
+
+  /* DEV 콘솔은 화면을 덮지 않고 문서 흐름 아래에 표시 */
+  #error-console {
+    display: none;
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    width: min(1600px, calc(100% - 48px));
+    margin: 16px auto 24px;
+    max-height: 260px;
+    overflow-y: auto;
+    background: rgba(8,12,16,0.97);
+    border: 1px solid rgba(227,168,37,0.28);
+    border-radius: 12px;
+    z-index: 10;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 10px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+  #error-console.has-errors { display: block; }
+  .close-console {
+    position: sticky;
+    top: 0;
+    float: right;
+    background: var(--bg3);
+    color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .dev-toggle {
+    bottom: 10px;
+    right: 10px;
+  }
+
+  /* 모바일 최적화 */
+  @media (max-width: 768px) {
+    body { overflow-x: hidden; }
+    header { padding: 0 10px; gap: 10px; }
+    .logo { font-size: 18px; letter-spacing: 1px; }
+    .logo span { font-size: 9px; }
+    .header-status { gap: 6px; font-size: 10px; }
+    .refresh-btn { padding: 3px 7px; font-size: 10px; }
+    nav {
+      padding: 0 6px;
+      gap: 0;
+      justify-content: space-between;
+      overflow-x: hidden;
+    }
+    .tab {
+      padding: 10px 4px;
+      font-size: 10px;
+      letter-spacing: -0.2px;
+      flex: 1 1 auto;
+      text-align: center;
+    }
+    .summary-banner {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 10px;
+    }
+    .banner-label { font-size: 9px; }
+    .banner-val { font-size: 13px; }
+    .section-title { font-size: 24px; }
+    .section-desc { font-size: 11px; margin-bottom: 14px; }
+    .chart-toolbar { gap: 8px; }
+    .toolbar-group { gap: 4px; }
+    .chart-btn, .tool-btn {
+      padding: 5px 8px;
+      font-size: 10px;
+    }
+    .mini-toolbar {
+      gap: 4px;
+      padding: 8px 10px 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .mini-toolbar::-webkit-scrollbar { display: none; }
+    .mini-tool-btn {
+      padding: 4px 7px;
+      font-size: 10px;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+    .mini-chart-shell,
+    .lw-chart-host,
+    .yf-chart,
+    .chart-card {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      touch-action: pan-y;
+    }
+    .liquidity-mini-grid {
+      grid-template-columns: 1fr !important;
+    }
+    #error-console {
+      width: calc(100% - 24px);
+      margin: 12px auto 20px;
+      max-height: 220px;
+      padding: 10px 12px;
+    }
+  }
+
   /* ── 반응형 ── */
   @media (max-width: 600px) {
     header { padding: 0 12px; }
@@ -575,9 +690,9 @@
 </header>
 
 <nav>
-  <div class="tab active" onclick="showTab('overview', this)">📊 전체 요약</div>
-  <div class="tab" onclick="showTab('us', this)">🇺🇸 미국 시장</div>
-  <div class="tab" onclick="showTab('kr', this)">🇰🇷 한국 시장</div>
+  <div class="tab active" onclick="showTab('overview', this)">📊 전체</div>
+  <div class="tab" onclick="showTab('us', this)">🇺🇸 미국</div>
+  <div class="tab" onclick="showTab('kr', this)">🇰🇷 한국</div>
   <div class="tab" onclick="showTab('macro', this)">🌐 매크로</div>
   <div class="tab" onclick="showTab('liquidity', this)">💧 유동성</div>
   <div class="tab" onclick="showTab('options', this)">🎯 옵션·변동성</div>
@@ -952,7 +1067,7 @@
           <div class="chart-sub">주요 유동성 관련 자산 추이</div>
         </div>
       </div>
-      <div style="padding:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="liquidity-mini-grid" style="padding:12px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div>
           <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">금 (안전자산 / 유동성 프록시)</div>
           <div id="liq_tv_gold" class="yf-chart" style="height:220px"></div>
@@ -2130,8 +2245,8 @@ function buildChart(containerId, mode='line') {
     rightPriceScale: { borderColor: 'rgba(255,255,255,0.10)' },
     timeScale: { borderColor: 'rgba(255,255,255,0.10)', timeVisible: true, secondsVisible: false, rightOffset: 2, barSpacing: mode === 'candlestick' ? 8 : 6 },
     crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: 'rgba(88,166,255,0.35)', width: 1 }, horzLine: { color: 'rgba(88,166,255,0.35)', width: 1 } },
-    handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
-    handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
+    handleScroll: { mouseWheel: !window.matchMedia('(max-width: 768px)').matches, pressedMouseMove: !window.matchMedia('(max-width: 768px)').matches, horzTouchDrag: false, vertTouchDrag: false },
+    handleScale: { axisPressedMouseMove: !window.matchMedia('(max-width: 768px)').matches, mouseWheel: !window.matchMedia('(max-width: 768px)').matches, pinch: false },
   });
   let series;
   if (mode === 'candlestick') {
@@ -2284,8 +2399,8 @@ function initChartsForTab(name) {
   if (name === 'options') loadMiniChart('tv_vix_chart');
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
 }
-function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); Logger.render(); }
-function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); }
+function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
+function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
 async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
