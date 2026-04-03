@@ -1115,6 +1115,39 @@
   .mobile-stock-current .pct.down { color: #4A9EFF; }
   .mobile-stock-current .pct.flat { color: #9aa4af; }
 
+
+  /* 한국종목 섹터 거래대금 합계 + TOP2 강조 */
+  #sec-krstocks .stock-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  #sec-krstocks .stock-group-title .title-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  #sec-krstocks .stock-group-title .crown {
+    font-size: 11px;
+    line-height: 1;
+  }
+  #sec-krstocks .stock-group-title .title-amt {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+  #sec-krstocks .stock-group.sector-rank-1 {
+    border-color: rgba(227,168,37,0.95);
+    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.45), 0 0 0 1px rgba(227,168,37,0.12);
+  }
+  #sec-krstocks .stock-group.sector-rank-2 {
+    border-color: rgba(227,168,37,0.62);
+    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.22);
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -2050,6 +2083,7 @@ const CONFIG = {
   CORS_PROXY2: 'https://api.allorigins.win/get?url=',
   FRED_BASE: 'https://fred.stlouisfed.org/graph/fredgraph.csv',
   REFRESH_INTERVAL: 300000,
+  KR_STOCK_SIGNAL_CACHE_MS: 300000,
 };
 
 // 종목 심볼 정의
@@ -3419,7 +3453,8 @@ function buildMobileStockPicker(tabKey) {
 
   buttons.forEach(btn => {
     const groupEl = btn.closest('.stock-group');
-    const title = groupEl?.querySelector('.stock-group-title')?.textContent?.trim() || '기타';
+    const titleEl = groupEl?.querySelector('.stock-group-title');
+    const title = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '기타';
     let group = groups.find(g => g.title === title);
     if (!group) {
       group = { title, items: [] };
@@ -3516,7 +3551,8 @@ function syncMobileStockPicker(tabKey) {
   buttons.forEach(btn => {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
     if (sym === cfg.symbol) {
-      foundGroup = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
+      const foundTitleEl = btn.closest('.stock-group')?.querySelector('.stock-group-title');
+      foundGroup = foundTitleEl?.dataset.baseTitle || foundTitleEl?.textContent?.trim() || '';
       foundLabel = (btn.dataset.baseLabel || btn.textContent.trim());
     }
   });
@@ -3526,7 +3562,7 @@ function syncMobileStockPicker(tabKey) {
   if (groupSel.value !== foundGroup) {
     groupSel.value = foundGroup;
     const groupEl = Array.from(document.querySelectorAll('.stock-group')).find(el =>
-      el.querySelector('.stock-group-title')?.textContent?.trim() === foundGroup
+((el.querySelector('.stock-group-title')?.dataset.baseTitle) || el.querySelector('.stock-group-title')?.textContent?.trim()) === foundGroup
     );
     if (groupEl) {
       const items = Array.from(groupEl.querySelectorAll(cfg.buttonSelector)).map(btn => {
@@ -3575,104 +3611,6 @@ async function updateKRStockSignals() {
   const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
   if (!buttons.length) return;
 
-  const symbols = buttons.map(btn => {
-    const onclick = btn.getAttribute('onclick') || '';
-    return extractSymbolFromOnclick(onclick);
-  }).filter(Boolean);
-
-  let signals = {};
-  try {
-    signals = await fetchNaverKRStockSignals(symbols);
-  } catch (e) {
-    Logger.log('NaverStockSignals', e.message || 'signal load failed', 'warn');
-    return;
-  }
-
-  buttons.forEach(btn => {
-    btn.classList.remove('sig-up', 'sig-down', 'sig-flat');
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    const state = signals[sym];
-    if (state === 'up') btn.classList.add('sig-up');
-    else if (state === 'down') btn.classList.add('sig-down');
-    else if (state === 'flat') btn.classList.add('sig-flat');
-  });
-}
-
-
-
-function getButtonPctInfo(btn) {
-  if (!btn) return { text: '--', cls: 'flat' };
-  const pctEl = btn.querySelector('.stock-btn-pct');
-  const text = pctEl ? pctEl.textContent.trim() : '--';
-  let cls = 'flat';
-  if (pctEl?.classList.contains('up')) cls = 'up';
-  else if (pctEl?.classList.contains('down')) cls = 'down';
-  return { text, cls };
-}
-
-function setMobileCurrentText(el, groupTitle, label, btn=null) {
-  if (!el) return;
-  const pct = getButtonPctInfo(btn);
-  el.innerHTML = `${groupTitle} · ${label} <span class="pct ${pct.cls}">${pct.text}</span>`;
-}
-function ensureStockButtonMarkup() {
-  document.querySelectorAll('.us-stock-btn, .kr-stock-btn').forEach(btn => {
-    const raw = btn.dataset.baseLabel || btn.textContent.trim();
-    btn.dataset.baseLabel = raw;
-    btn.innerHTML = `<span class="stock-btn-label">${raw}</span><span class="stock-btn-pct">--</span>`;
-  });
-}
-
-function setStockButtonSignal(btn, state, pctText='--') {
-  if (!btn) return;
-  btn.classList.remove('sig-up', 'sig-down', 'sig-flat');
-  const pctEl = btn.querySelector('.stock-btn-pct');
-  if (state === 'up') btn.classList.add('sig-up');
-  else if (state === 'down') btn.classList.add('sig-down');
-  else if (state === 'flat') btn.classList.add('sig-flat');
-
-  if (pctEl) {
-    pctEl.classList.remove('up', 'down', 'flat');
-    pctEl.textContent = pctText || '--';
-    if (state === 'up') pctEl.classList.add('up');
-    else if (state === 'down') pctEl.classList.add('down');
-    else pctEl.classList.add('flat');
-  }
-}
-
-async function fetchNaverKRStockSignalsDetailed(symbols) {
-  const krSymbols = Array.from(new Set(
-    (symbols || [])
-      .filter(sym => /\.(KS|KQ)$/.test(sym))
-      .map(sym => sym.split('.')[0])
-  ));
-  if (!krSymbols.length) return {};
-
-  const cacheKey = 'naver_stock_signals_detail_' + krSymbols.join('_');
-  const cached = Cache.get(cacheKey, 120000);
-  if (cached) return cached;
-
-  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
-  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 15000);
-  const rows = data?.result?.areas?.[0]?.datas || [];
-  const out = {};
-  rows.forEach(item => {
-    const code = String(item.cd || '').trim();
-    const pct = Number(item.cr);
-    if (!code || !isFinite(pct)) return;
-    const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-    const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-    out[code + '.KS'] = { state, pctText };
-    out[code + '.KQ'] = { state, pctText };
-  });
-  Cache.set(cacheKey, out);
-  return out;
-}
-
-async function updateKRStockSignals() {
-  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
-  if (!buttons.length) return;
-
   const symbols = buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean);
   let signals = {};
   try {
@@ -3682,11 +3620,19 @@ async function updateKRStockSignals() {
     return;
   }
 
+  const sectorTotals = {};
   buttons.forEach(btn => {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
     const info = signals[sym];
-    setStockButtonSignal(btn, info?.state || 'flat', info?.pctText || '--');
+    const pctText = info ? `${info.pctText} · ${info.amountText}` : '--';
+    setStockButtonSignal(btn, info?.state || 'flat', pctText);
+
+    const titleEl = btn.closest('.stock-group')?.querySelector('.stock-group-title');
+    const sector = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '';
+    if (sector) sectorTotals[sector] = (sectorTotals[sector] || 0) + Number(info?.amountEok || 0);
   });
+
+  updateKRStockSectorTotals(sectorTotals);
   if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
 }
 
@@ -3717,7 +3663,7 @@ async function updateUSStockSignals() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 </script>
