@@ -1025,6 +1025,53 @@
     opacity: 0.9;
   }
 
+
+  /* 미국/한국 종목 버튼: 작은 시그널 점 + 등락률 */
+  .us-stock-btn, .kr-stock-btn {
+    position: relative;
+    padding-left: 16px !important;
+    line-height: 1.15;
+  }
+  .us-stock-btn::before, .kr-stock-btn::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 12px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    opacity: 0;
+  }
+  .us-stock-btn.sig-up::before, .kr-stock-btn.sig-up::before {
+    background: #f85149;
+    opacity: 1;
+    box-shadow: 0 0 0 1px rgba(248,81,73,0.12);
+  }
+  .us-stock-btn.sig-down::before, .kr-stock-btn.sig-down::before {
+    background: #4A9EFF;
+    opacity: 1;
+    box-shadow: 0 0 0 1px rgba(74,158,255,0.12);
+  }
+  .us-stock-btn.sig-flat::before, .kr-stock-btn.sig-flat::before {
+    background: #9aa4af;
+    opacity: 0.95;
+  }
+  .stock-btn-label {
+    display: block;
+  }
+  .stock-btn-pct {
+    display: block;
+    margin-top: 2px;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    opacity: 0.95;
+  }
+  .stock-btn-pct.up { color: #f85149; }
+  .stock-btn-pct.down { color: #4A9EFF; }
+  .stock-btn-pct.flat { color: #9aa4af; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -3254,7 +3301,7 @@ function closeConsole() { document.getElementById('error-console').classList.rem
 async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals()]);
+  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
   updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
   const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
@@ -3289,7 +3336,7 @@ function buildMobileStockPicker(tabKey) {
       groups.push(group);
     }
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    group.items.push({ symbol: sym, label: btn.textContent.trim(), btn });
+    group.items.push({ symbol: sym, label: (btn.dataset.baseLabel || btn.textContent.trim()), btn });
   });
 
   root.innerHTML = `
@@ -3380,7 +3427,7 @@ function syncMobileStockPicker(tabKey) {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
     if (sym === cfg.symbol) {
       foundGroup = btn.closest('.stock-group')?.querySelector('.stock-group-title')?.textContent?.trim() || '';
-      foundLabel = btn.textContent.trim();
+      foundLabel = (btn.dataset.baseLabel || btn.textContent.trim());
     }
   });
 
@@ -3394,7 +3441,7 @@ function syncMobileStockPicker(tabKey) {
     if (groupEl) {
       const items = Array.from(groupEl.querySelectorAll(cfg.buttonSelector)).map(btn => {
         const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-        return `<option value="${sym}">${btn.textContent.trim()}</option>`;
+        return `<option value="${sym}">${btn.dataset.baseLabel || btn.textContent.trim()}</option>`;
       });
       symbolSel.innerHTML = items.join('');
     }
@@ -3461,8 +3508,108 @@ async function updateKRStockSignals() {
   });
 }
 
+
+function ensureStockButtonMarkup() {
+  document.querySelectorAll('.us-stock-btn, .kr-stock-btn').forEach(btn => {
+    const raw = btn.dataset.baseLabel || btn.textContent.trim();
+    btn.dataset.baseLabel = raw;
+    btn.innerHTML = `<span class="stock-btn-label">${raw}</span><span class="stock-btn-pct">--</span>`;
+  });
+}
+
+function setStockButtonSignal(btn, state, pctText='--') {
+  if (!btn) return;
+  btn.classList.remove('sig-up', 'sig-down', 'sig-flat');
+  const pctEl = btn.querySelector('.stock-btn-pct');
+  if (state === 'up') btn.classList.add('sig-up');
+  else if (state === 'down') btn.classList.add('sig-down');
+  else if (state === 'flat') btn.classList.add('sig-flat');
+
+  if (pctEl) {
+    pctEl.classList.remove('up', 'down', 'flat');
+    pctEl.textContent = pctText || '--';
+    if (state === 'up') pctEl.classList.add('up');
+    else if (state === 'down') pctEl.classList.add('down');
+    else pctEl.classList.add('flat');
+  }
+}
+
+async function fetchNaverKRStockSignalsDetailed(symbols) {
+  const krSymbols = Array.from(new Set(
+    (symbols || [])
+      .filter(sym => /\.(KS|KQ)$/.test(sym))
+      .map(sym => sym.split('.')[0])
+  ));
+  if (!krSymbols.length) return {};
+
+  const cacheKey = 'naver_stock_signals_detail_' + krSymbols.join('_');
+  const cached = Cache.get(cacheKey, 120000);
+  if (cached) return cached;
+
+  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
+  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 15000);
+  const rows = data?.result?.areas?.[0]?.datas || [];
+  const out = {};
+  rows.forEach(item => {
+    const code = String(item.cd || '').trim();
+    const pct = Number(item.cr);
+    if (!code || !isFinite(pct)) return;
+    const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+    const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
+    out[code + '.KS'] = { state, pctText };
+    out[code + '.KQ'] = { state, pctText };
+  });
+  Cache.set(cacheKey, out);
+  return out;
+}
+
+async function updateKRStockSignals() {
+  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
+  if (!buttons.length) return;
+
+  const symbols = buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean);
+  let signals = {};
+  try {
+    signals = await fetchNaverKRStockSignalsDetailed(symbols);
+  } catch (e) {
+    Logger.log('NaverStockSignals', e.message || 'signal load failed', 'warn');
+    return;
+  }
+
+  buttons.forEach(btn => {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    const info = signals[sym];
+    setStockButtonSignal(btn, info?.state || 'flat', info?.pctText || '--');
+  });
+}
+
+async function updateUSStockSignals() {
+  const buttons = Array.from(document.querySelectorAll('.us-stock-btn'));
+  if (!buttons.length) return;
+
+  const symbols = Array.from(new Set(
+    buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean)
+  ));
+
+  const results = {};
+  await Promise.allSettled(symbols.map(async (sym) => {
+    const encoded = encodeURIComponent(sym);
+    const d = await fetchYahoo(encoded);
+    if (!d) return;
+    const pct = Number(d.changePct);
+    const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+    results[sym] = { state, pctText: `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%` };
+  }));
+
+  buttons.forEach(btn => {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    const info = results[sym];
+    setStockButtonSignal(btn, info?.state || 'flat', info?.pctText || '--');
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  Logger.log('System', '마켓 레이더 초기화', 'ok'); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 </script>
