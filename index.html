@@ -3279,7 +3279,7 @@ function buildMobileStockPicker(tabKey) {
   function setBlankSymbolOptions(groupTitle) {
     const group = getGroup(groupTitle);
     symbolSel.innerHTML =
-      `<option value="">종목 선택</option>` +
+      `<option value="" selected disabled>-- 종목 선택 --</option>` +
       group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
     symbolSel.value = '';
     symbolSel.dataset.lastValue = '';
@@ -3325,7 +3325,7 @@ function buildMobileStockPicker(tabKey) {
   groupSel.value = startGroup;
   const group = getGroup(startGroup);
   symbolSel.innerHTML =
-    `<option value="">종목 선택</option>` +
+    `<option value="" selected disabled>-- 종목 선택 --</option>` +
     group.items.map(item => `<option value="${item.symbol}">${item.label}</option>`).join('');
   if (startItem) {
     symbolSel.value = startItem.symbol;
@@ -3368,7 +3368,7 @@ function syncMobileStockPicker(tabKey) {
         const sym = m ? m[1] : '';
         return `<option value="${sym}">${b.textContent.trim()}</option>`;
       });
-      symbolSel.innerHTML = `<option value="">종목 선택</option>` + items.join('');
+      symbolSel.innerHTML = `<option value="" selected disabled>-- 종목 선택 --</option>` + items.join('');
     }
   }
   symbolSel.value = cfg.symbol;
