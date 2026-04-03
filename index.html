@@ -749,6 +749,126 @@
     .tab-label-pc { display: inline; }
     .tab-label-mobile { display: none; }
   }
+
+
+  /* ===== PC 전용 사이즈/색상 조정 ===== */
+  @media (min-width: 769px) {
+    /* 활성 탭/차트 버튼 노란색 */
+    .tab.active,
+    .chart-btn.active,
+    .tool-btn.active,
+    .mini-tool-btn.active {
+      color: var(--yellow);
+      border-color: rgba(227,168,37,0.75);
+      background: rgba(227,168,37,0.12);
+    }
+
+    /* 미국 TAB 텍스트/라벨 */
+    #sec-us .section-title,
+    #sec-us .card-label,
+    #sec-us .chart-title,
+    #sec-us .chart-sub,
+    #sec-us .sector-mini-head,
+    #sec-us p[style*="SECTOR"],
+    #sec-us p[style*="RATES"] {
+      color: var(--yellow) !important;
+    }
+
+    /* 한국 TAB */
+    #sec-kr .section-title,
+    #sec-kr .card-label,
+    #sec-kr .chart-title,
+    #sec-kr .chart-sub {
+      color: var(--yellow) !important;
+    }
+
+    /* 매크로 TAB */
+    #sec-macro .card-label,
+    #sec-macro .chart-title,
+    #sec-macro .chart-sub {
+      color: var(--yellow) !important;
+    }
+
+    /* 유동성 TAB */
+    #sec-liquidity .chart-title,
+    #sec-liquidity .chart-sub,
+    #sec-liquidity div[style*="font-size:11px"][style*="margin-bottom:6px"] {
+      color: var(--yellow) !important;
+    }
+
+    /* 옵션변동성 TAB */
+    #sec-options .chart-title,
+    #sec-options .chart-sub {
+      color: var(--yellow) !important;
+    }
+
+    /* 차트/미국종목/한국종목 활성 버튼 노란색 강조 */
+    #sec-charts .chart-btn.active,
+    #sec-usstocks .chart-btn.active,
+    #sec-krstocks .chart-btn.active {
+      color: var(--yellow);
+      border-color: rgba(227,168,37,0.8);
+      background: rgba(227,168,37,0.12);
+    }
+
+    /* 미국 TAB: 섹터 카드 가로폭 +50% 수준 (3열 -> 2열), 주요 차트는 전체폭 */
+    #sec-us .sector-mini-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    #sec-us .chart-h-sector {
+      height: 225px;
+    }
+    #sec-us .sector-mini-card {
+      min-height: 267px;
+    }
+    #sec-us .g2 {
+      grid-template-columns: 1fr;
+    }
+    #sec-us .chart-h-us {
+      height: 420px;
+    }
+
+    /* 한국 TAB: 코스피/코스닥 전체폭, 원달러 더 크게 */
+    #sec-kr .g2 {
+      grid-template-columns: 1fr;
+    }
+    #sec-kr .chart-h-kr-index {
+      height: 420px;
+    }
+    #sec-kr .chart-h-kr-fx {
+      height: 780px;
+    }
+
+    /* 매크로 TAB: 차트 전체폭 */
+    #sec-macro .g2 {
+      grid-template-columns: 1fr;
+    }
+    #sec-macro .chart-h-macro {
+      height: 520px;
+    }
+
+    /* 유동성 TAB: 각 차트 높이 +50%, 세로폭도 보기 좋게 유지 */
+    #sec-liquidity .chart-h-liquidity {
+      height: 330px;
+    }
+
+    /* 옵션변동성 TAB */
+    #sec-options .chart-h-option {
+      height: 560px;
+    }
+
+    /* 차트/미국종목/한국종목 메인 차트 폭 체감 확대 위해 본문 최대폭 확대 */
+    #sec-charts,
+    #sec-usstocks,
+    #sec-krstocks {
+      max-width: 100%;
+    }
+    .chart-h-main,
+    .chart-h-stock {
+      height: 520px;
+    }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -1273,7 +1393,127 @@
       }
       .mini-tool-btn:hover { border-color: var(--accent); color: var(--accent); }
       .mini-tool-btn.active { background: var(--accent2); border-color: var(--accent); color: white; }
-    </style>
+    
+
+  /* ===== PC 전용 사이즈/색상 조정 ===== */
+  @media (min-width: 769px) {
+    /* 활성 탭/차트 버튼 노란색 */
+    .tab.active,
+    .chart-btn.active,
+    .tool-btn.active,
+    .mini-tool-btn.active {
+      color: var(--yellow);
+      border-color: rgba(227,168,37,0.75);
+      background: rgba(227,168,37,0.12);
+    }
+
+    /* 미국 TAB 텍스트/라벨 */
+    #sec-us .section-title,
+    #sec-us .card-label,
+    #sec-us .chart-title,
+    #sec-us .chart-sub,
+    #sec-us .sector-mini-head,
+    #sec-us p[style*="SECTOR"],
+    #sec-us p[style*="RATES"] {
+      color: var(--yellow) !important;
+    }
+
+    /* 한국 TAB */
+    #sec-kr .section-title,
+    #sec-kr .card-label,
+    #sec-kr .chart-title,
+    #sec-kr .chart-sub {
+      color: var(--yellow) !important;
+    }
+
+    /* 매크로 TAB */
+    #sec-macro .card-label,
+    #sec-macro .chart-title,
+    #sec-macro .chart-sub {
+      color: var(--yellow) !important;
+    }
+
+    /* 유동성 TAB */
+    #sec-liquidity .chart-title,
+    #sec-liquidity .chart-sub,
+    #sec-liquidity div[style*="font-size:11px"][style*="margin-bottom:6px"] {
+      color: var(--yellow) !important;
+    }
+
+    /* 옵션변동성 TAB */
+    #sec-options .chart-title,
+    #sec-options .chart-sub {
+      color: var(--yellow) !important;
+    }
+
+    /* 차트/미국종목/한국종목 활성 버튼 노란색 강조 */
+    #sec-charts .chart-btn.active,
+    #sec-usstocks .chart-btn.active,
+    #sec-krstocks .chart-btn.active {
+      color: var(--yellow);
+      border-color: rgba(227,168,37,0.8);
+      background: rgba(227,168,37,0.12);
+    }
+
+    /* 미국 TAB: 섹터 카드 가로폭 +50% 수준 (3열 -> 2열), 주요 차트는 전체폭 */
+    #sec-us .sector-mini-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    #sec-us .chart-h-sector {
+      height: 225px;
+    }
+    #sec-us .sector-mini-card {
+      min-height: 267px;
+    }
+    #sec-us .g2 {
+      grid-template-columns: 1fr;
+    }
+    #sec-us .chart-h-us {
+      height: 420px;
+    }
+
+    /* 한국 TAB: 코스피/코스닥 전체폭, 원달러 더 크게 */
+    #sec-kr .g2 {
+      grid-template-columns: 1fr;
+    }
+    #sec-kr .chart-h-kr-index {
+      height: 420px;
+    }
+    #sec-kr .chart-h-kr-fx {
+      height: 780px;
+    }
+
+    /* 매크로 TAB: 차트 전체폭 */
+    #sec-macro .g2 {
+      grid-template-columns: 1fr;
+    }
+    #sec-macro .chart-h-macro {
+      height: 520px;
+    }
+
+    /* 유동성 TAB: 각 차트 높이 +50%, 세로폭도 보기 좋게 유지 */
+    #sec-liquidity .chart-h-liquidity {
+      height: 330px;
+    }
+
+    /* 옵션변동성 TAB */
+    #sec-options .chart-h-option {
+      height: 560px;
+    }
+
+    /* 차트/미국종목/한국종목 메인 차트 폭 체감 확대 위해 본문 최대폭 확대 */
+    #sec-charts,
+    #sec-usstocks,
+    #sec-krstocks {
+      max-width: 100%;
+    }
+    .chart-h-main,
+    .chart-h-stock {
+      height: 520px;
+    }
+  }
+
+</style>
 
     <div class="chart-card">
       <div class="lw-chart-meta" id="main-chart-meta">Yahoo Finance · 캔들 · 6개월</div>
