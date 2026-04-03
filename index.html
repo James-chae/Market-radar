@@ -1351,6 +1351,48 @@
     .sched-event { font-size:9px; padding:3px 4px; }
   }
 
+
+  .schedule-week-box {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border: 1px solid rgba(227,168,37,0.28);
+    border-radius: 12px;
+    background: rgba(227,168,37,0.05);
+  }
+  .schedule-week-title {
+    font-family: var(--display);
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--yellow);
+    margin-bottom: 8px;
+  }
+  .schedule-week-list {
+    display: grid;
+    gap: 6px;
+  }
+  .schedule-week-item {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 10px;
+    align-items: start;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .schedule-week-date {
+    color: var(--yellow);
+    white-space: nowrap;
+  }
+  .schedule-week-empty {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+  @media (max-width: 600px) {
+    .schedule-week-title { font-size: 16px; }
+    .schedule-week-item { grid-template-columns: 56px 1fr; font-size: 10px; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -2263,12 +2305,13 @@
   <!-- ══════════════ 10. 일정 ══════════════ -->
   <div class="section" id="sec-schedule">
     <!-- [일정 선정조건]
-         - 미국 증시에 직접 영향이 큰 월간 일정만 표시
-         - 우선순위: 연준 / 빅테크 실적 / 선물옵션만기 / 고용 / 대형 이벤트
-         - 한 달 기준 중요 일정 4~5종만 캘린더에 표시
-         - 클릭 없이 한눈에 월간 리스크 확인용 -->
+         - 기준시간: 미국 현지시간(ET)
+         - 출처 우선순위: Fed / BLS / Apple / Google / ASCO / TSMC IR / Yahoo Earnings
+         - 우선순위: 연준 / 고용·물가 / 옵션만기 / 빅테크 실적 / 글로벌 바이오 이벤트
+         - 2026년 12월까지 상세 반영, 일부 실적은 발표 전 '예상'으로 표기
+         - 일정 변경 시 공식 출처 기준으로 수정 -->
     <p class="section-title">SCHEDULE</p>
-    <p class="section-desc">미국 증시에 영향이 큰 월간 핵심 일정 캘린더</p>
+    <p class="section-desc">미국 증시에 영향이 큰 월간 핵심 일정 캘린더 · 미국 현지시간 기준</p>
     <div class="data-note">
       <span class="badge"><strong>포함</strong> 연준 · 실적 · 옵션만기 · 고용 · 이벤트</span>
       <span class="badge"><strong>목적</strong> 월간 리스크 한눈에 확인</span>
@@ -2276,6 +2319,11 @@
     </div>
 
     <div class="chart-card" style="padding:14px 16px">
+      <div class="schedule-week-box">
+        <div class="schedule-week-title">THIS WEEK</div>
+        <div class="schedule-week-list" id="schedule-week-list"></div>
+      </div>
+
       <div class="schedule-toolbar">
         <button class="mini-tool-btn" id="sched-prev-btn" onclick="changeScheduleMonth(-1)">이전달</button>
         <div class="schedule-title" id="schedule-title">2026년 4월</div>
@@ -2289,7 +2337,7 @@
         <span class="legend-item"><span class="legend-dot event"></span>대형 이벤트</span>
       </div>
       <div class="schedule-calendar"><div class="schedule-weekdays"><div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div></div><div class="schedule-grid" id="schedule-grid"><div class="day-cell other-month" data-date="2026-03-29"><div class="day-num">29</div><div class="day-events" id="day-2026-03-29"></div></div><div class="day-cell other-month" data-date="2026-03-30"><div class="day-num">30</div><div class="day-events" id="day-2026-03-30"></div></div><div class="day-cell other-month" data-date="2026-03-31"><div class="day-num">31</div><div class="day-events" id="day-2026-03-31"></div></div><div class="day-cell " data-date="2026-04-01"><div class="day-num">1</div><div class="day-events" id="day-2026-04-01"></div></div><div class="day-cell " data-date="2026-04-02"><div class="day-num">2</div><div class="day-events" id="day-2026-04-02"></div></div><div class="day-cell today" data-date="2026-04-03"><div class="day-num">3</div><div class="day-events" id="day-2026-04-03"></div></div><div class="day-cell " data-date="2026-04-04"><div class="day-num">4</div><div class="day-events" id="day-2026-04-04"></div></div><div class="day-cell " data-date="2026-04-05"><div class="day-num">5</div><div class="day-events" id="day-2026-04-05"></div></div><div class="day-cell " data-date="2026-04-06"><div class="day-num">6</div><div class="day-events" id="day-2026-04-06"></div></div><div class="day-cell " data-date="2026-04-07"><div class="day-num">7</div><div class="day-events" id="day-2026-04-07"></div></div><div class="day-cell " data-date="2026-04-08"><div class="day-num">8</div><div class="day-events" id="day-2026-04-08"></div></div><div class="day-cell " data-date="2026-04-09"><div class="day-num">9</div><div class="day-events" id="day-2026-04-09"></div></div><div class="day-cell " data-date="2026-04-10"><div class="day-num">10</div><div class="day-events" id="day-2026-04-10"></div></div><div class="day-cell " data-date="2026-04-11"><div class="day-num">11</div><div class="day-events" id="day-2026-04-11"></div></div><div class="day-cell " data-date="2026-04-12"><div class="day-num">12</div><div class="day-events" id="day-2026-04-12"></div></div><div class="day-cell " data-date="2026-04-13"><div class="day-num">13</div><div class="day-events" id="day-2026-04-13"></div></div><div class="day-cell " data-date="2026-04-14"><div class="day-num">14</div><div class="day-events" id="day-2026-04-14"></div></div><div class="day-cell " data-date="2026-04-15"><div class="day-num">15</div><div class="day-events" id="day-2026-04-15"></div></div><div class="day-cell " data-date="2026-04-16"><div class="day-num">16</div><div class="day-events" id="day-2026-04-16"></div></div><div class="day-cell " data-date="2026-04-17"><div class="day-num">17</div><div class="day-events" id="day-2026-04-17"></div></div><div class="day-cell " data-date="2026-04-18"><div class="day-num">18</div><div class="day-events" id="day-2026-04-18"></div></div><div class="day-cell " data-date="2026-04-19"><div class="day-num">19</div><div class="day-events" id="day-2026-04-19"></div></div><div class="day-cell " data-date="2026-04-20"><div class="day-num">20</div><div class="day-events" id="day-2026-04-20"></div></div><div class="day-cell " data-date="2026-04-21"><div class="day-num">21</div><div class="day-events" id="day-2026-04-21"></div></div><div class="day-cell " data-date="2026-04-22"><div class="day-num">22</div><div class="day-events" id="day-2026-04-22"></div></div><div class="day-cell " data-date="2026-04-23"><div class="day-num">23</div><div class="day-events" id="day-2026-04-23"></div></div><div class="day-cell " data-date="2026-04-24"><div class="day-num">24</div><div class="day-events" id="day-2026-04-24"></div></div><div class="day-cell " data-date="2026-04-25"><div class="day-num">25</div><div class="day-events" id="day-2026-04-25"></div></div><div class="day-cell " data-date="2026-04-26"><div class="day-num">26</div><div class="day-events" id="day-2026-04-26"></div></div><div class="day-cell " data-date="2026-04-27"><div class="day-num">27</div><div class="day-events" id="day-2026-04-27"></div></div><div class="day-cell " data-date="2026-04-28"><div class="day-num">28</div><div class="day-events" id="day-2026-04-28"></div></div><div class="day-cell " data-date="2026-04-29"><div class="day-num">29</div><div class="day-events" id="day-2026-04-29"></div></div><div class="day-cell " data-date="2026-04-30"><div class="day-num">30</div><div class="day-events" id="day-2026-04-30"></div></div><div class="day-cell other-month" data-date="2026-05-01"><div class="day-num">1</div><div class="day-events" id="day-2026-05-01"></div></div><div class="day-cell other-month" data-date="2026-05-02"><div class="day-num">2</div><div class="day-events" id="day-2026-05-02"></div></div></div></div>
-      <div class="schedule-note">※ 날짜는 월간 체크용 기준이며, 실제 발표 시각은 현지시간 기준으로 달라질 수 있음.</div>
+      <div class="schedule-note">※ 모든 일정은 미국 현지시간(ET) 기준. 실적·이벤트 일부는 공식 확정 전까지 '예상'으로 표시되며, 공식 일정 변경 시 업데이트가 필요합니다.</div>
     </div>
   </div>
 
@@ -4236,48 +4284,109 @@ async function loadImpactNews(force=false) {
 }
 
 
+
 const SCHEDULE_STATE = {
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
 };
 
-const STATIC_SCHEDULES = {
+const SCHEDULE_SOURCES = {
+  fed: 'Federal Reserve',
+  bls: 'BLS',
+  apple: 'Apple Developer',
+  google: 'Google I/O',
+  asco: 'ASCO',
+  tsmc: 'TSMC IR',
+  yahoo: 'Yahoo Finance',
+};
+
+const DETAILED_SCHEDULES = {
   "2026-04": [
-    { date: "2026-04-03", type: "macro", text: "美 고용지표" },
-    { date: "2026-04-10", type: "event", text: "대형 빅테크 이벤트" },
-    { date: "2026-04-17", type: "opex", text: "선물·옵션 만기" },
-    { date: "2026-04-29", type: "fed", text: "FOMC" },
-    { date: "2026-04-30", type: "earnings", text: "MSFT/AAPL 실적" },
+    { date: "2026-04-03", type: "macro", text: "3월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-04-10", type: "macro", text: "3월 CPI 08:30", source: "BLS" },
+    { date: "2026-04-16", type: "earnings", text: "TSMC 1Q26 실적", source: "TSMC IR" },
+    { date: "2026-04-16", type: "earnings", text: "Netflix 실적 16:00", source: "Yahoo" },
+    { date: "2026-04-22", type: "earnings", text: "Tesla 실적 16:00", source: "Yahoo" },
+    { date: "2026-04-23", type: "earnings", text: "Alphabet 실적 16:00", source: "Yahoo" },
+    { date: "2026-04-29", type: "fed", text: "FOMC 4/28~4/29", source: "Fed" },
+    { date: "2026-04-29", type: "fed", text: "파월 기자회견", source: "Fed" },
+    { date: "2026-04-29", type: "earnings", text: "Microsoft 실적 16:00", source: "Yahoo" },
+    { date: "2026-04-30", type: "earnings", text: "Apple 실적 16:00", source: "Yahoo" },
+    { date: "2026-04-30", type: "earnings", text: "Amazon 실적 16:00", source: "Yahoo" },
+  ],
+  "2026-05": [
+    { date: "2026-05-08", type: "macro", text: "4월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-05-12", type: "macro", text: "4월 CPI 08:30", source: "BLS" },
+    { date: "2026-05-15", type: "opex", text: "월간 옵션만기", source: "Market" },
+    { date: "2026-05-19", type: "event", text: "Google I/O 5/19~20", source: "Google I/O" },
+    { date: "2026-05-29", type: "event", text: "ASCO 2026 5/29~6/2", source: "ASCO" },
+  ],
+  "2026-06": [
+    { date: "2026-06-05", type: "macro", text: "5월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-06-08", type: "event", text: "WWDC26 6/8~12", source: "Apple Developer" },
+    { date: "2026-06-10", type: "macro", text: "5월 CPI 08:30", source: "BLS" },
+    { date: "2026-06-17", type: "fed", text: "FOMC 6/16~6/17", source: "Fed" },
+    { date: "2026-06-17", type: "fed", text: "파월 기자회견", source: "Fed" },
+    { date: "2026-06-19", type: "opex", text: "월간 옵션만기", source: "Market" },
+  ],
+  "2026-07": [
+    { date: "2026-07-02", type: "macro", text: "6월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-07-14", type: "macro", text: "6월 CPI 08:30", source: "BLS" },
+    { date: "2026-07-16", type: "earnings", text: "TSMC 2Q26 실적 (예상)", source: "TSMC IR" },
+    { date: "2026-07-17", type: "opex", text: "월간 옵션만기", source: "Market" },
+    { date: "2026-07-28", type: "fed", text: "FOMC 7/28~7/29", source: "Fed" },
+    { date: "2026-07-29", type: "fed", text: "파월 기자회견", source: "Fed" },
+    { date: "2026-07-29", type: "earnings", text: "MSFT/META/TSLA 주간 (예상)", source: "Yahoo" },
+    { date: "2026-07-30", type: "earnings", text: "AAPL/AMZN 주간 (예상)", source: "Yahoo" },
+  ],
+  "2026-08": [
+    { date: "2026-08-07", type: "macro", text: "7월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-08-12", type: "macro", text: "7월 CPI 08:30", source: "BLS" },
+    { date: "2026-08-21", type: "opex", text: "월간 옵션만기", source: "Market" },
+    { date: "2026-08-26", type: "earnings", text: "NVIDIA 실적 주간 (예상)", source: "Yahoo" },
+  ],
+  "2026-09": [
+    { date: "2026-09-04", type: "macro", text: "8월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-09-11", type: "macro", text: "8월 CPI 08:30", source: "BLS" },
+    { date: "2026-09-15", type: "fed", text: "FOMC 9/15~9/16", source: "Fed" },
+    { date: "2026-09-16", type: "fed", text: "파월 기자회견", source: "Fed" },
+    { date: "2026-09-18", type: "opex", text: "월간 옵션만기", source: "Market" },
+    { date: "2026-09-08", type: "event", text: "Apple 가을 이벤트 (예상)", source: "Apple" },
+  ],
+  "2026-10": [
+    { date: "2026-10-02", type: "macro", text: "9월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-10-14", type: "macro", text: "9월 CPI 08:30", source: "BLS" },
+    { date: "2026-10-15", type: "earnings", text: "TSMC 3Q26 실적 (예상)", source: "TSMC IR" },
+    { date: "2026-10-16", type: "opex", text: "월간 옵션만기", source: "Market" },
+    { date: "2026-10-27", type: "fed", text: "FOMC 10/27~10/28", source: "Fed" },
+    { date: "2026-10-28", type: "fed", text: "파월 기자회견", source: "Fed" },
+    { date: "2026-10-28", type: "earnings", text: "빅테크 실적 주간 (예상)", source: "Yahoo" },
+  ],
+  "2026-11": [
+    { date: "2026-11-06", type: "macro", text: "10월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-11-10", type: "macro", text: "10월 CPI 08:30", source: "BLS" },
+    { date: "2026-11-20", type: "opex", text: "월간 옵션만기", source: "Market" },
+    { date: "2026-11-18", type: "earnings", text: "NVIDIA 실적 주간 (예상)", source: "Yahoo" },
+  ],
+  "2026-12": [
+    { date: "2026-12-04", type: "macro", text: "11월 고용·실업률 08:30", source: "BLS" },
+    { date: "2026-12-10", type: "macro", text: "11월 CPI 08:30", source: "BLS" },
+    { date: "2026-12-09", type: "fed", text: "FOMC 12/8~12/9", source: "Fed" },
+    { date: "2026-12-09", type: "fed", text: "파월 기자회견", source: "Fed" },
+    { date: "2026-12-18", type: "opex", text: "월간 옵션만기", source: "Market" },
+  ],
+  "2027-01": [
+    { date: "2027-01-27", type: "fed", text: "FOMC 1/26~1/27 (잠정)", source: "Fed" },
+    { date: "2027-01-27", type: "fed", text: "파월 기자회견 (잠정)", source: "Fed" },
+    { date: "2027-01-15", type: "opex", text: "월간 옵션만기", source: "Market" },
+    { date: "2027-01-14", type: "earnings", text: "TSMC 4Q26 실적 (예상)", source: "TSMC IR" },
+    { date: "2027-01-27", type: "earnings", text: "빅테크 실적 주간 (예상)", source: "Yahoo" },
   ]
 };
 
-function nthWeekdayOfMonth(year, month, weekday, n) {
-  let d = new Date(year, month - 1, 1);
-  let count = 0;
-  while (d.getMonth() === month - 1) {
-    if (d.getDay() === weekday) {
-      count += 1;
-      if (count === n) return new Date(d);
-    }
-    d.setDate(d.getDate() + 1);
-  }
-  return null;
-}
-
-function firstFriday(year, month) {
-  let d = new Date(year, month - 1, 1);
-  while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
-  return d;
-}
-
-function thirdFriday(year, month) {
-  return nthWeekdayOfMonth(year, month, 5, 3);
-}
-
-function lastWednesday(year, month) {
-  let d = new Date(year, month, 0);
-  while (d.getDay() !== 3) d.setDate(d.getDate() - 1);
-  return d;
+function buildMonthlySchedule(year, month) {
+  const key = `${year}-${String(month).padStart(2, '0')}`;
+  return DETAILED_SCHEDULES[key] || [];
 }
 
 function iso(d) {
@@ -4287,26 +4396,46 @@ function iso(d) {
   return `${y}-${m}-${day}`;
 }
 
-function buildMonthlySchedule(year, month) {
-  const key = `${year}-${String(month).padStart(2,'0')}`;
-  if (STATIC_SCHEDULES[key]) return STATIC_SCHEDULES[key];
 
-  const payroll = firstFriday(year, month);
-  const opex = thirdFriday(year, month);
-  const fed = lastWednesday(year, month);
+function renderWeeklySchedule() {
+  const box = document.getElementById('schedule-week-list');
+  if (!box) return;
 
-  // representative big-tech earnings cluster in late month
-  const earningsDay = new Date(year, month - 1, Math.min(30, new Date(year, month, 0).getDate()));
-  const eventDay = new Date(year, month - 1, Math.min(10, new Date(year, month, 0).getDate()));
+  const now = new Date();
+  const day = now.getDay();
+  const start = new Date(now);
+  start.setDate(now.getDate() - day); // Sunday start
+  start.setHours(0,0,0,0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23,59,59,999);
 
-  return [
-    { date: iso(payroll), type: 'macro', text: '美 고용지표' },
-    { date: iso(eventDay), type: 'event', text: '빅테크 이벤트' },
-    { date: iso(opex), type: 'opex', text: '선물·옵션 만기' },
-    { date: iso(fed), type: 'fed', text: 'FOMC' },
-    { date: iso(earningsDay), type: 'earnings', text: '빅테크 실적' },
-  ];
+  const monthKey = `${SCHEDULE_STATE.year}-${String(SCHEDULE_STATE.month).padStart(2, '0')}`;
+  const currentMonthEvents = buildMonthlySchedule(SCHEDULE_STATE.year, SCHEDULE_STATE.month);
+
+  const weekEvents = currentMonthEvents.filter(ev => {
+    const d = new Date(ev.date + 'T12:00:00');
+    return d >= start && d <= end;
+  }).sort((a,b) => (a.date > b.date) - (a.date < b.date));
+
+  if (!weekEvents.length) {
+    box.innerHTML = '<div class="schedule-week-empty">이번 주 핵심 일정 없음</div>';
+    return;
+  }
+
+  box.innerHTML = weekEvents.map(ev => {
+    const d = new Date(ev.date + 'T12:00:00');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `
+      <div class="schedule-week-item">
+        <div class="schedule-week-date">${mm}/${dd}</div>
+        <div>${ev.text}</div>
+      </div>
+    `;
+  }).join('');
 }
+
 
 function renderSchedule() {
   const title = document.getElementById('schedule-title');
@@ -4330,15 +4459,17 @@ function renderSchedule() {
   grid.innerHTML = cal.map(d => {
     const other = d.getMonth() !== month - 1 ? 'other-month' : '';
     const today = iso(d) === iso(new Date()) ? 'today' : '';
-    return `<div class="day-cell ${other} ${today}" data-date="${iso(d)}"><div class="day-num">${d.getDate()}</div><div class="day-events" id="day-${iso(d)}"></div></div>`;
+    return `<div class="day-cell ${other} ${today}" data-date="${iso(d)}"><div class="day-num">${d.day}</div><div class="day-events" id="day-${iso(d)}"></div></div>`;
   }).join('');
 
   const events = buildMonthlySchedule(year, month);
+  renderWeeklySchedule();
   events.forEach(ev => {
     const slot = document.getElementById(`day-${ev.date}`);
     if (slot) {
       const el = document.createElement('div');
       el.className = `sched-event ${ev.type}`;
+      el.title = `${ev.text} · ${ev.source || ''}`;
       el.textContent = ev.text;
       slot.appendChild(el);
     }
@@ -4354,7 +4485,6 @@ function changeScheduleMonth(delta) {
   SCHEDULE_STATE.month = m;
   renderSchedule();
 }
-
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
