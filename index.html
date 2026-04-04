@@ -1690,20 +1690,6 @@
       </div>
     </div>
 
-    <!-- 섹터 히트맵 -->
-    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">SECTOR 차트</p>
-    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">XL ETF 기준 · 전일 대비 등락률</p>
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">S&P 500 섹터별 등락</div>
-          <div class="chart-sub">Yahoo Finance 6개월 추이</div>
-        </div>
-      </div>
-      
-      <div id="tv-sector"></div>
-    </div>
-
     <!-- S&P500 / 나스닥 차트 -->
 
     <div class="grid g2" style="margin-top:12px">
@@ -1722,47 +1708,62 @@
         <div id="tv_us_ndx" class="yf-chart chart-h-us"></div>
       </div>
     </div>
+
+    <!-- 섹터 히트맵 -->
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">SECTOR 차트</p>
+    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px"><strong>XLK기술</strong>, <strong>XLF금융</strong>, <strong>XLE에너지</strong>, <strong>XLV헬스케어</strong>, <strong>XLI산업재</strong>, <strong>XLY경기소비재</strong> · XL ETF 기준</p>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">S&P 500 섹터별 등락</div>
+          <div class="chart-sub">Yahoo Finance 6개월 추이</div>
+        </div>
+      </div>
+      
+      <div id="tv-sector"></div>
+    </div>
   </div>
 
   <!-- ══════════════ 3. 한국 시장 ══════════════ -->
   <div class="section" id="sec-kr">
     <!-- [한국 지수] 데이터 + 차트 모두 Naver 기준 / 코스피·코스닥은 실시간에 가장 가까운 기준 -->
     <p class="section-title">KOREA MARKET</p>
-    <p class="section-desc">코스피 · 코스닥 · 원달러 · 삼성전자</p>
+    <p class="section-desc">코스피 · 코스닥 · 원달러 · 야간선물 · 대표 종목</p>
     <div class="data-note">
       <span class="badge live"><strong>지수 데이터</strong> Naver</span>
       <span class="badge live"><strong>지수 차트</strong> Naver</span>
+      <span class="badge"><strong>야간선물</strong> Yahoo KOSPI200 프록시</span>
       <span class="badge"><strong>해석</strong> 실시간에 가까운 기준</span>
     </div>
 
     <div class="grid g4">
       <div class="card">
-        <div class="card-label"><span class="dot" style="background:var(--green)"></span>코스피</div>
+        <div class="card-label"><span class="dot" style="background:var(--green)"></span>코스피지수</div>
         <div class="card-value" id="kr-kospi-v">--</div>
         <div class="card-change" id="kr-kospi-c">--</div>
         <div class="card-sub" id="kr-kospi-source">KOSPI · Naver Finance · 52주고점 낙폭: <span id="kr-kospi-dd" class="neutral">--</span></div>
       </div>
       <div class="card">
-        <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>코스닥</div>
+        <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>코스닥지수</div>
         <div class="card-value" id="kr-kosdaq-v">--</div>
         <div class="card-change" id="kr-kosdaq-c">--</div>
         <div class="card-sub" id="kr-kosdaq-source">KOSDAQ · Naver Finance · 52주고점 낙폭: <span id="kr-kosdaq-dd" class="neutral">--</span></div>
       </div>
       <div class="card">
-        <div class="card-label"><span class="dot" style="background:var(--red)"></span>원달러 환율</div>
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>원달러환율</div>
         <div class="card-value" id="kr-usdkrw-v">--</div>
         <div class="card-change" id="kr-usdkrw-c">--</div>
         <div class="card-sub">KRW=X · 원/달러</div>
       </div>
       <div class="card">
-        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>삼성전자</div>
-        <div class="card-value" id="kr-samsung-v">--</div>
-        <div class="card-change" id="kr-samsung-c">--</div>
-        <div class="card-sub">005930.KS · 원</div>
+        <div class="card-label"><span class="dot" style="background:var(--purple)"></span>야간선물</div>
+        <div class="card-value" id="kr-night-v">--</div>
+        <div class="card-change" id="kr-night-c">--</div>
+        <div class="card-sub">^KS200 · Yahoo Finance proxy</div>
       </div>
     </div>
 
-    <!-- KOSPI / KOSDAQ 차트 — Yahoo Finance 렌더링 -->
+    <!-- KOSPI / KOSDAQ 차트 -->
     <div class="grid g2" style="margin-top:12px">
       <div class="chart-card">
         <div class="chart-header">
@@ -1780,13 +1781,33 @@
       </div>
     </div>
 
-    <!-- 원달러 환율 차트 -->
-    <div class="chart-card" style="margin-top:12px">
-      <div class="chart-header">
-        <div class="chart-title">원달러 환율 차트</div>
-        <div class="chart-sub">FX:USDKRW · 일봉</div>
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">대표 종목</p>
+    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px"><strong>삼성전자</strong>, <strong>SK하이닉스</strong>, <strong>현대차</strong>, <strong>두산에너빌리티</strong>, <strong>한화에어로스페이스</strong>, <strong>셀트리온</strong></p>
+    <div class="grid grid-3" style="margin-top:12px">
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">삼성전자</div><div class="chart-sub">005930.KS</div></div>
+        <div id="tv_kr_rep_samsung" class="yf-chart chart-h-sector"></div>
       </div>
-      <div id="tv_usdkrw" class="yf-chart chart-h-kr-fx"></div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">SK하이닉스</div><div class="chart-sub">000660.KS</div></div>
+        <div id="tv_kr_rep_hynix" class="yf-chart chart-h-sector"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">현대차</div><div class="chart-sub">005380.KS</div></div>
+        <div id="tv_kr_rep_hyundai" class="yf-chart chart-h-sector"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">두산에너빌리티</div><div class="chart-sub">034020.KS</div></div>
+        <div id="tv_kr_rep_doosan" class="yf-chart chart-h-sector"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">한화에어로스페이스</div><div class="chart-sub">012450.KS</div></div>
+        <div id="tv_kr_rep_hanwha" class="yf-chart chart-h-sector"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">셀트리온</div><div class="chart-sub">068270.KS</div></div>
+        <div id="tv_kr_rep_celltrion" class="yf-chart chart-h-sector"></div>
+      </div>
     </div>
   </div>
   <!-- ══════════════ 4. 매크로 ══════════════ -->
@@ -2544,6 +2565,7 @@ const SYMBOLS = {
   copper:  { sym: 'HG%3DF',    label: '구리',        ids: ['mac-copper-v','mac-copper-c'] },
   vix:     { sym: '%5EVIX',    label: 'VIX',         ids: ['vix-v','vix-c','opt-vix-v','opt-vix-c'] },
   vvix:    { sym: '%5EVVIX',   label: 'VVIX',        ids: ['opt-vvix-v','opt-vvix-c'] },
+  krnight: { sym: '%5EKS200',  label: '야간선물',    ids: ['kr-night-v','kr-night-c'] },
 };
 
 // ══════════════════════════════════════════
@@ -3110,6 +3132,7 @@ async function loadStockData() {
     { key: 'HG%3DF',    vIds: ['mac-copper-v'],              cIds: ['mac-copper-c'],              fmt: v => '$'+fmt(v,4) },
     { key: '%5EVIX',    vIds: ['vix-v','opt-vix-v'],         cIds: ['vix-c','opt-vix-c'],         fmt: v => fmt(v,2) },
     { key: '%5EVVIX',   vIds: ['opt-vvix-v'],                cIds: ['opt-vvix-c'],                fmt: v => fmt(v,2) },
+    { key: '%5EKS200',  vIds: ['kr-night-v'],                  cIds: ['kr-night-c'],                  fmt: v => fmt(v,2) },
   ];
 
   tasks.forEach(t => {
@@ -3455,6 +3478,12 @@ const MINI_CHARTS = {
   'liq_tv_dxy': { sym: 'DX-Y.NYB', label: '달러 인덱스', range: '6mo', interval: '1d', type: 'candlestick' },
   'liq_tv_btc': { sym: 'BTC-USD', label: '비트코인', range: '6mo', interval: '1d', type: 'candlestick' },
   'liq_tv_sp': { sym: '^GSPC', label: 'S&P 500', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kr_rep_samsung': { sym: '005930.KS', label: '삼성전자', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kr_rep_hynix': { sym: '000660.KS', label: 'SK하이닉스', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kr_rep_hyundai': { sym: '005380.KS', label: '현대차', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kr_rep_doosan': { sym: '034020.KS', label: '두산에너빌리티', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kr_rep_hanwha': { sym: '012450.KS', label: '한화에어로스페이스', range: '6mo', interval: '1d', type: 'candlestick' },
+  'tv_kr_rep_celltrion': { sym: '068270.KS', label: '셀트리온', range: '6mo', interval: '1d', type: 'candlestick' },
 };
 
 function ensureMiniChartUI(containerId) {
@@ -3908,7 +3937,7 @@ function showTab(name, btn) {
 }
 function initChartsForTab(name) {
   if (name === 'us') { initYahooSectorOverview(); loadMiniChart('tv_us_sp500'); loadMiniChart('tv_us_ndx'); }
-  if (name === 'kr') { loadMiniChart('tv_kospi'); loadMiniChart('tv_kosdaq'); loadMiniChart('tv_usdkrw'); }
+  if (name === 'kr') { loadMiniChart('tv_kospi'); loadMiniChart('tv_kosdaq'); loadMiniChart('tv_kr_rep_samsung'); loadMiniChart('tv_kr_rep_hynix'); loadMiniChart('tv_kr_rep_hyundai'); loadMiniChart('tv_kr_rep_doosan'); loadMiniChart('tv_kr_rep_hanwha'); loadMiniChart('tv_kr_rep_celltrion'); }
   if (name === 'macro') { loadMiniChart('tv_macro_dxy'); loadMiniChart('tv_macro_gold'); }
   if (name === 'options') loadMiniChart('tv_vix_chart');
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
