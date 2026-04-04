@@ -3438,8 +3438,8 @@ let _mainChartInterval = '1d';
 let _mainChartType = 'candlestick';
 
 const TAB_CHARTS = {
-  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'SPY', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
-  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '091230.KS', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
+  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'NVDA', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
+  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '005930.KS', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
 };
 
 const MINI_CHARTS = {
@@ -3913,8 +3913,16 @@ function initChartsForTab(name) {
   if (name === 'options') loadMiniChart('tv_vix_chart');
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
   if (name === 'schedule') renderSchedule();
-  if (name === 'usstocks') loadTabChart('usstocks');
-  if (name === 'krstocks') loadTabChart('krstocks');
+  if (name === 'usstocks') {
+    buildMobileStockPicker('usstocks');
+    syncMobileStockPicker('usstocks');
+    loadTabChart('usstocks', true);
+  }
+  if (name === 'krstocks') {
+    buildMobileStockPicker('krstocks');
+    syncMobileStockPicker('krstocks');
+    loadTabChart('krstocks', true);
+  }
 }
 function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
 function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
@@ -4025,12 +4033,25 @@ function buildMobileStockPicker(tabKey) {
     }
   };
 
-  let startGroup = groups[0]?.title || '';
+  // ★ 모바일 기본 강제 설정
+  if (tabKey === 'usstocks') {
+    cfg.symbol = 'NVDA';
+  }
+  if (tabKey === 'krstocks') {
+    cfg.symbol = '005930.KS';
+  }
+
+  let startGroup = '';
   groups.forEach(g => {
     if (g.items.some(i => i.symbol === cfg.symbol)) startGroup = g.title;
   });
+  if (!startGroup) startGroup = groups[0]?.title || '';
+
   groupSel.value = startGroup;
-  renderSymbolOptions(startGroup, cfg.symbol);
+  const item = renderSymbolOptions(startGroup, cfg.symbol);
+  if (item) {
+    switchTabStockChart(tabKey, item.symbol, item.btn);
+  }
 }
 
 function syncMobileStockPicker(tabKey) {
