@@ -2241,6 +2241,63 @@
     }
   }
 
+
+
+  /* ===== 추가 수정: PC 종목 차트 크게 / 모바일 미국종목 참조리스트 ===== */
+  @media (min-width: 769px) {
+    #sec-usstocks .chart-card,
+    #sec-krstocks .chart-card {
+      width: 100%;
+    }
+    #tv-usstocks-chart,
+    #tv-krstocks-chart {
+      height: 702px !important;
+      min-height: 702px !important;
+      width: 100% !important;
+    }
+  }
+  .mobile-sector-reference {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+  }
+  .mobile-sector-reference-title {
+    font-family: var(--display);
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--yellow);
+    margin-bottom: 10px;
+  }
+  .mobile-sector-reference-list {
+    display: grid;
+    gap: 8px;
+  }
+  .mobile-sector-reference-item {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+  }
+  .mobile-sector-reference-sector {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--yellow);
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+  .mobile-sector-reference-stocks {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  @media (max-width: 600px) {
+    #sec-usstocks .mobile-sector-reference {
+      display: block;
+    }
+  }
 </style>
 
     <div class="chart-card">
@@ -2352,6 +2409,11 @@
     <div class="chart-card">
       <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · SPY · 캔들 · 6개월</div>
       <div id="tv-usstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
+    </div>
+
+    <div class="mobile-sector-reference" id="usstocks-mobile-reference">
+      <div class="mobile-sector-reference-title">SECTOR · STOCK LIST</div>
+      <div class="mobile-sector-reference-list" id="usstocks-mobile-reference-list"></div>
     </div>
   </div>
 
@@ -4380,6 +4442,26 @@ function setMobileCurrentText(el, groupTitle, label, btn=null) {
   el.innerHTML = `${groupTitle} · ${label} <span class="pct ${pct.cls}">${pct.text}</span>`;
 }
 
+function renderUSMobileSectorReference() {
+  const root = document.getElementById('usstocks-mobile-reference-list');
+  if (!root) return;
+  const groups = Array.from(document.querySelectorAll('#sec-usstocks .stock-group'));
+  root.innerHTML = groups.map(group => {
+    const titleEl = group.querySelector('.stock-group-title');
+    const sector = ((titleEl?.dataset.baseTitle) || titleEl?.textContent || '').trim();
+    const stocks = Array.from(group.querySelectorAll('.us-stock-btn .stock-btn-label'))
+      .map(el => el.textContent.trim())
+      .filter(Boolean)
+      .join(', ');
+    return `
+      <div class="mobile-sector-reference-item">
+        <div class="mobile-sector-reference-sector">${sector}</div>
+        <div class="mobile-sector-reference-stocks">${stocks}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 async function fetchNaverKRStockSignalsDetailed(symbols) {
   const krSymbols = Array.from(new Set(
     (symbols || [])
@@ -4942,7 +5024,7 @@ function changeScheduleMonth(delta) {
   renderSchedule();
 }
 document.addEventListener('DOMContentLoaded', () => {
-  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderUSMobileSectorReference(); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 </script>
