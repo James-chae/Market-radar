@@ -2527,6 +2527,11 @@
       <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · TIGER 반도체 · 캔들 · 6개월</div>
       <div id="tv-krstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
+
+    <div class="mobile-sector-reference" id="krstocks-mobile-reference">
+      <div class="mobile-sector-reference-title">SECTOR · STOCK LIST</div>
+      <div class="mobile-sector-reference-list" id="krstocks-mobile-reference-list"></div>
+    </div>
   </div>
 
 
@@ -3786,6 +3791,16 @@ function calcSMA(data, period) {
   }
   return out;
 }
+function resizeChartToContainer(containerId) {
+  const state = chartState[containerId];
+  const el = document.getElementById(containerId);
+  if (!state?.chart || !el) return;
+  const width = Math.max(el.clientWidth, 280);
+  const height = Math.max(el.clientHeight, 180);
+  state.chart.applyOptions({ width, height });
+  state.chart.timeScale().fitContent();
+}
+
 function buildChart(containerId, mode='line', sym='') {
   const container = document.getElementById(containerId);
   if (!container || !window.LightweightCharts) return null;
@@ -3888,7 +3903,7 @@ async function loadLWChart(containerId, sym, options={}) {
   const fullStamp = `${dataKey}|${mode}`;
 
   const state = chartState[containerId];
-  if (!options.force && container.dataset.loaded === fullStamp && state?.data?.length) return;
+  if (!options.force && container.dataset.loaded === fullStamp && state?.data?.length) { resizeChartToContainer(containerId); return; }
 
   chartRequestSeq[containerId] = (chartRequestSeq[containerId] || 0) + 1;
   const reqId = chartRequestSeq[containerId];
@@ -3925,6 +3940,7 @@ async function loadLWChart(containerId, sym, options={}) {
   chartState[containerId].dataKey = dataKey;
   chartState[containerId].range = range;
   chartState[containerId].interval = interval;
+  resizeChartToContainer(containerId);
 }
 function updateMainChartMeta() {
   const el = document.getElementById('main-chart-meta');
@@ -4033,7 +4049,7 @@ function showTab(name, btn) {
   const sec = document.getElementById('sec-' + name);
   if (!sec) return;
   sec.classList.add('active');
-  initChartsForTab(name);
+  requestAnimationFrame(() => { initChartsForTab(name); if (name === 'usstocks') resizeChartToContainer('tv-usstocks-chart'); if (name === 'krstocks') resizeChartToContainer('tv-krstocks-chart'); });
   if (name === 'charts') {
     syncMainToolbar();
     updateMainChartMeta();
@@ -4064,6 +4080,8 @@ async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
+  renderSectorReferenceList('usstocks');
+  renderSectorReferenceList('krstocks');
   updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
   const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
@@ -4083,8 +4101,7 @@ function extractSymbolFromOnclick(onclickText) {
 
 
 function renderMobileStockReference(tabKey, groups) {
-  if (tabKey !== 'usstocks') return;
-  const root = document.getElementById('usstocks-mobile-reference');
+  const root = document.getElementById(tabKey + '-mobile-reference');
   if (!root) return;
   root.innerHTML = `
     <div class="mobile-stock-reference-title">SECTOR & STOCK LIST</div>
@@ -4119,6 +4136,7 @@ function buildMobileStockPicker(tabKey) {
   });
 
   renderMobileStockReference(tabKey, groups);
+  renderSectorReferenceList(tabKey);
 
   root.innerHTML = `
     <div class="mobile-stock-picker-row">
@@ -4442,14 +4460,16 @@ function setMobileCurrentText(el, groupTitle, label, btn=null) {
   el.innerHTML = `${groupTitle} · ${label} <span class="pct ${pct.cls}">${pct.text}</span>`;
 }
 
-function renderUSMobileSectorReference() {
-  const root = document.getElementById('usstocks-mobile-reference-list');
+function renderSectorReferenceList(tabKey) {
+  const root = document.getElementById(tabKey + '-mobile-reference-list');
   if (!root) return;
-  const groups = Array.from(document.querySelectorAll('#sec-usstocks .stock-group'));
+  const sectionId = tabKey === 'usstocks' ? '#sec-usstocks' : '#sec-krstocks';
+  const btnClass = tabKey === 'usstocks' ? '.us-stock-btn' : '.kr-stock-btn';
+  const groups = Array.from(document.querySelectorAll(sectionId + ' .stock-group'));
   root.innerHTML = groups.map(group => {
     const titleEl = group.querySelector('.stock-group-title');
     const sector = ((titleEl?.dataset.baseTitle) || titleEl?.textContent || '').trim();
-    const stocks = Array.from(group.querySelectorAll('.us-stock-btn .stock-btn-label'))
+    const stocks = Array.from(group.querySelectorAll(btnClass + ' .stock-btn-label'))
       .map(el => el.textContent.trim())
       .filter(Boolean)
       .join(', ');
@@ -5024,7 +5044,7 @@ function changeScheduleMonth(delta) {
   renderSchedule();
 }
 document.addEventListener('DOMContentLoaded', () => {
-  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderUSMobileSectorReference(); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 </script>
