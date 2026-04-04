@@ -4629,6 +4629,8 @@ const LEADSTOCKS_STATE = {
   cPassCount: 0,
   ePassCount: 0,
   rendered: false,
+  sourceLabel: 'KRX 장마감 기준',
+  tradeDate: '',
 };
 
 function formatLeadAmount(amountEok) {
@@ -4638,35 +4640,83 @@ function formatLeadAmount(amountEok) {
   return `${amountEok.toFixed(1)}억`;
 }
 
-async function fetchNaverSignalsByCodes(codeItems) {
-  const codes = Array.from(new Set((codeItems || []).map(x => String(x.code || '').trim()).filter(Boolean)));
-  if (!codes.length) return {};
-  const cacheKey = 'naver_signals_by_codes_' + codes.join('_');
-  const cached = Cache.get(cacheKey, (CONFIG.KR_STOCK_SIGNAL_CACHE_MS || 300000));
-  if (cached) return cached;
-  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + codes.join(',');
-  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'Naver/KRX300Signals', 15000);
-  const rows = data?.result?.areas?.[0]?.datas || [];
-  const out = {};
-  rows.forEach(item => {
-    const code = String(item.cd || '').trim();
-    const pct = Number(item.cr);
-    const amountRaw = Number(item.aq);
-    if (!code || !Number.isFinite(pct)) return;
-    const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-    const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-    const amountEok = normalizeNaverAmountToEok(amountRaw);
-    out[code] = {
-      code,
-      state,
-      pct,
-      pctText,
-      amountEok: Number.isFinite(amountEok) ? amountEok : null,
-      amountText: Number.isFinite(amountEok) ? formatLeadAmount(amountEok) : '--',
-    };
+function parseNumericLoose(value) {
+  if (value == null) return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const cleaned = String(value).replace(/,/g, '').trim();
+  if (!cleaned) return null;
+  const num = Number(cleaned);
+  return Number.isFinite(num) ? num : null;
+}
+
+function toKrxTradeDate(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}${m}${d}`;
+}
+
+function formatKrxTradeDate(dateStr) {
+  if (!/^\d{8}$/.test(dateStr || '')) return '--';
+  return `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}-${dateStr.slice(6,8)}`;
+}
+
+function getKrxDailyUrls(trdDd) {
+  const params = new URLSearchParams({
+    bld: 'dbms/MDC/STAT/standard/MDCSTAT01501',
+    locale: 'ko_KR',
+    mktId: 'ALL',
+    trdDd,
+    share: '1',
+    money: '1',
+    csvxls_isNo: 'false',
   });
-  Cache.set(cacheKey, out);
-  return out;
+  const direct = `https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd?${params.toString()}`;
+  return [
+    direct,
+    `https://corsproxy.io/?url=${encodeURIComponent(direct)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(direct)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(direct)}`,
+  ];
+}
+
+async function fetchKrxDailyMarketByDate(trdDd) {
+  const cacheKey = 'krx_daily_market_' + trdDd;
+  const cached = Cache.get(cacheKey, 300000);
+  if (cached) return cached;
+
+  const urls = getKrxDailyUrls(trdDd);
+  for (let i = 0; i < urls.length; i++) {
+    try {
+      const r = await fetchWithTimeout(urls[i], 18000);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const raw = await r.json();
+      const data = raw?.contents ? JSON.parse(raw.contents) : raw;
+      const rows = Array.isArray(data?.OutBlock_1) ? data.OutBlock_1 : [];
+      if (!rows.length) throw new Error('빈 데이터');
+      Cache.set(cacheKey, rows);
+      Logger.log('KRX/Daily', `${trdDd} 프록시${i + 1} 성공: ${rows.length}건`, 'ok');
+      return rows;
+    } catch (e) {
+      const isLast = i === urls.length - 1;
+      Logger.log('KRX/Daily', `${trdDd} 프록시${i + 1} 실패: ${e.message}`, isLast ? 'warn' : 'warn');
+    }
+  }
+  return null;
+}
+
+async function fetchLatestKrxDailyMarket(maxBackDays=10) {
+  const today = new Date();
+  for (let offset = 0; offset < maxBackDays; offset++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - offset);
+    const day = d.getDay();
+    if (day === 0 || day === 6) continue;
+    const trdDd = toKrxTradeDate(d);
+    const rows = await fetchKrxDailyMarketByDate(trdDd);
+    if (rows && rows.length) return { trdDd, rows };
+  }
+  return null;
 }
 
 async function computeLeadStocks() {
@@ -4679,20 +4729,34 @@ async function computeLeadStocks() {
       LEADSTOCKS_STATE.ePassCount = 0;
       LEADSTOCKS_STATE.computedAt = new Date();
       LEADSTOCKS_STATE.rendered = false;
+      LEADSTOCKS_STATE.tradeDate = '';
       return;
     }
 
-    const signalMap = await fetchNaverSignalsByCodes(baseItems);
-    const rows = baseItems.map(item => {
-      const signal = signalMap[item.code] || null;
-      return {
-        ...item,
-        pct: Number.isFinite(signal?.pct) ? signal.pct : null,
-        pctText: signal?.pctText || '--',
-        currentAmountEok: Number.isFinite(signal?.amountEok) ? signal.amountEok : null,
-        amountText: signal?.amountText || '--',
-      };
-    }).filter(row => Number.isFinite(row.currentAmountEok) && Number.isFinite(row.pct));
+    const krxResult = await fetchLatestKrxDailyMarket(10);
+    if (!krxResult?.rows?.length) throw new Error('KRX 장마감 데이터를 불러오지 못했습니다');
+
+    const universeSet = new Set(baseItems.map(x => String(x.code).trim()));
+    const nameMap = new Map(baseItems.map(x => [String(x.code).trim(), x.name]));
+
+    const rows = krxResult.rows
+      .map(row => {
+        const code = String(row.ISU_SRT_CD || row.ISU_CD || row.SHRS || '').trim();
+        if (!universeSet.has(code)) return null;
+        const pct = parseNumericLoose(row.FLUC_RT);
+        const tradeValWon = parseNumericLoose(row.ACC_TRDVAL);
+        const amountEok = Number.isFinite(tradeValWon) ? (tradeValWon / 100000000) : null;
+        if (!Number.isFinite(pct) || !Number.isFinite(amountEok)) return null;
+        return {
+          code,
+          name: String(row.ISU_ABBRV || nameMap.get(code) || '').trim() || nameMap.get(code) || code,
+          pct,
+          pctText: `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`,
+          currentAmountEok: amountEok,
+          amountText: formatLeadAmount(amountEok),
+        };
+      })
+      .filter(Boolean);
 
     const amountRanked = [...rows].sort((a, b) => b.currentAmountEok - a.currentAmountEok || b.pct - a.pct);
     amountRanked.forEach((row, idx) => { row.currentRank = idx + 1; row.cPass = idx < 30; });
@@ -4714,6 +4778,8 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.ePassCount = rows.filter(x => x.ePass).length;
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
+    LEADSTOCKS_STATE.sourceLabel = 'KRX 장마감 기준';
+    LEADSTOCKS_STATE.tradeDate = krxResult.trdDd || '';
   } catch (e) {
     Logger.log('LeadStocks', e.message || '계산 실패', 'warn');
     LEADSTOCKS_STATE.items = [];
@@ -4722,6 +4788,8 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.ePassCount = 0;
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
+    LEADSTOCKS_STATE.sourceLabel = 'KRX 장마감 기준';
+    LEADSTOCKS_STATE.tradeDate = '';
   }
 }
 
@@ -4744,8 +4812,8 @@ function renderLeadStocks() {
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.items.length || 0}</div>
     </div>
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">계산 시각</div>
-      <div class="leadstocks-stat-value">${updatedText}</div>
+      <div class="leadstocks-stat-label">계산 시각 / 기준일</div>
+      <div class="leadstocks-stat-value">${updatedText} / ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)}</div>
     </div>
   `;
 
@@ -4759,7 +4827,7 @@ function renderLeadStocks() {
     <div class="leadstocks-sector-card" style="grid-column:1 / -1">
       <div class="leadstocks-sector-head">
         <div class="leadstocks-sector-name">거래대금순 정렬</div>
-        <div class="leadstocks-sector-meta">KRX300 후보군 기준 · C=당일 거래대금 상위 30 · E=당일 상승률 순위 30 · C and E</div>
+        <div class="leadstocks-sector-meta">KRX300 후보군 기준 · ${LEADSTOCKS_STATE.sourceLabel} · 기준일 ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)} · C=당일 거래대금 상위 30 · E=당일 상승률 순위 30 · C and E</div>
       </div>
       <div class="leadstocks-list">
         ${LEADSTOCKS_STATE.items.map((item, idx) => `
