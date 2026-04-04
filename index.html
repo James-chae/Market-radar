@@ -1688,20 +1688,6 @@
       </div>
     </div>
 
-    <!-- 섹터 히트맵 -->
-    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">SECTOR 차트</p>
-    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px">XL ETF 기준 · 전일 대비 등락률</p>
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <div class="chart-title">S&P 500 섹터별 등락</div>
-          <div class="chart-sub">Yahoo Finance 6개월 추이</div>
-        </div>
-      </div>
-      
-      <div id="tv-sector"></div>
-    </div>
-
     <!-- S&P500 / 나스닥 차트 -->
 
     <div class="grid g2" style="margin-top:12px">
@@ -1719,6 +1705,19 @@
         </div>
         <div id="tv_us_ndx" class="yf-chart chart-h-us"></div>
       </div>
+    </div>
+
+    <!-- 섹터 히트맵 -->
+    <p style="font-family:var(--display);font-size:18px;letter-spacing:2px;color:#d0d7de;margin:20px 0 4px">SECTOR 차트</p>
+    <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px"><strong>XLK기술</strong>, <strong>XLF금융</strong>, <strong>XLE에너지</strong>, <strong>XLV헬스케어</strong>, <strong>XLI산업재</strong>, <strong>XLY경기소비재</strong> · XL ETF 기준</p>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">S&P 500 섹터별 등락</div>
+          <div class="chart-sub"><strong>XLK기술</strong>, <strong>XLF금융</strong>, <strong>XLE에너지</strong>, <strong>XLV헬스케어</strong>, <strong>XLI산업재</strong>, <strong>XLY경기소비재</strong></div>
+        </div>
+      </div>
+      <div id="tv-sector"></div>
     </div>
   </div>
 
@@ -1999,8 +1998,8 @@
 
     <!-- 심볼 선택 -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <button class="chart-btn active" onclick="switchChart('^GSPC', this)">S&amp;P 500</button>
-      <button class="chart-btn" onclick="switchChart('^NDX', this)">나스닥 100</button>
+      <button class="chart-btn" onclick="switchChart('^GSPC', this)">S&amp;P 500</button>
+      <button class="chart-btn active" onclick="switchChart('^NDX', this)">나스닥 100</button>
       <button class="chart-btn" onclick="switchChart('^DJI', this)">다우존스</button>
       <button class="chart-btn" onclick="switchChart('^VIX', this)">VIX</button>
       <button class="chart-btn" onclick="switchChart('^KS11', this)">코스피</button>
@@ -2201,13 +2200,13 @@
 <div class="stock-group">
       <div class="stock-group-title">0. ETF</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn us-stock-btn active" onclick="switchTabStockChart('usstocks', 'SPY', this)">SPY</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'VOO', this)">VOO</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'QQQ', this)">QQQ</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SOXX', this)">SOXX</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SOXL', this)">SOXL</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NLR', this)">NLR</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'URNM', this)">URNM</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'PPA', this)">PPA</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'ITA', this)">ITA</button>
+        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SPY', this)">SPY</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'VOO', this)">VOO</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'QQQ', this)">QQQ</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SOXX', this)">SOXX</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'SOXL', this)">SOXL</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NLR', this)">NLR</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'URNM', this)">URNM</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'PPA', this)">PPA</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'ITA', this)">ITA</button>
       </div>
     </div>
 <div class="stock-group">
       <div class="stock-group-title">1. 시총</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'NVDA', this)">NVIDIA</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AAPL', this)">Apple</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'MSFT', this)">Microsoft</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GOOGL', this)">Alphabet</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AVGO', this)">Broadcom</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'TSLA', this)">Tesla</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'META', this)">Meta</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'BRK-B', this)">Berkshire</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'WMT', this)">Walmart</button>
+        <button class="chart-btn us-stock-btn active" onclick="switchTabStockChart('usstocks', 'NVDA', this)">NVIDIA</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AAPL', this)">Apple</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'MSFT', this)">Microsoft</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'GOOGL', this)">Alphabet</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'AVGO', this)">Broadcom</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'TSLA', this)">Tesla</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'META', this)">Meta</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'BRK-B', this)">Berkshire</button> <button class="chart-btn us-stock-btn" onclick="switchTabStockChart('usstocks', 'WMT', this)">Walmart</button>
       </div>
     </div>
 <div class="stock-group">
@@ -2284,7 +2283,7 @@
     </div>
 
     <div class="chart-card">
-      <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · SPY · 캔들 · 6개월</div>
+      <div class="lw-chart-meta" id="usstocks-chart-meta">Yahoo Finance · NVIDIA · 캔들 · 6개월</div>
       <div id="tv-usstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
   </div>
@@ -2307,13 +2306,13 @@
 <div class="stock-group">
       <div class="stock-group-title">0. ETF</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn kr-stock-btn active" onclick="switchTabStockChart('krstocks', '091230.KS', this)">TIGER 반도체</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '0080G0.KS', this)">KODEX 방산TOP10</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '400570.KS', this)">TIGER 원자력·우주항공</button>
+        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '091230.KS', this)">TIGER 반도체</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '0080G0.KS', this)">KODEX 방산TOP10</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '400570.KS', this)">TIGER 원자력·우주항공</button>
       </div>
     </div>
 <div class="stock-group">
       <div class="stock-group-title">1. 반도체</div>
       <div class="stock-group-buttons">
-        <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '005930.KS', this)">삼성전자</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000660.KS', this)">SK하이닉스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '042700.KS', this)">한미반도체</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '357780.KQ', this)">솔브레인</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '039030.KQ', this)">이오테크닉스</button>
+        <button class="chart-btn kr-stock-btn active" onclick="switchTabStockChart('krstocks', '005930.KS', this)">삼성전자</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '000660.KS', this)">SK하이닉스</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '042700.KS', this)">한미반도체</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '357780.KQ', this)">솔브레인</button> <button class="chart-btn kr-stock-btn" onclick="switchTabStockChart('krstocks', '039030.KQ', this)">이오테크닉스</button>
       </div>
     </div>
 <div class="stock-group">
@@ -2396,7 +2395,7 @@
     </div>
 
     <div class="chart-card">
-      <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · TIGER 반도체 · 캔들 · 6개월</div>
+      <div class="lw-chart-meta" id="krstocks-chart-meta">Yahoo Finance · 삼성전자 · 캔들 · 6개월</div>
       <div id="tv-krstocks-chart" class="lw-chart-host chart-h-stock" style="position:relative;z-index:10;"></div>
     </div>
   </div>
@@ -3430,14 +3429,14 @@ const CHART_META = {
 const chartState = {};
 const chartRequestSeq = {};
 const pendingHistoryRequests = {};
-let _activeChartSym = '^GSPC';
+let _activeChartSym = '^NDX';
 let _mainChartRange = '6mo';
 let _mainChartInterval = '1d';
 let _mainChartType = 'candlestick';
 
 const TAB_CHARTS = {
-  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'SPY', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
-  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '091230.KS', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
+  usstocks: { containerId: 'tv-usstocks-chart', metaId: 'usstocks-chart-meta', symbol: 'NVDA', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.us-stock-btn' },
+  krstocks: { containerId: 'tv-krstocks-chart', metaId: 'krstocks-chart-meta', symbol: '005930.KS', range: '6mo', interval: '1d', type: 'candlestick', buttonSelector: '.kr-stock-btn' },
 };
 
 const MINI_CHARTS = {
