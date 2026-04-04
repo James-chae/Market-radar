@@ -1537,6 +1537,50 @@
     .schedule-update-status { width: 100%; }
   }
 
+
+  /* ── 오늘의 주도주 ── */
+  .leader-board { display: grid; gap: 12px; }
+  .leader-topline { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .leader-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+    font-family: var(--mono); font-size: 10px; border: 1px solid var(--border2);
+    background: rgba(255,255,255,0.03); color: var(--text3);
+  }
+  .leader-badge strong { color: var(--yellow); font-weight: 700; }
+  .leader-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .leader-sector-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius2); overflow: hidden;
+  }
+  .leader-sector-head {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+    padding: 14px 16px 10px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+  }
+  .leader-sector-name {
+    font-family: var(--display); font-size: 20px; letter-spacing: 1.5px; color: var(--yellow); line-height: 1;
+  }
+  .leader-sector-sub { margin-top: 4px; font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  .leader-sector-score { text-align: right; font-family: var(--mono); font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .leader-sector-score strong { display: block; color: #fff; font-size: 18px; line-height: 1.1; }
+  .leader-stock-list { padding: 8px 14px 14px; display: grid; gap: 8px; }
+  .leader-stock-row {
+    display: grid; grid-template-columns: 24px 1fr auto auto; gap: 8px; align-items: center;
+    padding: 10px 10px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.02);
+  }
+  .leader-rank { font-family: var(--mono); font-size: 11px; color: var(--yellow); text-align: center; }
+  .leader-stock-name { font-size: 13px; color: var(--text2); font-weight: 500; min-width: 0; }
+  .leader-stock-pct { font-family: var(--mono); font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .leader-stock-pct.up { color: #f85149; }
+  .leader-stock-pct.down { color: #4A9EFF; }
+  .leader-stock-pct.flat { color: #9aa4af; }
+  .leader-stock-score { font-family: var(--mono); font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .leader-stock-score strong { color: #fff; font-weight: 700; }
+  .leader-empty {
+    padding: 20px; border: 1px dashed var(--border2); border-radius: 12px;
+    text-align: center; color: var(--text3); font-family: var(--mono); font-size: 11px;
+  }
+  .leader-footnote { margin-top: 12px; font-family: var(--mono); font-size: 10px; line-height: 1.7; color: var(--text3); }
+  @media (max-width: 900px) { .leader-grid { grid-template-columns: 1fr; } }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -1567,6 +1611,7 @@
   <div class="tab mobile-row-2" onclick="showTab('schedule', this)">🗓️ <span class="tab-label-pc">일정</span><span class="tab-label-mobile">일정</span></div>
 
   <div class="tab mobile-row-3" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션변동성</span><span class="tab-label-mobile">옵션변동성</span></div>
+  <div class="tab mobile-row-3" onclick="showTab('leadstocks', this)">🔥 <span class="tab-label-pc">오늘의 주도주</span><span class="tab-label-mobile">주도주</span></div>
 </nav>
 
 <main>
@@ -2538,7 +2583,28 @@
 
   
   
-  <!-- ══════════════ 10. 일정 ══════════════ -->
+
+  <!-- ══════════════ 10. 오늘의 주도주 ══════════════ -->
+  <div class="section" id="sec-leadstocks">
+    <p class="section-title">TODAY'S LEADERS</p>
+    <p class="section-desc">거래대금 + 등락률 중심 · 누락 수급은 중립값 반영 · 프론트 계산형</p>
+    <div class="leader-topline">
+      <span class="leader-badge"><strong>대상</strong> 한국종목 TAB 등록 종목</span>
+      <span class="leader-badge"><strong>계산</strong> 데이터 갱신 시 1회</span>
+      <span class="leader-badge"><strong>정렬</strong> 섹터 점수 → 종목 점수</span>
+      <span class="leader-badge"><strong>수급 누락</strong> 중립 50점</span>
+    </div>
+    <div class="leader-board">
+      <div class="leader-grid" id="leadstocks-grid">
+        <div class="leader-empty">계산 대기 중...</div>
+      </div>
+      <div class="leader-footnote" id="leadstocks-footnote">
+        money_flow_score = 0.40×거래대금 + 0.25×등락률 + 0.20×외인 + 0.10×기관 + 0.05×프매
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ 11. 일정 ══════════════ -->
   <div class="section" id="sec-schedule">
     <!-- [일정 선정조건]
          - 기준시간: 미국 현지시간(ET)
@@ -4064,6 +4130,7 @@ function initChartsForTab(name) {
   if (name === 'options') loadMiniChart('tv_vix_chart');
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
   if (name === 'schedule') renderSchedule();
+  if (name === 'leadstocks') renderLeadStocks();
   if (name === 'usstocks') {
     buildMobileStockPicker('usstocks');
     syncMobileStockPicker('usstocks');
@@ -4081,6 +4148,8 @@ async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
+  computeLeadStocks();
+  renderLeadStocks();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
   updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } }
@@ -4513,6 +4582,190 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
   });
   Cache.set(cacheKey, out);
   return out;
+}
+
+
+
+const LEADSTOCKS_STATE = {
+  sectors: [],
+  computedAt: null,
+  universeSize: 0,
+  missingFlowFields: ['외인', '기관', '프매'],
+};
+
+function escapeHtml(str='') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function percentileScoreFromSortedDesc(value, sortedValues) {
+  if (!Array.isArray(sortedValues) || !sortedValues.length || !isFinite(value)) return 50;
+  if (sortedValues.length === 1) return 100;
+  const idx = sortedValues.findIndex(v => value >= v);
+  const rank = idx >= 0 ? idx : (sortedValues.length - 1);
+  const pct = ((sortedValues.length - 1 - rank) / (sortedValues.length - 1)) * 100;
+  return clamp(pct, 0, 100);
+}
+
+function parsePctTextToNumber(text='') {
+  const plain = String(text).replace(/<[^>]+>/g, ' ').replace(/[^\d+\-\.]/g, ' ').trim();
+  const match = plain.match(/[+\-]?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function extractAmountEokFromPctHtml(html='') {
+  const plain = String(html).replace(/<[^>]+>/g, ' ').replace(/,/g, '');
+  const match = plain.match(/([+\-]?\d+(?:\.\d+)?)\s*억/);
+  return match ? Number(match[1]) : null;
+}
+
+function getLeadSectorBaseTitle(groupEl) {
+  const titleEl = groupEl?.querySelector('.stock-group-title');
+  return titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '기타';
+}
+
+function collectLeadStocksUniverse() {
+  const groups = Array.from(document.querySelectorAll('#sec-krstocks .stock-group'));
+  const out = [];
+  groups.forEach(group => {
+    const sector = getLeadSectorBaseTitle(group);
+    if (!sector) return;
+    Array.from(group.querySelectorAll('.kr-stock-btn')).forEach(btn => {
+      const symbol = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+      const label = btn.dataset.baseLabel || btn.querySelector('.stock-btn-label')?.textContent?.trim() || btn.textContent.trim();
+      const pctHtml = btn.querySelector('.stock-btn-pct')?.innerHTML || '';
+      const pct = parsePctTextToNumber(pctHtml);
+      const amountEok = extractAmountEokFromPctHtml(pctHtml);
+      if (!symbol || !label) return;
+      out.push({
+        sector: sector || '기타',
+        symbol,
+        label,
+        pct: isFinite(pct) ? pct : 0,
+        amountEok: isFinite(amountEok) ? amountEok : 0,
+        foreignNet: null,
+        instNet: null,
+        programNet: null,
+      });
+    });
+  });
+  return out;
+}
+
+function computeLeadStocks() {
+  const stocks = collectLeadStocksUniverse().filter(item => item.sector && item.sector !== '0. ETF');
+  LEADSTOCKS_STATE.universeSize = stocks.length;
+  if (!stocks.length) {
+    LEADSTOCKS_STATE.sectors = [];
+    LEADSTOCKS_STATE.computedAt = new Date();
+    return LEADSTOCKS_STATE;
+  }
+
+  const amountSorted = stocks.map(x => Number(x.amountEok) || 0).sort((a, b) => b - a);
+  const foreignSorted = stocks.map(x => isFinite(x.foreignNet) ? x.foreignNet : 0).sort((a, b) => b - a);
+  const instSorted = stocks.map(x => isFinite(x.instNet) ? x.instNet : 0).sort((a, b) => b - a);
+  const programSorted = stocks.map(x => isFinite(x.programNet) ? x.programNet : 0).sort((a, b) => b - a);
+
+  stocks.forEach(item => {
+    const turnoverScore = percentileScoreFromSortedDesc(Number(item.amountEok) || 0, amountSorted);
+    const pctScore = clamp((clamp(Number(item.pct) || 0, -10, 10) + 10) * 5, 0, 100);
+    const foreignScore = isFinite(item.foreignNet) ? percentileScoreFromSortedDesc(item.foreignNet, foreignSorted) : 50;
+    const instScore = isFinite(item.instNet) ? percentileScoreFromSortedDesc(item.instNet, instSorted) : 50;
+    const programScore = isFinite(item.programNet) ? percentileScoreFromSortedDesc(item.programNet, programSorted) : 50;
+
+    item.moneyFlowScore = (
+      0.40 * turnoverScore +
+      0.25 * pctScore +
+      0.20 * foreignScore +
+      0.10 * instScore +
+      0.05 * programScore
+    );
+  });
+
+  const sectorMap = {};
+  stocks.forEach(item => {
+    const key = item.sector || '기타';
+    if (!sectorMap[key]) sectorMap[key] = [];
+    sectorMap[key].push(item);
+  });
+
+  const sectors = Object.entries(sectorMap).map(([sector, items]) => {
+    const sortedItems = items.slice().sort((a, b) => b.moneyFlowScore - a.moneyFlowScore || b.amountEok - a.amountEok || b.pct - a.pct);
+    const topForSector = sortedItems.slice(0, 5);
+    const sectorScore = topForSector.reduce((sum, row) => sum + row.moneyFlowScore, 0) / Math.max(topForSector.length, 1);
+    return {
+      sector,
+      sectorScore,
+      items: sortedItems.slice(0, 5),
+      sectorAmountEok: sortedItems.reduce((sum, row) => sum + (Number(row.amountEok) || 0), 0),
+    };
+  }).sort((a, b) => b.sectorScore - a.sectorScore || b.sectorAmountEok - a.sectorAmountEok)
+    .slice(0, 10);
+
+  LEADSTOCKS_STATE.sectors = sectors;
+  LEADSTOCKS_STATE.computedAt = new Date();
+  return LEADSTOCKS_STATE;
+}
+
+function renderLeadStocks() {
+  const root = document.getElementById('leadstocks-grid');
+  const note = document.getElementById('leadstocks-footnote');
+  if (!root) return;
+
+  const sectors = LEADSTOCKS_STATE.sectors || [];
+  if (!sectors.length) {
+    root.innerHTML = '<div class="leader-empty">표시할 계산 결과가 없습니다</div>';
+    if (note) {
+      note.innerHTML = '현재 한국종목 데이터에서 거래대금·등락률은 반영했고, 외인·기관·프매 개별 수급 수치는 현재 파일에 노출돼 있지 않아 요청 규칙대로 중립값 50을 적용했습니다.';
+    }
+    return;
+  }
+
+  root.innerHTML = sectors.map((sector, sIdx) => `
+    <div class="leader-sector-card">
+      <div class="leader-sector-head">
+        <div>
+          <div class="leader-sector-name">${sIdx + 1}. ${escapeHtml(sector.sector)}</div>
+          <div class="leader-sector-sub">섹터 거래대금 ${formatEok(sector.sectorAmountEok)} · 상위 ${Math.min(sector.items.length, 5)}종목 평균</div>
+        </div>
+        <div class="leader-sector-score">SECTOR SCORE<strong>${sector.sectorScore.toFixed(1)}</strong></div>
+      </div>
+      <div class="leader-stock-list">
+        ${sector.items.slice(0, 5).map((item, idx) => {
+          const pctClass = item.pct > 0 ? 'up' : item.pct < 0 ? 'down' : 'flat';
+          const pctText = `${item.pct > 0 ? '+' : ''}${item.pct.toFixed(1)}%`;
+          return `
+            <div class="leader-stock-row">
+              <div class="leader-rank">${idx + 1}</div>
+              <div class="leader-stock-name">${escapeHtml(item.label)}</div>
+              <div class="leader-stock-pct ${pctClass}">${pctText}</div>
+              <div class="leader-stock-score"><strong>${item.moneyFlowScore.toFixed(1)}</strong> / ${formatEok(item.amountEok)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  const computedAt = LEADSTOCKS_STATE.computedAt
+    ? `${String(LEADSTOCKS_STATE.computedAt.getHours()).padStart(2, '0')}:${String(LEADSTOCKS_STATE.computedAt.getMinutes()).padStart(2, '0')}:${String(LEADSTOCKS_STATE.computedAt.getSeconds()).padStart(2, '0')}`
+    : '--:--:--';
+
+  if (note) {
+    note.innerHTML = [
+      `대상 종목 ${LEADSTOCKS_STATE.universeSize}개 기준 · 계산 시각 ${computedAt}`,
+      `거래대금은 Naver 실시간 거래대금 백분위, 등락률은 -10%~+10% 범위 점수화 적용`,
+      `외인·기관·프매 개별 수급 값은 현재 업로드된 프론트 파일에 별도 숫자로 노출되지 않아 요청 규칙대로 각각 50점 중립 처리`
+    ].join('<br>');
+  }
 }
 
 
