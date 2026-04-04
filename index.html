@@ -4626,7 +4626,7 @@ const LEADSTOCKS_STATE = {
   sectors: [],
   eligibleCount: 0,
   cPassCount: 0,
-  ePassCount: 0,
+  dPassCount: 0,
   rendered: false,
 };
 
@@ -4707,74 +4707,56 @@ async function computeLeadStocks() {
     if (!baseItems.length) {
       LEADSTOCKS_STATE.items = [];
       LEADSTOCKS_STATE.sectors = [];
+      LEADSTOCKS_STATE.eligibleCount = 0;
+      LEADSTOCKS_STATE.cPassCount = 0;
+      LEADSTOCKS_STATE.dPassCount = 0;
+      LEADSTOCKS_STATE.computedAt = new Date();
       LEADSTOCKS_STATE.rendered = false;
       return;
     }
 
     const signalMap = await fetchNaverKRStockSignalsDetailed(baseItems.map(x => x.symbol));
-    const histResults = await Promise.allSettled(baseItems.map(item => fetchYahooHistoryWithVolume(item.symbol, '3mo', '1d')));
 
-    const rows = baseItems.map((item, idx) => {
+    const rows = baseItems.map(item => {
       const signal = signalMap[item.symbol] || null;
       const pctNum = signal?.pctText ? parseFloat(String(signal.pctText).replace('%', '')) : null;
       const currentAmountEok = Number(signal?.amountEok);
-      const hist = histResults[idx]?.status === 'fulfilled' ? histResults[idx].value : null;
-      let avgPrevValueEok = null;
-      if (Array.isArray(hist) && hist.length >= 5) {
-        const usable = hist.slice(-21, -1).filter(row => Number.isFinite(row.close) && Number.isFinite(row.volume));
-        if (usable.length) {
-          const values = usable.map(row => (row.close * row.volume) / 100000000);
-          const sum = values.reduce((acc, v) => acc + (Number.isFinite(v) ? v : 0), 0);
-          avgPrevValueEok = sum / usable.length;
-        }
-      }
       return {
         ...item,
         pct: Number.isFinite(pctNum) ? pctNum : null,
         pctText: signal?.pctText || '--',
         currentAmountEok: Number.isFinite(currentAmountEok) ? currentAmountEok : null,
-        avgPrevValueEok: Number.isFinite(avgPrevValueEok) ? avgPrevValueEok : null,
       };
-    }).filter(row => Number.isFinite(row.currentAmountEok) && Number.isFinite(row.avgPrevValueEok));
+    }).filter(row => Number.isFinite(row.currentAmountEok) && Number.isFinite(row.pct));
 
-    const currentRanked = [...rows].sort((a, b) => b.currentAmountEok - a.currentAmountEok);
-    currentRanked.forEach((row, idx) => { row.currentRank = idx + 1; row.cPass = idx < 30; });
-    const avgRanked = [...rows].sort((a, b) => b.avgPrevValueEok - a.avgPrevValueEok);
-    avgRanked.forEach((row, idx) => { row.avgRank = idx + 1; row.ePass = idx < 200; });
+    const amountRanked = [...rows].sort((a, b) => b.currentAmountEok - a.currentAmountEok);
+    amountRanked.forEach((row, idx) => { row.currentRank = idx + 1; row.cPass = idx < 50; });
+
+    const pctRanked = [...rows].sort((a, b) => b.pct - a.pct || b.currentAmountEok - a.currentAmountEok);
+    pctRanked.forEach((row, idx) => { row.pctRank = idx + 1; row.dPass = idx < 100; });
 
     rows.forEach(row => {
-      const currentScore = percentileScore(row.currentRank, rows.length);
-      const avgScore = percentileScore(row.avgRank, rows.length);
-      const pctScore = Number.isFinite(row.pct) ? Math.max(0, Math.min(100, (Math.max(-10, Math.min(10, row.pct)) + 10) * 5)) : 50;
-      row.flowScore = currentScore * 0.65 + avgScore * 0.25 + pctScore * 0.10;
-      row.pass = !!row.cPass && !!row.ePass;
+      row.pass = !!row.cPass && !!row.dPass;
     });
 
-    const passed = rows.filter(row => row.pass).sort((a, b) => b.flowScore - a.flowScore || b.currentAmountEok - a.currentAmountEok);
-    const sectorMap = new Map();
-    passed.forEach(row => {
-      const key = row.sector || '기타';
-      if (!sectorMap.has(key)) sectorMap.set(key, []);
-      sectorMap.get(key).push(row);
-    });
-
-    const sectors = Array.from(sectorMap.entries()).map(([sector, items]) => {
-      const sorted = items.sort((a, b) => b.flowScore - a.flowScore || b.currentAmountEok - a.currentAmountEok).slice(0, 5);
-      const sectorScore = sorted.reduce((acc, row) => acc + row.flowScore, 0) / Math.max(sorted.length, 1);
-      return { sector, sectorScore, items: sorted };
-    }).sort((a, b) => b.sectorScore - a.sectorScore).slice(0, 10);
+    const passed = rows
+      .filter(row => row.pass)
+      .sort((a, b) => b.currentAmountEok - a.currentAmountEok || b.pct - a.pct);
 
     LEADSTOCKS_STATE.items = passed;
-    LEADSTOCKS_STATE.sectors = sectors;
+    LEADSTOCKS_STATE.sectors = [];
     LEADSTOCKS_STATE.eligibleCount = rows.length;
     LEADSTOCKS_STATE.cPassCount = rows.filter(x => x.cPass).length;
-    LEADSTOCKS_STATE.ePassCount = rows.filter(x => x.ePass).length;
+    LEADSTOCKS_STATE.dPassCount = rows.filter(x => x.dPass).length;
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
   } catch (e) {
     Logger.log('LeadStocks', e.message || '계산 실패', 'warn');
     LEADSTOCKS_STATE.items = [];
     LEADSTOCKS_STATE.sectors = [];
+    LEADSTOCKS_STATE.eligibleCount = 0;
+    LEADSTOCKS_STATE.cPassCount = 0;
+    LEADSTOCKS_STATE.dPassCount = 0;
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
   }
@@ -4795,7 +4777,7 @@ function renderLeadStocks() {
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.eligibleCount || 0}</div>
     </div>
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">C ∩ E 통과 종목</div>
+      <div class="leadstocks-stat-label">C ∩ D 통과 종목</div>
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.items.length || 0}</div>
     </div>
     <div class="leadstocks-stat">
@@ -4804,28 +4786,28 @@ function renderLeadStocks() {
     </div>
   `;
 
-  if (!LEADSTOCKS_STATE.sectors.length) {
+  if (!LEADSTOCKS_STATE.items.length) {
     gridEl.innerHTML = '<div class="leadstocks-empty">조건을 만족한 종목이 아직 없습니다. 데이터 갱신 후 다시 확인해 주세요.</div>';
     LEADSTOCKS_STATE.rendered = true;
     return;
   }
 
-  gridEl.innerHTML = LEADSTOCKS_STATE.sectors.map(group => `
-    <div class="leadstocks-sector-card">
+  gridEl.innerHTML = `
+    <div class="leadstocks-sector-card" style="grid-column:1 / -1">
       <div class="leadstocks-sector-head">
-        <div class="leadstocks-sector-name">${group.sector}</div>
-        <div class="leadstocks-sector-meta">${group.items.length}종목 · SCORE ${group.sectorScore.toFixed(1)}</div>
+        <div class="leadstocks-sector-name">거래대금순 정렬</div>
+        <div class="leadstocks-sector-meta">후보군: 현재 대시보드 한국종목 등록 종목만 사용</div>
       </div>
       <div class="leadstocks-list">
-        ${group.items.map(item => `
+        ${LEADSTOCKS_STATE.items.map((item, idx) => `
           <div class="leadstocks-item">
-            <div class="leadstocks-stock-name">${item.name}</div>
+            <div class="leadstocks-stock-name">${idx + 1}. ${item.name}</div>
             <div class="leadstocks-stock-pct ${Number(item.pct) >= 0 ? 'up' : 'down'}">${item.pctText}</div>
           </div>
         `).join('')}
       </div>
     </div>
-  `).join('');
+  `;
   LEADSTOCKS_STATE.rendered = true;
 }
 
