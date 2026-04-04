@@ -900,9 +900,12 @@
     #sec-krstocks {
       max-width: 100%;
     }
-    .chart-h-main,
-    .chart-h-stock {
+    .chart-h-main {
       height: 572px;
+    }
+    #sec-usstocks .chart-h-stock,
+    #sec-krstocks .chart-h-stock {
+      height: 702px;
     }
   }
 
@@ -992,6 +995,43 @@
   }
   @media (min-width: 601px) {
     .mobile-stock-picker { display: none !important; }
+    .mobile-stock-reference { display: none !important; }
+  }
+
+  @media (max-width: 600px) {
+    .mobile-stock-reference {
+      display: block;
+      margin-top: 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .mobile-stock-reference-title {
+      font-family: var(--display);
+      font-size: 16px;
+      letter-spacing: 1px;
+      color: var(--yellow);
+      margin-bottom: 10px;
+    }
+    .mobile-stock-reference-group {
+      margin-bottom: 10px;
+    }
+    .mobile-stock-reference-group:last-child {
+      margin-bottom: 0;
+    }
+    .mobile-stock-reference-group-name {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--yellow);
+      margin-bottom: 4px;
+    }
+    .mobile-stock-reference-items {
+      font-size: 11px;
+      color: var(--text3);
+      line-height: 1.6;
+    }
   }
 
 
@@ -2192,9 +2232,12 @@
     #sec-krstocks {
       max-width: 100%;
     }
-    .chart-h-main,
-    .chart-h-stock {
+    .chart-h-main {
       height: 572px;
+    }
+    #sec-usstocks .chart-h-stock,
+    #sec-krstocks .chart-h-stock {
+      height: 702px;
     }
   }
 
@@ -3142,8 +3185,8 @@ async function loadStockData() {
   ['kospi-v','kr-kospi-v'].forEach(id => setVal(id, 'Loading'));
   ['kosdaq-v','kr-kosdaq-v'].forEach(id => setVal(id, 'Loading'));
   ['kospi-c','kr-kospi-c','kosdaq-c','kr-kosdaq-c'].forEach(id => { const el=document.getElementById(id); if(el){ el.classList.remove('up','down','neutral','skeleton'); el.textContent='Loading'; el.classList.add('neutral'); }});
-  ['btc-v'].forEach(id => setSkeleton(id));
-  ['btc-c'].forEach(id => setSkeleton(id));
+  ['btc-v'].forEach(id => setVal(id, 'Loading'));
+  ['btc-c'].forEach(id => { const el=document.getElementById(id); if(el){ el.classList.remove('up','down','neutral','skeleton'); el.textContent='Loading'; el.classList.add('neutral'); }});
 
   await Promise.allSettled(tasks.map(async t => {
     const d = await fetchYahoo(t.key);
@@ -3976,6 +4019,22 @@ function extractSymbolFromOnclick(onclickText) {
   return match ? match[1] : '';
 }
 
+
+function renderMobileStockReference(tabKey, groups) {
+  if (tabKey !== 'usstocks') return;
+  const root = document.getElementById('usstocks-mobile-reference');
+  if (!root) return;
+  root.innerHTML = `
+    <div class="mobile-stock-reference-title">SECTOR & STOCK LIST</div>
+    ${groups.map(group => `
+      <div class="mobile-stock-reference-group">
+        <div class="mobile-stock-reference-group-name">${group.title}</div>
+        <div class="mobile-stock-reference-items">${group.items.map(item => item.label).join(' · ')}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
 function buildMobileStockPicker(tabKey) {
   const root = document.getElementById(tabKey + '-mobile-picker');
   const cfg = TAB_CHARTS[tabKey];
@@ -3996,6 +4055,8 @@ function buildMobileStockPicker(tabKey) {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
     group.items.push({ symbol: sym, label: (btn.dataset.baseLabel || btn.textContent.trim()), btn });
   });
+
+  renderMobileStockReference(tabKey, groups);
 
   root.innerHTML = `
     <div class="mobile-stock-picker-row">
