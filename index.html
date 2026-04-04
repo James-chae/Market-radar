@@ -2603,81 +2603,38 @@ async function fetchWithTimeout(url, timeout=8000) {
   }
 }
 
-// Yahoo Finance API (전일 종가 기준 등락률 고정)
-function buildYahooPriceProxyUrls(sym, range='5d', interval='1d') {
-  const decodedSym = (() => { try { return decodeURIComponent(sym); } catch(_) { return sym; } })();
-  const ts = Date.now();
-  const direct1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(decodedSym)}?interval=${interval}&range=${range}&includePrePost=false&events=div%2Csplits&_=${ts}`;
-  const direct2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(decodedSym)}?interval=${interval}&range=${range}&includePrePost=false&events=div%2Csplits&_=${ts}`;
-  return [
-    `https://corsproxy.io/?url=${encodeURIComponent(direct1)}`,
-    `https://api.allorigins.win/get?url=${encodeURIComponent(direct1)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(direct2)}`,
-  ];
-}
-
-function parseYahooProxyPayload(raw) {
-  if (raw && typeof raw === 'object' && typeof raw.contents === 'string') {
-    try { return JSON.parse(raw.contents); } catch (_) { return null; }
-  }
-  return raw;
-}
-
-function normalizeYahooFromChartPayload(payload) {
-  const result = payload?.chart?.result?.[0];
-  const meta = result?.meta;
-  const quote = result?.indicators?.quote?.[0];
-  if (!meta || !quote) return null;
-
-  const price = Number(meta.regularMarketPrice);
-  const closes = (quote.close || []).map(v => Number(v)).filter(v => isFinite(v));
-  if (!isFinite(price) || !closes.length) return null;
-
-  const lastClose = closes[closes.length - 1];
-  const previousSessionClose = closes.length >= 2 ? closes[closes.length - 2] : null;
-
-  // 핵심:
-  // - 오늘 장중이면 regularMarketPrice != lastClose(전일 종가) 인 경우가 많음 → 전일 종가 = lastClose
-  // - 장마감 후/휴장이면 regularMarketPrice ≒ lastClose → 전일 종가 = previousSessionClose
-  let prev = null;
-  const deltaToLast = Math.abs(price - lastClose) / Math.max(Math.abs(price), 1);
-  if (previousSessionClose != null) {
-    prev = deltaToLast > 0.0005 ? lastClose : previousSessionClose;
-  }
-
-  if (!isFinite(prev) || prev === 0) {
-    const metaPrev = Number(meta.regularMarketPreviousClose ?? meta.previousClose ?? meta.chartPreviousClose);
-    prev = isFinite(metaPrev) && metaPrev !== 0 ? metaPrev : price;
-  }
-
-  return {
-    price,
-    prev,
-    change: price - prev,
-    changePct: ((price - prev) / prev) * 100,
-    high52: isFinite(Number(meta.fiftyTwoWeekHigh)) ? Number(meta.fiftyTwoWeekHigh) : null,
-    low52: isFinite(Number(meta.fiftyTwoWeekLow)) ? Number(meta.fiftyTwoWeekLow) : null,
-    currency: meta.currency || '',
-  };
-}
-
 async function fetchYahoo(sym) {
-  const cached = Cache.get(sym, 60000);
+  const cached = Cache.get(sym, 300000);
   if (cached) return cached;
 
-  const proxies = buildYahooPriceProxyUrls(sym, '5d', '1d');
+  const proxies = [
+    () => `https://corsproxy.io/?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
+    () => `https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
+    () => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
+  ];
 
   for (let i = 0; i < proxies.length; i++) {
     try {
       const r = await fetchWithTimeout(proxies[i](), 12000);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const raw = await r.json();
-      const payload = parseYahooProxyPayload(raw);
-      const result = normalizeYahooFromChartPayload(payload);
-      if (!result) throw new Error('유효한 시세 없음');
+      const d = raw.contents ? JSON.parse(raw.contents) : raw;
+      const meta = d.chart?.result?.[0]?.meta;
+      if (!meta || !meta.regularMarketPrice) throw new Error('meta 없음');
 
+      const price = meta.regularMarketPrice;
+      const prev  = meta.previousClose || meta.chartPreviousClose || price;
+      const result = {
+        price,
+        prev,
+        change: price - prev,
+        changePct: ((price - prev) / prev) * 100,
+        high52: meta.fiftyTwoWeekHigh || null,
+        low52: meta.fiftyTwoWeekLow || null,
+        currency: meta.currency || '',
+      };
       Cache.set(sym, result);
-      Logger.log('Yahoo/' + sym, `프록시${i+1} 성공: ${result.price} / prev ${result.prev} / ${result.changePct.toFixed(2)}%`, 'ok');
+      Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 성공: ' + price, 'ok');
       return result;
     } catch(e) {
       const isLast = i === proxies.length - 1;
@@ -3539,7 +3496,14 @@ function formatChartMetaHtml(sym, type, range) {
     + `<span style="color:#4A9EFF;font-weight:700">MA120</span>`;
 }
 function getYahooChartUrls(sym, range='6mo', interval='1d') {
-  return buildYahooPriceProxyUrls(sym, range, interval);
+  const encoded = encodeURIComponent(sym);
+  const direct1 = `https://query1.finance.yahoo.com/v8/finance/chart/${encoded}?interval=${interval}&range=${range}&includePrePost=false&events=div%2Csplits`;
+  const direct2 = `https://query2.finance.yahoo.com/v8/finance/chart/${encoded}?interval=${interval}&range=${range}&includePrePost=false&events=div%2Csplits`;
+  return [
+    `https://corsproxy.io/?url=${encodeURIComponent(direct1)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(direct1)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(direct2)}`,
+  ];
 }
 function toBusinessDay(ts) {
   const d = new Date(ts);
