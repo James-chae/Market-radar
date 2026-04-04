@@ -2587,6 +2587,45 @@ const Cache = {
   }
 };
 
+const pendingQuoteRequests = {};
+
+function getLastTwoValidClosesFromChart(result) {
+  const quote = result?.indicators?.quote?.[0];
+  const closes = Array.isArray(quote?.close) ? quote.close.filter(v => v != null && !Number.isNaN(Number(v))) : [];
+  if (!closes.length) return { latestClose: null, prevCloseFromSeries: null };
+  return {
+    latestClose: Number(closes[closes.length - 1]),
+    prevCloseFromSeries: closes.length >= 2 ? Number(closes[closes.length - 2]) : null,
+  };
+}
+
+function resolveYahooPrevClose(meta, result) {
+  const { latestClose, prevCloseFromSeries } = getLastTwoValidClosesFromChart(result);
+  const regular = Number(meta?.regularMarketPrice);
+  const previousClose = Number(meta?.previousClose);
+  const chartPreviousClose = Number(meta?.chartPreviousClose);
+
+  const candidates = [];
+
+  if (Number.isFinite(previousClose) && previousClose > 0) {
+    candidates.push(previousClose);
+  }
+
+  if (Number.isFinite(prevCloseFromSeries) && prevCloseFromSeries > 0) {
+    candidates.push(prevCloseFromSeries);
+  }
+
+  if (
+    Number.isFinite(chartPreviousClose) && chartPreviousClose > 0 &&
+    (!Number.isFinite(latestClose) || Math.abs(chartPreviousClose - latestClose) > 1e-8)
+  ) {
+    candidates.push(chartPreviousClose);
+  }
+
+  const prev = candidates.find(v => Number.isFinite(v) && v > 0);
+  return prev || regular;
+}
+
 // ══════════════════════════════════════════
 // ■ API 레이어 (실패 시 폴백)
 // ══════════════════════════════════════════
@@ -2603,45 +2642,65 @@ async function fetchWithTimeout(url, timeout=8000) {
   }
 }
 
+// Yahoo Finance API (CORS 직접 호출 - 브라우저에서 가능)
 async function fetchYahoo(sym) {
-  const cached = Cache.get(sym, 300000);
+  const cached = Cache.get(sym);
   if (cached) return cached;
+  if (pendingQuoteRequests[sym]) return pendingQuoteRequests[sym];
 
-  const proxies = [
-    () => `https://corsproxy.io/?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
-    () => `https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
-    () => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d')}`,
-  ];
+  pendingQuoteRequests[sym] = (async () => {
+    const cacheBust = Date.now();
 
-  for (let i = 0; i < proxies.length; i++) {
-    try {
-      const r = await fetchWithTimeout(proxies[i](), 12000);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const raw = await r.json();
-      const d = raw.contents ? JSON.parse(raw.contents) : raw;
-      const meta = d.chart?.result?.[0]?.meta;
-      if (!meta || !meta.regularMarketPrice) throw new Error('meta 없음');
+    // 3중 프록시 폴백 — CORS 완전 우회
+    const proxies = [
+      () => `https://corsproxy.io/?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d&_=' + cacheBust)}`,
+      () => `https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d&_=' + cacheBust)}`,
+      () => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1d&range=5d&_=' + cacheBust)}`,
+    ];
 
-      const price = meta.regularMarketPrice;
-      const prev  = meta.previousClose || meta.chartPreviousClose || price;
-      const result = {
-        price,
-        prev,
-        change: price - prev,
-        changePct: ((price - prev) / prev) * 100,
-        high52: meta.fiftyTwoWeekHigh || null,
-        low52: meta.fiftyTwoWeekLow || null,
-        currency: meta.currency || '',
-      };
-      Cache.set(sym, result);
-      Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 성공: ' + price, 'ok');
-      return result;
-    } catch(e) {
-      const isLast = i === proxies.length - 1;
-      Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 실패: ' + e.message, isLast ? 'error' : 'warn');
+    for (let i = 0; i < proxies.length; i++) {
+      try {
+        const r = await fetchWithTimeout(proxies[i](), 12000);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const raw = await r.json();
+
+        // allorigins 는 { contents: "..." }, 나머지는 직접 JSON
+        const d = raw.contents ? JSON.parse(raw.contents) : raw;
+        const chartResult = d.chart?.result?.[0];
+        const meta = chartResult?.meta;
+        if (!meta || !meta.regularMarketPrice) throw new Error('meta 없음');
+
+        const price = Number(meta.regularMarketPrice);
+        const prev = resolveYahooPrevClose(meta, chartResult);
+        if (!Number.isFinite(price) || !Number.isFinite(prev) || prev <= 0) {
+          throw new Error('price/prev 계산 실패');
+        }
+
+        const result = {
+          price,
+          prev,
+          change: price - prev,
+          changePct: ((price - prev) / prev) * 100,
+          high52: Number.isFinite(Number(meta.fiftyTwoWeekHigh)) ? Number(meta.fiftyTwoWeekHigh) : null,
+          low52: Number.isFinite(Number(meta.fiftyTwoWeekLow)) ? Number(meta.fiftyTwoWeekLow) : null,
+          currency: meta.currency || '',
+        };
+        Cache.set(sym, result);
+        Logger.log('Yahoo/' + sym, `프록시${i + 1} 성공: price=${price}, prev=${prev}`, 'ok');
+        return result;
+      } catch(e) {
+        const isLast = i === proxies.length - 1;
+        Logger.log('Yahoo/' + sym, '프록시' + (i+1) + ' 실패: ' + e.message, isLast ? 'error' : 'warn');
+      }
     }
+    return null;
+  })();
+
+  try {
+    return await pendingQuoteRequests[sym];
+  } finally {
+    delete pendingQuoteRequests[sym];
   }
-  return null;
 }
 
 
