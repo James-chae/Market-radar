@@ -2652,10 +2652,9 @@
   <!-- ══════════════ 10. 오늘의 주도주 ══════════════ -->
   <div class="section" id="sec-leadstocks">
     <p class="section-title">TODAY'S LEADERS</p>
-    <p class="section-desc">KRX 거래대금 상위 400 유니버스 · C=거래대금 상위 50 · E=상승률 상위 50 · C or E</p>
+    <p class="section-desc">KRX 거래대금 상위 1000 유니버스 · 거래대금 상위 50 AND 상승률 상위 50 (교집합) · 거래대금순 정렬</p>
     <div class="data-note">
-      <span class="badge live"><strong>C</strong> 당일 거래대금 상위 50</span>
-      <span class="badge live"><strong>E</strong> 당일 상승률 순위 50</span>
+      <span class="badge live"><strong>거래대금 상위 50 ∩ 상승률 상위 50</strong> 교집합</span>
       <span class="badge"><strong>표시</strong> 종목 · 등락률 · 거래대금</span>
     </div>
 
@@ -4631,7 +4630,7 @@ const LEADSTOCKS_STATE = {
   ePassCount: 0,
   rendered: false,
   sourceLabel: '저장 데이터 기준',
-  universeLabel: 'KRX 거래대금 상위 400 유니버스',
+  universeLabel: 'KRX 거래대금 상위 1000 유니버스',
   tradeDate: '',
 };
 
@@ -4766,14 +4765,14 @@ async function computeLeadStocks() {
     const riseRanked = [...rows].sort((a, b) => b.pct - a.pct || b.currentAmountEok - a.currentAmountEok);
     riseRanked.forEach((row, idx) => { row.eRank = idx + 1; row.ePass = idx < 50; });
 
-    // C or E 합집합 (설명: C=거래대금상위50, E=상승률상위50, 하나라도 해당하면 편입)
+    // C AND E 교집합 (거래대금상위50 AND 상승률상위50) · 거래대금순 정렬
     rows.forEach(row => {
-      row.pass = !!row.cPass || !!row.ePass;
+      row.pass = !!row.cPass && !!row.ePass;
     });
 
     const passed = rows
       .filter(row => row.pass)
-      .sort((a, b) => b.pct - a.pct || b.currentAmountEok - a.currentAmountEok);
+      .sort((a, b) => b.currentAmountEok - a.currentAmountEok || b.pct - a.pct);
 
     LEADSTOCKS_STATE.items = passed.map(row => ({
       ...row,
@@ -4798,7 +4797,7 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
     LEADSTOCKS_STATE.sourceLabel = '저장 데이터 기준';
-    LEADSTOCKS_STATE.universeLabel = 'KRX 거래대금 상위 400 유니버스';
+    LEADSTOCKS_STATE.universeLabel = 'KRX 거래대금 상위 1000 유니버스';
     LEADSTOCKS_STATE.tradeDate = '';
   }
 }
@@ -4818,7 +4817,7 @@ function renderLeadStocks() {
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.eligibleCount || 0}</div>
     </div>
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">C or E 편입 종목</div>
+      <div class="leadstocks-stat-label">C AND E 편입 종목</div>
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.items.length || 0}</div>
     </div>
     <div class="leadstocks-stat">
@@ -4836,13 +4835,13 @@ function renderLeadStocks() {
   gridEl.innerHTML = `
     <div class="leadstocks-sector-card" style="grid-column:1 / -1">
       <div class="leadstocks-sector-head">
-        <div class="leadstocks-sector-name">거래대금순 정렬</div>
-        <div class="leadstocks-sector-meta">${LEADSTOCKS_STATE.universeLabel || "유니버스"} 기준 · ${LEADSTOCKS_STATE.sourceLabel} · 기준일 ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)} · C=거래대금 상위 50 · E=상승률 상위 50 · C or E</div>
+        <div class="leadstocks-sector-name">거래대금 상위 50 ∩ 상승률 상위 50</div>
+        <div class="leadstocks-sector-meta">${LEADSTOCKS_STATE.universeLabel || "유니버스"} 기준 · ${LEADSTOCKS_STATE.sourceLabel} · 기준일 ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)} · 거래대금 상위 50 ∩ 상승률 상위 50 · 거래대금순 정렬</div>
       </div>
       <div class="leadstocks-list">
         ${LEADSTOCKS_STATE.items.map((item, idx) => `
           <div class="leadstocks-item">
-            <div class="leadstocks-stock-name">${idx + 1}. ${item.name} <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">[${item.cPass ? 'C' : ''}${item.cPass && item.ePass ? '+' : ''}${item.ePass ? 'E' : ''}]</span></div>
+            <div class="leadstocks-stock-name">${idx + 1}. ${item.name} <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">C∩E</span></div>
             <div class="leadstocks-stock-right">
               <div class="leadstocks-stock-pct ${Number(item.pct) >= 0 ? 'up' : 'down'}">${item.pctText}</div>
               <div class="leadstocks-stock-amt">${item.amountText}</div>
@@ -5584,10 +5583,10 @@ async function computeLeadStocksWithStaticFallback() {
         riseRanked.forEach((row, idx) => { row.eRank = idx + 1; row.ePass = idx < 50; });
 
         const merged = rows
-          .filter(row => row.cPass || row.ePass)
+          .filter(row => row.cPass && row.ePass)
           .sort((a, b) =>
-            Number(b.pct) - Number(a.pct) ||
             Number(b.trade_value_eok) - Number(a.trade_value_eok) ||
+            Number(b.pct) - Number(a.pct) ||
             String(a.name || '').localeCompare(String(b.name || ''), 'ko')
           )
           .map(row => ({
@@ -5611,7 +5610,7 @@ async function computeLeadStocksWithStaticFallback() {
         LEADSTOCKS_STATE.computedAt = new Date();
         LEADSTOCKS_STATE.rendered = false;
         LEADSTOCKS_STATE.sourceLabel = staticData.source || '저장 데이터 기준';
-        LEADSTOCKS_STATE.universeLabel = staticData.universe_name || 'KRX 거래대금 상위 400 유니버스';
+        LEADSTOCKS_STATE.universeLabel = staticData.universe_name || 'KRX 거래대금 상위 1000 유니버스';
         LEADSTOCKS_STATE.tradeDate = staticData.trade_date || '';
         Logger.log('LeadStocks', `Static/Embedded 데이터 사용: ${merged.length}종목`, 'ok');
         return;
