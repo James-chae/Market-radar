@@ -1,7 +1,7 @@
 {
-  "generated_at": "",
-  "trade_date": "",
-  "trade_date_display": "",
+  "generated_at": "2026-04-05T21:57:47.833667+09:00",
+  "trade_date": "20260405",
+  "trade_date_display": "2026-04-05",
   "source": "Naver KRX+NXT table 기준",
   "universe_name": "KOSPI200 + KOSDAQ200 by market cap",
   "counts": {
@@ -14,5 +14,5 @@
   "by_symbol": {},
   "status": "fallback",
   "fallback_used": true,
-  "message": "Run scripts/manual_update_latest.bat to populate from NAVER KRX/NXT tables."
+  "message": "naver table update failed: 'symbol'"
 }

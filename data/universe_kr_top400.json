@@ -1,575 +1,2413 @@
-#!/usr/bin/env python3
-from __future__ import annotations
-
-import json
-import math
-import re
-import sys
-import time
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-
-import requests
-from bs4 import BeautifulSoup
-
-
-SEOUL = timezone(timedelta(hours=9))
-ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
-DEBUG_DIR = ROOT / "debug"
-
-UNIVERSE_PATH = DATA_DIR / "universe_kr_top400.json"
-OUTPUT_PATH = DATA_DIR / "latest_krx.json"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Referer": "https://finance.naver.com/",
+{
+  "generated_at": "2026-04-05T21:54:59.474083+09:00",
+  "source": "Naver Finance market cap ranking",
+  "counts": {
+    "KOSPI": 200,
+    "KOSDAQ": 200,
+    "total": 400
+  },
+  "items": [
+    {
+      "code": "005930",
+      "name": "삼성전자",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000660",
+      "name": "SK하이닉스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005935",
+      "name": "삼성전자우",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005380",
+      "name": "현대차",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "373220",
+      "name": "LG에너지솔루션",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "012450",
+      "name": "한화에어로스페이스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "207940",
+      "name": "삼성바이오로직스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "402340",
+      "name": "SK스퀘어",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "034020",
+      "name": "두산에너빌리티",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000270",
+      "name": "기아",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "105560",
+      "name": "KB금융",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "329180",
+      "name": "HD현대중공업",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "068270",
+      "name": "셀트리온",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "032830",
+      "name": "삼성생명",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "055550",
+      "name": "신한지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "028260",
+      "name": "삼성물산",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "042660",
+      "name": "한화오션",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "006400",
+      "name": "삼성SDI",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "012330",
+      "name": "현대모비스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "006800",
+      "name": "미래에셋증권",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "009150",
+      "name": "삼성전기",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "267260",
+      "name": "HD현대일렉트릭",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "035420",
+      "name": "NAVER",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "010130",
+      "name": "고려아연",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "086790",
+      "name": "하나금융지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005490",
+      "name": "POSCO홀딩스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "009540",
+      "name": "HD한국조선해양",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "015760",
+      "name": "한국전력",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "272210",
+      "name": "한화시스템",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "042700",
+      "name": "한미반도체",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "010140",
+      "name": "삼성중공업",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "298040",
+      "name": "효성중공업",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "316140",
+      "name": "우리금융지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "010120",
+      "name": "LS ELECTRIC",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "064350",
+      "name": "현대로템",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "034730",
+      "name": "SK",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "051910",
+      "name": "LG화학",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000810",
+      "name": "삼성화재",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "035720",
+      "name": "카카오",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "096770",
+      "name": "SK이노베이션",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "267250",
+      "name": "HD현대",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "138040",
+      "name": "메리츠금융지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "079550",
+      "name": "LIG넥스원",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "011200",
+      "name": "HMM",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "003670",
+      "name": "포스코퓨처엠",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "033780",
+      "name": "KT&G",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "047810",
+      "name": "한국항공우주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "066570",
+      "name": "LG전자",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "069500",
+      "name": "KODEX 200",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "017670",
+      "name": "SK텔레콤",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000150",
+      "name": "두산",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "024110",
+      "name": "기업은행",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000720",
+      "name": "현대건설",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "086280",
+      "name": "현대글로비스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "360750",
+      "name": "TIGER 미국S&P500",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "030200",
+      "name": "KT",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "047050",
+      "name": "포스코인터내셔널",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "003550",
+      "name": "LG",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "010950",
+      "name": "S-Oil",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "278470",
+      "name": "에이피알",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "071050",
+      "name": "한국금융지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "018260",
+      "name": "삼성에스디에스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "352820",
+      "name": "하이브",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "259960",
+      "name": "크래프톤",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005830",
+      "name": "DB손해보험",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "323410",
+      "name": "카카오뱅크",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "039490",
+      "name": "키움증권",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005940",
+      "name": "NH투자증권",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "307950",
+      "name": "현대오토에버",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "003230",
+      "name": "삼양식품",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "396500",
+      "name": "TIGER 반도체TOP10",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000880",
+      "name": "한화",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "003490",
+      "name": "대한항공",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "006260",
+      "name": "LS",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "016360",
+      "name": "삼성증권",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005387",
+      "name": "현대차2우B",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "133690",
+      "name": "TIGER 미국나스닥100",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "443060",
+      "name": "HD현대마린솔루션",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "379800",
+      "name": "KODEX 미국S&P500",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "028050",
+      "name": "삼성E&A",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "459580",
+      "name": "KODEX CD금리액티브(합성)",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "488770",
+      "name": "KODEX 머니마켓액티브",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "090430",
+      "name": "아모레퍼시픽",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "011070",
+      "name": "LG이노텍",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "007660",
+      "name": "이수페타시스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000100",
+      "name": "유한양행",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "326030",
+      "name": "SK바이오팜",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "180640",
+      "name": "한진칼",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "102110",
+      "name": "TIGER 200",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "267270",
+      "name": "HD건설기계",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "047040",
+      "name": "대우건설",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "009830",
+      "name": "한화솔루션",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "066970",
+      "name": "엘앤에프",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "032640",
+      "name": "LG유플러스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "128940",
+      "name": "한미약품",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "377300",
+      "name": "카카오페이",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "161390",
+      "name": "한국타이어앤테크놀로지",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "229200",
+      "name": "KODEX 코스닥150",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "052690",
+      "name": "한전기술",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "029780",
+      "name": "삼성카드",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "078930",
+      "name": "GS",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "379810",
+      "name": "KODEX 미국나스닥100",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "241560",
+      "name": "두산밥캣",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "122630",
+      "name": "KODEX 레버리지",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "278530",
+      "name": "KODEX 200TR",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "064400",
+      "name": "LG씨엔에스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "001040",
+      "name": "CJ",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005385",
+      "name": "현대차우",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "175330",
+      "name": "JB금융지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "138930",
+      "name": "BNK금융지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "001440",
+      "name": "대한전선",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "034220",
+      "name": "LG디스플레이",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "088980",
+      "name": "맥쿼리인프라",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "454910",
+      "name": "두산로보틱스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "271560",
+      "name": "오리온",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "021240",
+      "name": "코웨이",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "411060",
+      "name": "ACE KRX금현물",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "450080",
+      "name": "에코프로머티",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "357870",
+      "name": "TIGER CD금리투자KIS(합성)",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "022100",
+      "name": "포스코DX",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "004020",
+      "name": "현대제철",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "036570",
+      "name": "엔씨소프트",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "423160",
+      "name": "KODEX KOFR금리액티브(합성)",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "010060",
+      "name": "OCI홀딩스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "002380",
+      "name": "KCC",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "251270",
+      "name": "넷마블",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "062040",
+      "name": "산일전기",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "353200",
+      "name": "대덕전자",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "310970",
+      "name": "TIGER MSCI Korea TR",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "273130",
+      "name": "KODEX 종합채권(AA-이상)액티브",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000990",
+      "name": "DB하이텍",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "091160",
+      "name": "KODEX 반도체",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "088350",
+      "name": "한화생명",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "018880",
+      "name": "한온시스템",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "082740",
+      "name": "한화엔진",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "233740",
+      "name": "KODEX 코스닥150레버리지",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "051900",
+      "name": "LG생활건강",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "498400",
+      "name": "KODEX 200타겟위클리커버드콜",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "381170",
+      "name": "TIGER 미국테크TOP10 INDXX",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "489790",
+      "name": "한화비전",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "439260",
+      "name": "대한조선",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "012510",
+      "name": "더존비즈온",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "011790",
+      "name": "SKC",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "381180",
+      "name": "TIGER 미국필라델피아반도체나스닥",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "035250",
+      "name": "강원랜드",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "111770",
+      "name": "영원무역",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "011170",
+      "name": "롯데케미칼",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "097950",
+      "name": "CJ제일제당",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "017800",
+      "name": "현대엘리베이터",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "103590",
+      "name": "일진전기",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "031210",
+      "name": "서울보증보험",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "360200",
+      "name": "ACE 미국S&P500",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "012750",
+      "name": "에스원",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "112610",
+      "name": "씨에스윈드",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "302440",
+      "name": "SK바이오사이언스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "036460",
+      "name": "한국가스공사",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "458730",
+      "name": "TIGER 미국배당다우존스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "148020",
+      "name": "RISE 200",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "001720",
+      "name": "신영증권",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "011780",
+      "name": "금호석유화학",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "014680",
+      "name": "한솔케미칼",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "085620",
+      "name": "미래에셋생명",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "004170",
+      "name": "신세계",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "375500",
+      "name": "DL이앤씨",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "004990",
+      "name": "롯데지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "009970",
+      "name": "영원무역홀딩스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "481050",
+      "name": "KODEX CD1년금리플러스액티브(합성)",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "023530",
+      "name": "롯데쇼핑",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "028670",
+      "name": "팬오션",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "457190",
+      "name": "이수스페셜티케미컬",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "367380",
+      "name": "ACE 미국나스닥100",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "103140",
+      "name": "풍산",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "026960",
+      "name": "동서",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "139130",
+      "name": "iM금융지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "001450",
+      "name": "현대해상",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "051600",
+      "name": "한전KPS",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "008930",
+      "name": "한미사이언스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "071970",
+      "name": "HD현대마린엔진",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "005850",
+      "name": "에스엘",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "161510",
+      "name": "PLUS 고배당주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "336260",
+      "name": "두산퓨얼셀",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "139480",
+      "name": "이마트",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "102780",
+      "name": "KODEX 삼성그룹",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "009420",
+      "name": "한올바이오파마",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "449170",
+      "name": "TIGER KOFR금리액티브(합성)",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "455890",
+      "name": "RISE 머니마켓액티브",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "001430",
+      "name": "세아베스틸지주",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "279570",
+      "name": "케이뱅크",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "003690",
+      "name": "코리안리",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "018670",
+      "name": "SK가스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "000120",
+      "name": "CJ대한통운",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "383220",
+      "name": "F&F",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "017960",
+      "name": "한국카본",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "006360",
+      "name": "GS건설",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "475150",
+      "name": "SK이터닉스",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "282330",
+      "name": "BGF리테일",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "004800",
+      "name": "효성",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "204320",
+      "name": "HL만도",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "120110",
+      "name": "코오롱인더",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "292150",
+      "name": "TIGER 코리아TOP10",
+      "market": "KOSPI",
+      "suffix": ".KS"
+    },
+    {
+      "code": "196170",
+      "name": "알테오젠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "086520",
+      "name": "에코프로",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "247540",
+      "name": "에코프로비엠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "000250",
+      "name": "삼천당제약",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "277810",
+      "name": "레인보우로보틱스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "298380",
+      "name": "에이비엘바이오",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "950160",
+      "name": "코오롱티슈진",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "058470",
+      "name": "리노공업",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "028300",
+      "name": "HLB",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "087010",
+      "name": "펩트론",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "141080",
+      "name": "리가켐바이오",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "214370",
+      "name": "케어젠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "240810",
+      "name": "원익IPS",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "310210",
+      "name": "보로노이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "095340",
+      "name": "ISC",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "039030",
+      "name": "이오테크닉스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "263750",
+      "name": "펄어비스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "032820",
+      "name": "우리기술",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "108490",
+      "name": "로보티즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "403870",
+      "name": "HPSP",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "214150",
+      "name": "클래시스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "226950",
+      "name": "올릭스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "043260",
+      "name": "성호전자",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "319400",
+      "name": "현대무벡스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "214450",
+      "name": "파마리서치",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "347850",
+      "name": "디앤디파마텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "145020",
+      "name": "휴젤",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "357780",
+      "name": "솔브레인",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "036930",
+      "name": "주성엔지니어링",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "237690",
+      "name": "에스티팜",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "083650",
+      "name": "비에이치아이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "084370",
+      "name": "유진테크",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "178320",
+      "name": "서진시스템",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "140410",
+      "name": "메지온",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "476830",
+      "name": "알지노믹스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "440110",
+      "name": "파두",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "257720",
+      "name": "실리콘투",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "068760",
+      "name": "셀트리온제약",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "064760",
+      "name": "티씨케이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "005290",
+      "name": "동진쎄미켐",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "218410",
+      "name": "RFHIC",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "058610",
+      "name": "에스피지",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "347700",
+      "name": "스피어",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "376900",
+      "name": "로킷헬스케어",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "319660",
+      "name": "피에스케이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "035900",
+      "name": "JYP Ent.",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "030530",
+      "name": "원익홀딩스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "031980",
+      "name": "피에스케이홀딩스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "010170",
+      "name": "대한광통신",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "041510",
+      "name": "에스엠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "067310",
+      "name": "하나마이크론",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "078600",
+      "name": "대주전자재료",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "039200",
+      "name": "오스코텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "222800",
+      "name": "심텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "082920",
+      "name": "비츠로셀",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "099320",
+      "name": "쎄트렉아이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "131970",
+      "name": "두산테스나",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "098460",
+      "name": "고영",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "089030",
+      "name": "테크윙",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "475830",
+      "name": "오름테라퓨틱",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "437730",
+      "name": "삼현",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "101490",
+      "name": "에스앤에스텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "140860",
+      "name": "파크시스템스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "491000",
+      "name": "리브스메드",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "290650",
+      "name": "엘앤씨바이오",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "085660",
+      "name": "차바이오텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "323280",
+      "name": "태성",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "060370",
+      "name": "LS마린솔루션",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "038500",
+      "name": "삼표시멘트",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "003380",
+      "name": "하림지주",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "065350",
+      "name": "신성델타테크",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "100790",
+      "name": "미래에셋벤처투자",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "417200",
+      "name": "LS머트리얼즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "127120",
+      "name": "제이에스링크",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "232140",
+      "name": "와이씨",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "195940",
+      "name": "HK이노엔",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "080220",
+      "name": "제주반도체",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "115180",
+      "name": "큐리언트",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "445680",
+      "name": "큐리옥스바이오시스템즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "090710",
+      "name": "휴림로봇",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "466100",
+      "name": "클로봇",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "082270",
+      "name": "젬백스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "048410",
+      "name": "현대바이오",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "281740",
+      "name": "레이크머티리얼즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "189300",
+      "name": "인텔리안테크",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "086450",
+      "name": "동국제약",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "131290",
+      "name": "티에스이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "397030",
+      "name": "에이프릴바이오",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "183300",
+      "name": "코미코",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "032500",
+      "name": "케이엠더블유",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "035760",
+      "name": "CJ ENM",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "096530",
+      "name": "씨젠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "095610",
+      "name": "테스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "388210",
+      "name": "씨엠티엑스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "174900",
+      "name": "앱클론",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "137400",
+      "name": "피엔티",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "456160",
+      "name": "지투지바이오",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "007390",
+      "name": "네이처셀",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "213420",
+      "name": "덕산네오룩스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "166090",
+      "name": "하나머티리얼즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "052020",
+      "name": "에스티큐브",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "124500",
+      "name": "아이티센글로벌",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "027360",
+      "name": "아주IB투자",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "023160",
+      "name": "태광",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "293490",
+      "name": "카카오게임즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "036540",
+      "name": "SFA반도체",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "420770",
+      "name": "기가비스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "295310",
+      "name": "에이치브이엠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "014620",
+      "name": "성광벤드",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "160190",
+      "name": "하이젠알앤엠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "253450",
+      "name": "스튜디오드래곤",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "044490",
+      "name": "태웅",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "089970",
+      "name": "브이엠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "388720",
+      "name": "유일로보틱스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "050890",
+      "name": "쏠리드",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "036830",
+      "name": "솔브레인홀딩스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "056190",
+      "name": "에스에프에이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "328130",
+      "name": "루닛",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "122870",
+      "name": "와이지엔터테인먼트",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "056080",
+      "name": "유진로봇",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "476060",
+      "name": "온코닉테라퓨틱스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "222080",
+      "name": "씨아이에스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "204270",
+      "name": "제이앤티씨",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "161580",
+      "name": "필옵틱스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "032190",
+      "name": "다우데이타",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "171090",
+      "name": "선익시스템",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "006730",
+      "name": "서부T&D",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "126340",
+      "name": "비나텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "241710",
+      "name": "코스메카코리아",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "389470",
+      "name": "인벤티지랩",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "358570",
+      "name": "지아이이노베이션",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "036810",
+      "name": "에프에스티",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "052400",
+      "name": "코나아이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "490470",
+      "name": "세미파이브",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "074600",
+      "name": "원익QnC",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "033500",
+      "name": "동성화인텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "121600",
+      "name": "나노신소재",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "348370",
+      "name": "엔켐",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "200710",
+      "name": "에이디테크놀로지",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "368770",
+      "name": "파이버프로",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "009520",
+      "name": "포스코엠텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "372320",
+      "name": "큐로셀",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "225570",
+      "name": "넥슨게임즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "486990",
+      "name": "노타",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "078160",
+      "name": "메디포스트",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "365340",
+      "name": "성일하이텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "475960",
+      "name": "토모큐브",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "024850",
+      "name": "HLB이노베이션",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "086900",
+      "name": "메디톡스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "214430",
+      "name": "아이쓰리시스템",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "399720",
+      "name": "가온칩스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "102940",
+      "name": "코오롱생명과학",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "033100",
+      "name": "제룡전기",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "084110",
+      "name": "휴온스글로벌",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "425420",
+      "name": "티에프이",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "348340",
+      "name": "뉴로메카",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "376300",
+      "name": "디어유",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "033790",
+      "name": "피노",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "468530",
+      "name": "프로티나",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "493280",
+      "name": "아이엠바이오로직스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "348210",
+      "name": "넥스틴",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "112040",
+      "name": "위메이드",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "015750",
+      "name": "성우하이텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "067160",
+      "name": "SOOP",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "053800",
+      "name": "안랩",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "460930",
+      "name": "현대힘스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "102710",
+      "name": "이엔에프테크놀로지",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "327260",
+      "name": "RF머트리얼즈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "356860",
+      "name": "티엘비",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "253590",
+      "name": "네오셈",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "025980",
+      "name": "아난티",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "042000",
+      "name": "카페24",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "336570",
+      "name": "원텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "060250",
+      "name": "NHN KCP",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "060280",
+      "name": "큐렉소",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "383310",
+      "name": "에코프로에이치엔",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "448900",
+      "name": "한국피아이엠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "278280",
+      "name": "천보",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "094170",
+      "name": "동운아나텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "458870",
+      "name": "씨어스테크놀로지",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "041960",
+      "name": "코미팜",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "424870",
+      "name": "이뮨온시아",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "272290",
+      "name": "이녹스첨단소재",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "287840",
+      "name": "인투셀",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "053610",
+      "name": "프로텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "187660",
+      "name": "페니트리움바이오",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "211050",
+      "name": "인카금융서비스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "251970",
+      "name": "펌텍코리아",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "090360",
+      "name": "로보스타",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "252990",
+      "name": "샘씨엔에스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "098070",
+      "name": "한텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "025320",
+      "name": "시노펙스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "389650",
+      "name": "넥스트바이오메디컬",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "047920",
+      "name": "HLB제약",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "019210",
+      "name": "와이지-원",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "215600",
+      "name": "신라젠",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "484590",
+      "name": "삼양컴텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "099190",
+      "name": "아이센스",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "018290",
+      "name": "브이티",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    },
+    {
+      "code": "488900",
+      "name": "비츠로넥스텍",
+      "market": "KOSDAQ",
+      "suffix": ".KQ"
+    }
+  ],
+  "status": "ok",
+  "message": ""
 }
-
-
-# ---------- 공용 유틸 ----------
-
-def now_seoul() -> datetime:
-    return datetime.now(SEOUL)
-
-
-def ensure_dirs() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    DEBUG_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def read_text_with_fallback(raw: bytes) -> str:
-    for enc in ("euc-kr", "cp949", "utf-8"):
-        try:
-            return raw.decode(enc)
-        except Exception:
-            pass
-    return raw.decode("utf-8", errors="replace")
-
-
-def save_debug_html(name: str, html_text: str) -> None:
-    ensure_dirs()
-    path = DEBUG_DIR / name
-    path.write_text(html_text, encoding="utf-8")
-    print(f"[DEBUG] saved html -> {path}")
-
-
-def to_number(text: str) -> Optional[float]:
-    if text is None:
-        return None
-    s = str(text).strip().replace(",", "").replace("%", "")
-    s = s.replace("＋", "+").replace("－", "-")
-    if not s or s in {"-", "--", "N/A"}:
-        return None
-    try:
-        return float(s)
-    except Exception:
-        return None
-
-
-def format_pct(pct: float) -> str:
-    return f"{pct:+.1f}%".replace("+0.0%", "0.0%")
-
-
-def format_eok(eok: float) -> str:
-    if not math.isfinite(eok):
-        return "--"
-    if eok >= 10000:
-        return f"{eok / 10000:.2f}조"
-    if eok >= 100:
-        return f"{round(eok):,}억"
-    return f"{eok:.1f}억"
-
-
-def yyyy_mm_dd(date_str: str) -> str:
-    if len(date_str) == 8:
-        return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
-    return date_str
-
-
-def load_universe() -> List[dict]:
-    with UNIVERSE_PATH.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, list):
-        raise ValueError("universe_kr_top400.json 형식이 리스트가 아닙니다.")
-    return data
-
-
-def market_suffix(code: str) -> str:
-    # universe 파일에서 시장 정보가 없으므로 대략 코드 매칭 후, 코스닥 여부는 universe name 대신 후속 매핑에서 처리
-    # 이 함수는 기본값만 제공하고 실제 suffix는 universe_map에서 override 가능
-    return ".KS"
-
-
-def load_existing_payload() -> Optional[dict]:
-    if not OUTPUT_PATH.exists():
-        return None
-    try:
-        return json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
-    except Exception as e:
-        print(f"[WARN] 기존 latest_krx.json 읽기 실패: {e}")
-        return None
-
-
-def save_payload(payload: dict) -> None:
-    ensure_dirs()
-    OUTPUT_PATH.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    print(f"[OK] saved -> {OUTPUT_PATH}")
-
-
-def build_error_payload(message: str) -> dict:
-    return {
-        "generated_at": now_seoul().isoformat(),
-        "trade_date": now_seoul().strftime("%Y%m%d"),
-        "trade_date_display": yyyy_mm_dd(now_seoul().strftime("%Y%m%d")),
-        "source": "Naver KRX+NXT table 기준",
-        "universe_name": "KOSPI200 + KOSDAQ200 by market cap",
-        "counts": {
-            "universe": 0,
-            "top_current_30": 0,
-            "top_rise_30": 0,
-            "leaders": 0,
-        },
-        "leaders": [],
-        "by_symbol": {},
-        "status": "error",
-        "fallback_used": False,
-        "message": message,
-    }
-
-
-# ---------- 거래대금 문자열 파싱 ----------
-
-def parse_trade_value_to_eok(text: str) -> Optional[float]:
-    """
-    NAVER 표에 보이는 문자열을 '억원' 단위 float으로 환산.
-    예:
-      7.36조 -> 73600
-      9470억 -> 9470
-      3548억 -> 3548
-      8500만 -> 0.85
-      123백만 -> 1.23
-      12,345 -> 12345 (이미 억 단위 숫자로 간주하지 않음; 일반 숫자는 None 처리)
-    """
-    if text is None:
-        return None
-
-    s = str(text).strip()
-    s = s.replace(",", "").replace(" ", "")
-    if not s or s in {"-", "--"}:
-        return None
-
-    # 숫자만 있으면 단위가 불명확하므로 보수적으로 None
-    if re.fullmatch(r"[+-]?\d+(\.\d+)?", s):
-        return None
-
-    try:
-        if "조" in s:
-            m = re.search(r"([+-]?\d+(?:\.\d+)?)조", s)
-            if m:
-                return float(m.group(1)) * 10000
-        if "억" in s:
-            m = re.search(r"([+-]?\d+(?:\.\d+)?)억", s)
-            if m:
-                return float(m.group(1))
-        if "만" in s:
-            m = re.search(r"([+-]?\d+(?:\.\d+)?)만", s)
-            if m:
-                # 1억 = 10000만
-                return float(m.group(1)) / 10000
-        if "백만" in s:
-            m = re.search(r"([+-]?\d+(?:\.\d+)?)백만", s)
-            if m:
-                # 1억 = 100백만
-                return float(m.group(1)) / 100
-    except Exception:
-        return None
-
-    return None
-
-
-# ---------- NAVER 표 파싱 ----------
-
-@dataclass
-class ParsedRow:
-    code: str
-    name: str
-    pct: float
-    trade_value_eok: float
-    market: str
-
-
-def build_session() -> requests.Session:
-    s = requests.Session()
-    s.headers.update(HEADERS)
-    return s
-
-
-def fetch_html(session: requests.Session, method: str, url: str, *, data=None, params=None, debug_name: str = "") -> str:
-    r = session.request(method, url, data=data, params=params, timeout=20)
-    r.raise_for_status()
-    text = read_text_with_fallback(r.content)
-    if debug_name:
-        save_debug_html(debug_name, text)
-    return text
-
-
-def extract_code_from_href(href: str) -> Optional[str]:
-    if not href:
-        return None
-    m = re.search(r"code=(\d{6})", href)
-    return m.group(1) if m else None
-
-
-def find_header_indexes(table) -> Dict[str, int]:
-    """
-    헤더에서 종목명 / 등락률 / 거래대금 열 인덱스 추정.
-    """
-    header_map: Dict[str, int] = {}
-    thead = table.find("thead")
-    if not thead:
-        return header_map
-
-    header_texts: List[str] = []
-    for th in thead.find_all("th"):
-        txt = th.get_text(" ", strip=True).replace("\n", " ").strip()
-        header_texts.append(txt)
-
-    for idx, txt in enumerate(header_texts):
-        compact = txt.replace(" ", "")
-        if "종목명" in compact or compact == "종목명":
-            header_map["name"] = idx
-        elif "등락률" in compact:
-            header_map["pct"] = idx
-        elif "거래대금" in compact:
-            header_map["amount"] = idx
-
-    return header_map
-
-
-def parse_market_sum_table(html_text: str, market_label: str) -> List[ParsedRow]:
-    soup = BeautifulSoup(html_text, "lxml")
-    tables = soup.select("table.type_2")
-    if not tables:
-        return []
-
-    table = tables[0]
-    header_idx = find_header_indexes(table)
-
-    rows: List[ParsedRow] = []
-    tbody = table.find("tbody")
-    if not tbody:
-        return rows
-
-    for tr in tbody.find_all("tr"):
-        tds = tr.find_all("td")
-        if not tds:
-            continue
-
-        a = tr.select_one("a[href*='item/main.naver?code=']")
-        if not a:
-            continue
-
-        code = extract_code_from_href(a.get("href", ""))
-        name = a.get_text(strip=True)
-        if not code or not name:
-            continue
-
-        # 헤더 인덱스가 있으면 우선 사용
-        pct = None
-        amount_eok = None
-
-        if "pct" in header_idx and header_idx["pct"] < len(tds):
-            pct = to_number(tds[header_idx["pct"]].get_text(strip=True))
-
-        if "amount" in header_idx and header_idx["amount"] < len(tds):
-            amount_eok = parse_trade_value_to_eok(tds[header_idx["amount"]].get_text(strip=True))
-
-        # 헤더 탐지가 실패하면 보조 스캔
-        if pct is None:
-            for td in tds:
-                txt = td.get_text(strip=True)
-                if "%" in txt:
-                    num = to_number(txt)
-                    if num is not None:
-                        pct = num
-                        break
-
-        if amount_eok is None:
-            for td in reversed(tds):
-                txt = td.get_text(strip=True)
-                if any(unit in txt for unit in ("조", "억", "만", "백만")):
-                    parsed = parse_trade_value_to_eok(txt)
-                    if parsed is not None:
-                        amount_eok = parsed
-                        break
-
-        if pct is None or amount_eok is None:
-            continue
-
-        rows.append(
-            ParsedRow(
-                code=code,
-                name=name,
-                pct=float(pct),
-                trade_value_eok=float(amount_eok),
-                market=market_label,
-            )
-        )
-
-    return rows
-
-
-def fetch_krx_market_pages(session: requests.Session, sosok: int, market_name: str, max_pages: int = 20) -> List[ParsedRow]:
-    """
-    KRX 표:
-      https://finance.naver.com/sise/sise_market_sum.naver
-      https://finance.naver.com/sise/sise_market_sum.naver?sosok=1
-    """
-    all_rows: List[ParsedRow] = []
-
-    base_url = "https://finance.naver.com/sise/sise_market_sum.naver"
-    params_base = {"sosok": sosok} if sosok else {}
-
-    for page in range(1, max_pages + 1):
-        params = dict(params_base)
-        params["page"] = page
-        html = fetch_html(
-            session,
-            "GET",
-            base_url,
-            params=params,
-            debug_name=f"debug_krx_{market_name.lower()}_p{page}.html",
-        )
-        rows = parse_market_sum_table(html, market_name)
-        print(f"[PARSE] KRX {market_name} page {page}: {len(rows)} rows")
-        if not rows:
-            break
-
-        # 중복 방지
-        before = len(all_rows)
-        existing = {r.code for r in all_rows}
-        for row in rows:
-            if row.code not in existing:
-                all_rows.append(row)
-        if len(all_rows) == before:
-            break
-
-        time.sleep(0.2)
-
-    return all_rows
-
-
-def fetch_nxt_pages(session: requests.Session, sosok: int, market_name: str, max_pages: int = 20) -> List[ParsedRow]:
-    """
-    NXT 표:
-      https://finance.naver.com/sise/nxt_sise_quant.naver
-      https://finance.naver.com/sise/nxt_sise_quant.naver?sosok=1
-    """
-    all_rows: List[ParsedRow] = []
-
-    base_url = "https://finance.naver.com/sise/nxt_sise_quant.naver"
-    params_base = {"sosok": sosok} if sosok else {}
-
-    for page in range(1, max_pages + 1):
-        params = dict(params_base)
-        params["page"] = page
-        html = fetch_html(
-            session,
-            "GET",
-            base_url,
-            params=params,
-            debug_name=f"debug_nxt_{market_name.lower()}_p{page}.html",
-        )
-        rows = parse_market_sum_table(html, market_name)
-        print(f"[PARSE] NXT {market_name} page {page}: {len(rows)} rows")
-        if not rows:
-            break
-
-        before = len(all_rows)
-        existing = {r.code for r in all_rows}
-        for row in rows:
-            if row.code not in existing:
-                all_rows.append(row)
-        if len(all_rows) == before:
-            break
-
-        time.sleep(0.2)
-
-    return all_rows
-
-
-# ---------- 데이터 합산 / payload ----------
-
-def build_universe_maps(universe: List[dict]) -> Tuple[Dict[str, dict], Dict[str, str]]:
-    """
-    universe_kr_top400.json은 최소 code/name/market 정도를 가진다고 가정.
-    """
-    by_code: Dict[str, dict] = {}
-    suffix_map: Dict[str, str] = {}
-    for item in universe:
-        code = str(item.get("code", "")).zfill(6)
-        if not code:
-            continue
-        by_code[code] = item
-        market = str(item.get("market", "")).upper()
-        if "KOSDAQ" in market or item.get("suffix") == ".KQ":
-            suffix_map[code] = ".KQ"
-        else:
-            suffix_map[code] = ".KS"
-    return by_code, suffix_map
-
-
-def merge_rows(
-    universe: List[dict],
-    krx_kospi: List[ParsedRow],
-    krx_kosdaq: List[ParsedRow],
-    nxt_kospi: List[ParsedRow],
-    nxt_kosdaq: List[ParsedRow],
-) -> List[dict]:
-    universe_map, suffix_map = build_universe_maps(universe)
-    agg: Dict[str, dict] = {}
-
-    def apply(rows: List[ParsedRow], source_tag: str) -> None:
-        for row in rows:
-            if row.code not in universe_map:
-                continue
-
-            if row.code not in agg:
-                suffix = suffix_map.get(row.code, ".KS")
-                agg[row.code] = {
-                    "code": row.code,
-                    "symbol": row.code + suffix,
-                    "name": universe_map[row.code].get("name") or row.name,
-                    "market": universe_map[row.code].get("market") or row.market,
-                    "pct": row.pct,
-                    "trade_value_eok": 0.0,
-                    "sources": [],
-                }
-
-            # 장중엔 등락률은 KRX/NXT 어느 쪽이든 거의 같다고 보고, 가장 최근 적용값으로 갱신
-            agg[row.code]["pct"] = row.pct
-            agg[row.code]["trade_value_eok"] += row.trade_value_eok
-            agg[row.code]["sources"].append(source_tag)
-
-    apply(krx_kospi, "KRX_KOSPI")
-    apply(krx_kosdaq, "KRX_KOSDAQ")
-    apply(nxt_kospi, "NXT_KOSPI")
-    apply(nxt_kosdaq, "NXT_KOSDAQ")
-
-    merged: List[dict] = []
-    for _, item in agg.items():
-        pct = float(item["pct"])
-        eok = float(item["trade_value_eok"])
-        merged.append({
-            "code": item["code"],
-            "symbol": item["symbol"],
-            "name": item["name"],
-            "market": item["market"],
-            "close": None,
-            "pct": round(pct, 4),
-            "pct_text": format_pct(pct),
-            "trade_value_eok": round(eok, 4),
-            "trade_value_text": format_eok(eok),
-            "source_parts": item["sources"],
-        })
-
-    return merged
-
-
-def build_payload(universe: List[dict], merged_rows: List[dict]) -> dict:
-    amount_ranked = sorted(
-        merged_rows,
-        key=lambda x: (-float(x["trade_value_eok"]), -float(x["pct"]))
-    )
-    rise_ranked = sorted(
-        merged_rows,
-        key=lambda x: (-float(x["pct"]), -float(x["trade_value_eok"]))
-    )
-
-    top_c = {item["symbol"] for item in amount_ranked[:30]}
-    top_e = {item["symbol"] for item in rise_ranked[:30]}
-    leaders = [item for item in amount_ranked if item["symbol"] in top_c and item["symbol"] in top_e]
-    by_symbol = {item["symbol"]: item for item in merged_rows}
-
-    trade_date = now_seoul().strftime("%Y%m%d")
-
-    return {
-        "generated_at": now_seoul().isoformat(),
-        "trade_date": trade_date,
-        "trade_date_display": yyyy_mm_dd(trade_date),
-        "source": "Naver KRX+NXT table 기준",
-        "universe_name": "KOSPI200 + KOSDAQ200 by market cap",
-        "counts": {
-            "universe": len(merged_rows),
-            "top_current_30": min(30, len(amount_ranked)),
-            "top_rise_30": min(30, len(rise_ranked)),
-            "leaders": len(leaders),
-        },
-        "leaders": leaders,
-        "by_symbol": by_symbol,
-        "status": "ok",
-        "fallback_used": False,
-        "message": "",
-    }
-
-
-# ---------- 메인 ----------
-
-def main() -> None:
-    ensure_dirs()
-
-    try:
-        universe = load_universe()
-    except Exception as e:
-        payload = build_error_payload(f"유니버스 로드 실패: {e}")
-        save_payload(payload)
-        sys.exit(1)
-
-    session = build_session()
-
-    try:
-        krx_kospi = fetch_krx_market_pages(session, sosok=0, market_name="KOSPI")
-        krx_kosdaq = fetch_krx_market_pages(session, sosok=1, market_name="KOSDAQ")
-        nxt_kospi = fetch_nxt_pages(session, sosok=0, market_name="KOSPI")
-        nxt_kosdaq = fetch_nxt_pages(session, sosok=1, market_name="KOSDAQ")
-
-        print(f"[TOTAL] KRX KOSPI  rows: {len(krx_kospi)}")
-        print(f"[TOTAL] KRX KOSDAQ rows: {len(krx_kosdaq)}")
-        print(f"[TOTAL] NXT KOSPI  rows: {len(nxt_kospi)}")
-        print(f"[TOTAL] NXT KOSDAQ rows: {len(nxt_kosdaq)}")
-
-        merged = merge_rows(universe, krx_kospi, krx_kosdaq, nxt_kospi, nxt_kosdaq)
-        print(f"[TOTAL] merged universe rows: {len(merged)}")
-
-        if len(merged) == 0:
-            payload = build_error_payload(
-                "Naver KRX/NXT 표 파싱 결과가 0건입니다. debug/*.html 파일을 확인하세요."
-            )
-            save_payload(payload)
-            sys.exit(2)
-
-        payload = build_payload(universe, merged)
-        save_payload(payload)
-
-        print("[DONE] latest_krx.json 생성 완료")
-        print(f"[DONE] universe={payload['counts']['universe']}, leaders={payload['counts']['leaders']}")
-
-    except Exception as e:
-        payload = build_error_payload(f"실행 실패: {e}")
-        save_payload(payload)
-        raise
-
-
-if __name__ == "__main__":
-    main()
