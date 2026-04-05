@@ -1785,7 +1785,8 @@
   <div class="header-status">
     <span class="live-dot"></span>
     <span>LIVE</span>
-    <span id="last-update">--:--:--</span>
+    <span id="current-time" style="color:#e8edf2;font-weight:600;">--:--:--</span>
+    <span style="color:var(--text3);font-size:10px;">갱신 <span id="last-update">--:--</span></span>
     <button class="refresh-btn" onclick="refreshAll()">↻ 새로고침</button>
   </div>
 </header>
@@ -4378,7 +4379,7 @@ async function refreshAll() {
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
   updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } if (activeName === 'leadstocks') { renderLeadStocks(); } }
-  const now = new Date().toLocaleTimeString('ko-KR'); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
+  const now = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
 
 
@@ -5799,12 +5800,19 @@ async function updateKRStockSignals() {
     const naverInfo = signals[sym] || null;
     const staticRow = useStatic ? getStaticKrxRow(sym) : null;
 
-    let state = naverInfo?.state || 'flat';
-    let pctText = naverInfo?.pctText || '--';
-    let amountEok = Number(naverInfo?.amountEok || 0);
-    let amountText = naverInfo?.amountText || '--';
+    let state = 'flat';
+    let pctText = '--';
+    let amountEok = 0;
+    let amountText = '--';
 
-    if (staticRow) {
+    if (naverInfo) {
+      // Naver 실시간 데이터 우선 사용
+      state = naverInfo.state || 'flat';
+      pctText = naverInfo.pctText || '--';
+      amountEok = Number(naverInfo.amountEok || 0);
+      amountText = naverInfo.amountText || '--';
+    } else if (staticRow && Number(staticRow.trade_value_eok) > 0) {
+      // Naver 실패 시 static 데이터 fallback (리셋 상태=0이면 사용 안 함)
       state = Number(staticRow.pct) > 0 ? 'up' : Number(staticRow.pct) < 0 ? 'down' : 'flat';
       pctText = staticRow.pct_text || `${Number(staticRow.pct) > 0 ? '+' : ''}${Number(staticRow.pct || 0).toFixed(1)}%`;
       amountEok = Number(staticRow.trade_value_eok || 0);
@@ -5913,6 +5921,14 @@ refreshAll = async function refreshAllWithStaticKrx() {
 
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok');
+  // 현재 KST 시각 1초마다 업데이트
+  function updateCurrentTime() {
+    const el = document.getElementById('current-time');
+    if (!el) return;
+    el.textContent = new Date().toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  }
+  updateCurrentTime();
+  setInterval(updateCurrentTime, 1000);
   ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
