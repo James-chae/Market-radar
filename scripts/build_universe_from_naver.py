@@ -3,157 +3,258 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import time
-from dataclasses import dataclass, asdict
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import requests
 from bs4 import BeautifulSoup
 
+
+SEOUL = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
+DEBUG_DIR = ROOT / "debug"
+
 OUTPUT_PATH = DATA_DIR / "universe_kr_top400.json"
 
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
     ),
+    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
     "Referer": "https://finance.naver.com/",
 }
 
-MARKETS = [
-    {"name": "KOSPI", "sosok": 0, "suffix": ".KS", "target": 200},
-    {"name": "KOSDAQ", "sosok": 1, "suffix": ".KQ", "target": 200},
-]
 
-@dataclass
-class UniverseRow:
-    code: str
-    symbol: str
-    name: str
-    market: str
-    market_cap_text: str
-    market_cap_eok: Optional[float]
-    rank: int
+def now_seoul() -> datetime:
+    return datetime.now(SEOUL)
 
 
-def decode_response(resp: requests.Response) -> str:
-    for enc in (resp.encoding, resp.apparent_encoding, 'euc-kr', 'cp949', 'utf-8'):
-        if not enc:
-            continue
+def ensure_dirs() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DEBUG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def read_text_with_fallback(raw: bytes) -> str:
+    for enc in ("euc-kr", "cp949", "utf-8"):
         try:
-            return resp.content.decode(enc, errors='replace')
+            return raw.decode(enc)
         except Exception:
             pass
-    return resp.text
+    return raw.decode("utf-8", errors="replace")
 
 
-def parse_market_cap_to_eok(text: str) -> Optional[float]:
-    if not text:
+def save_debug_html(name: str, html_text: str) -> None:
+    ensure_dirs()
+    path = DEBUG_DIR / name
+    path.write_text(html_text, encoding="utf-8")
+    print(f"[DEBUG] saved html -> {path}")
+
+
+def extract_code_from_href(href: str) -> Optional[str]:
+    if not href:
         return None
-    cleaned = re.sub(r"\s+", "", text).replace(",", "")
-    if cleaned in {"", "-", "N/A"}:
-        return None
-    total = 0.0
-    m = re.search(r"([\d.]+)조", cleaned)
-    if m:
-        total += float(m.group(1)) * 10000
-    m = re.search(r"([\d.]+)억", cleaned)
-    if m:
-        total += float(m.group(1))
-    return total or None
+    m = re.search(r"code=(\d{6})", href)
+    return m.group(1) if m else None
 
 
-def get_page(session: requests.Session, sosok: int, page: int) -> str:
-    url = f"https://finance.naver.com/sise/sise_market_sum.naver?sosok={sosok}&page={page}"
-    r = session.get(url, headers=HEADERS, timeout=20)
+def save_payload(payload: dict) -> None:
+    ensure_dirs()
+    OUTPUT_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    print(f"[OK] saved -> {OUTPUT_PATH}")
+
+
+def build_error_payload(message: str) -> dict:
+    return {
+        "generated_at": now_seoul().isoformat(),
+        "source": "Naver Finance market cap ranking",
+        "counts": {
+            "KOSPI": 0,
+            "KOSDAQ": 0,
+            "total": 0,
+        },
+        "items": [],
+        "status": "error",
+        "message": message,
+    }
+
+
+def build_session() -> requests.Session:
+    s = requests.Session()
+    s.headers.update(HEADERS)
+    return s
+
+
+def fetch_html(
+    session: requests.Session,
+    url: str,
+    *,
+    params: Optional[dict] = None,
+    debug_name: str = "",
+) -> str:
+    r = session.get(url, params=params, timeout=20)
     r.raise_for_status()
-    return decode_response(r)
+    text = read_text_with_fallback(r.content)
+    if debug_name:
+        save_debug_html(debug_name, text)
+    return text
 
 
-def extract_last_page(html: str) -> int:
-    soup = BeautifulSoup(html, 'lxml')
-    pgrr = soup.select_one('td.pgRR a')
-    if pgrr and pgrr.get('href'):
-        m = re.search(r"page=(\d+)", pgrr['href'])
-        if m:
-            return int(m.group(1))
-    return 1
-
-
-def parse_rows(html: str, market_name: str, suffix: str, start_rank: int) -> List[UniverseRow]:
-    soup = BeautifulSoup(html, 'lxml')
-    table = soup.select_one('table.type_2')
+def parse_market_cap_table(html_text: str, market_name: str) -> List[dict]:
+    """
+    NAVER 시총 상위 페이지에서 종목코드/종목명 파싱.
+    URL 예:
+      https://finance.naver.com/sise/sise_market_sum.naver?page=1
+      https://finance.naver.com/sise/sise_market_sum.naver?sosok=1&page=1
+    """
+    soup = BeautifulSoup(html_text, "lxml")
+    table = soup.select_one("table.type_2")
     if not table:
         return []
-    out: List[UniverseRow] = []
-    seen = set()
-    for tr in table.select('tr'):
-        a = tr.select_one('a.tltle')
+
+    tbody = table.find("tbody")
+    if not tbody:
+        return []
+
+    rows: List[dict] = []
+
+    for tr in tbody.find_all("tr"):
+        a = tr.select_one("a[href*='item/main.naver?code=']")
         if not a:
             continue
-        href = a.get('href', '')
-        m = re.search(r"code=(\d{6})", href)
-        if not m:
+
+        code = extract_code_from_href(a.get("href", ""))
+        name = a.get_text(strip=True)
+
+        if not code or not name:
             continue
-        code = m.group(1)
-        if code in seen:
-            continue
-        seen.add(code)
-        tds = tr.select('td')
-        if len(tds) < 7:
-            continue
-        market_cap_text = tds[6].get_text(' ', strip=True)
-        out.append(UniverseRow(
-            code=code,
-            symbol=code + suffix,
-            name=a.get_text(' ', strip=True),
-            market=market_name,
-            market_cap_text=market_cap_text,
-            market_cap_eok=parse_market_cap_to_eok(market_cap_text),
-            rank=start_rank + len(out) + 1,
-        ))
-    return out
+
+        rows.append({
+            "code": code,
+            "name": name,
+            "market": market_name,
+            "suffix": ".KQ" if market_name.upper() == "KOSDAQ" else ".KS",
+        })
+
+    return rows
 
 
-def build_universe() -> List[UniverseRow]:
-    session = requests.Session()
-    session.headers.update(HEADERS)
-    all_rows: List[UniverseRow] = []
-    for market in MARKETS:
-        first_html = get_page(session, market['sosok'], 1)
-        last_page = extract_last_page(first_html)
-        collected: List[UniverseRow] = []
-        collected.extend(parse_rows(first_html, market['name'], market['suffix'], 0))
-        page = 2
-        while len(collected) < market['target'] and page <= last_page:
-            html = get_page(session, market['sosok'], page)
-            rows = parse_rows(html, market['name'], market['suffix'], len(collected))
-            if not rows:
-                break
-            collected.extend(rows)
-            page += 1
-            time.sleep(0.15)
-        collected = collected[:market['target']]
-        all_rows.extend(collected)
-        print(f"[{market['name']}] collected {len(collected)}")
+def fetch_market_cap_pages(
+    session: requests.Session,
+    sosok: int,
+    market_name: str,
+    max_pages: int = 25,
+) -> List[dict]:
+    """
+    KOSPI / KOSDAQ 시총 상위 페이지 순회.
+    """
+    base_url = "https://finance.naver.com/sise/sise_market_sum.naver"
+    all_rows: List[dict] = []
+
+    for page in range(1, max_pages + 1):
+        params = {"page": page}
+        if sosok:
+            params["sosok"] = sosok
+
+        html = fetch_html(
+            session,
+            base_url,
+            params=params,
+            debug_name=f"debug_universe_{market_name.lower()}_p{page}.html",
+        )
+
+        rows = parse_market_cap_table(html, market_name)
+        print(f"[PARSE] {market_name} page {page}: {len(rows)} rows")
+
+        if not rows:
+            break
+
+        before = len(all_rows)
+        seen = {r["code"] for r in all_rows}
+        for row in rows:
+            if row["code"] not in seen:
+                all_rows.append(row)
+
+        if len(all_rows) == before:
+            break
+
+        time.sleep(0.2)
+
     return all_rows
 
 
-def main() -> None:
-    rows = build_universe()
-    payload = {
-        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "universe_name": "KOSPI200 + KOSDAQ200 by market cap",
-        "counts": {"total": len(rows), "kospi": 200, "kosdaq": 200},
-        "items": [asdict(r) for r in rows],
+def dedupe_rows(rows: List[dict]) -> List[dict]:
+    out: List[dict] = []
+    seen = set()
+    for row in rows:
+        code = row["code"]
+        if code in seen:
+            continue
+        seen.add(code)
+        out.append(row)
+    return out
+
+
+def build_payload(kospi_rows: List[dict], kosdaq_rows: List[dict]) -> dict:
+    kospi_top = dedupe_rows(kospi_rows)[:200]
+    kosdaq_top = dedupe_rows(kosdaq_rows)[:200]
+    items = kospi_top + kosdaq_top
+
+    return {
+        "generated_at": now_seoul().isoformat(),
+        "source": "Naver Finance market cap ranking",
+        "counts": {
+            "KOSPI": len(kospi_top),
+            "KOSDAQ": len(kosdaq_top),
+            "total": len(items),
+        },
+        "items": items,
+        "status": "ok",
+        "message": "",
     }
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(f"saved {OUTPUT_PATH} ({len(rows)} items)")
 
 
-if __name__ == '__main__':
+def main() -> None:
+    ensure_dirs()
+    session = build_session()
+
+    try:
+        kospi_rows = fetch_market_cap_pages(session, sosok=0, market_name="KOSPI")
+        kosdaq_rows = fetch_market_cap_pages(session, sosok=1, market_name="KOSDAQ")
+
+        print(f"[TOTAL] KOSPI parsed rows : {len(kospi_rows)}")
+        print(f"[TOTAL] KOSDAQ parsed rows: {len(kosdaq_rows)}")
+
+        payload = build_payload(kospi_rows, kosdaq_rows)
+        save_payload(payload)
+
+        total = payload["counts"]["total"]
+        print(f"[DONE] total universe items: {total}")
+
+        if total == 0:
+            err = build_error_payload(
+                "Naver 시총 상위 표 파싱 결과가 0건입니다. debug/*.html 파일을 확인하세요."
+            )
+            save_payload(err)
+            sys.exit(2)
+
+        # 400 미만이어도 일단 저장은 하되, 경고 출력
+        if total < 300:
+            print(f"[WARN] universe items too small: {total}")
+
+    except Exception as e:
+        err = build_error_payload(f"실행 실패: {e}")
+        save_payload(err)
+        raise
+
+
+if __name__ == "__main__":
     main()
