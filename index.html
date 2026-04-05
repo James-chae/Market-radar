@@ -4371,6 +4371,9 @@ async function refreshAll() {
   const _ldBar = document.getElementById('leadstocks-loading');
   if (_ldBar) { _ldBar.style.removeProperty('display'); _ldBar.dataset.shownAt = _now; }
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
+  // allSettled 완료 = Naver API 완료 시점. 주도주 배너도 이때 숨김 (KR탭과 동일 타이밍)
+  const _ldBarHide = document.getElementById('leadstocks-loading');
+  if (_ldBarHide) _ldBarHide.style.setProperty('display', 'none', 'important');
   await computeLeadStocks();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
@@ -4968,14 +4971,7 @@ function renderLeadStocks() {
   const summaryEl = document.getElementById('leadstocks-summary');
   const gridEl = document.getElementById('leadstocks-grid');
   if (!summaryEl || !gridEl) return;
-  // Loading 배너 숨김 (최소 1.5초 표시 보장)
-  const ldBar = document.getElementById('leadstocks-loading');
-  if (ldBar) {
-    const shown = Number(ldBar.dataset.shownAt || 0);
-    const elapsed = Date.now() - shown;
-    const delay = Math.max(0, 1500 - elapsed);
-    setTimeout(() => { ldBar.style.setProperty('display', 'none', 'important'); }, delay);
-  }
+  // 배너 숨김은 refreshAll의 Promise.allSettled 완료 후 처리 (KR탭과 동일 타이밍)
 
   const updatedText = LEADSTOCKS_STATE.computedAt
     ? LEADSTOCKS_STATE.computedAt.toLocaleTimeString('ko-KR')
