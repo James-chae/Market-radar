@@ -1,9 +1,9 @@
-name: Update KRX close data
+name: Update KR universe and latest data
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '10 7 * * 1-5'  # UTC 07:10 = KST 16:10
+    - cron: '35 6 * * 1-5'
 
 permissions:
   contents: write
@@ -11,32 +11,34 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: true
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install requirements
         run: pip install -r requirements.txt
 
-      - name: Generate KRX JSON
-        run: python scripts/generate_krx_json.py
+      - name: Build universe
+        run: python scripts/build_universe_from_naver.py
 
-      - name: Commit latest_krx.json if changed
+      - name: Generate latest data
+        run: python scripts/generate_latest_krx_from_naver.py
+
+      - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/latest_krx.json
+          git add data/universe_kr_top400.json data/latest_krx.json
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "update krx close data"
+          git commit -m "update KR universe and latest data"
           git push
