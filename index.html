@@ -4352,11 +4352,11 @@ function closeConsole() { document.getElementById('error-console').classList.rem
 async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
-  // 두 로딩 배너 모두 갱신 시작 시 표시
+  // 두 로딩 배너 모두 갱신 시작 시 표시 + 타임스탬프 기록
   const _krBar = document.getElementById('kr-stocks-loading');
-  if (_krBar) _krBar.style.display = '';
+  if (_krBar) { _krBar.style.display = ''; _krBar.dataset.shownAt = Date.now(); }
   const _ldBar = document.getElementById('leadstocks-loading');
-  if (_ldBar) _ldBar.style.display = '';
+  if (_ldBar) { _ldBar.style.display = ''; _ldBar.dataset.shownAt = Date.now(); }
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
   await computeLeadStocks();
   renderSectorReferenceList('usstocks');
@@ -4955,9 +4955,14 @@ function renderLeadStocks() {
   const summaryEl = document.getElementById('leadstocks-summary');
   const gridEl = document.getElementById('leadstocks-grid');
   if (!summaryEl || !gridEl) return;
-  // Loading 배너 숨김
+  // Loading 배너 숨김 (최소 표시 보장)
   const ldBar = document.getElementById('leadstocks-loading');
-  if (ldBar) ldBar.style.display = 'none';
+  if (ldBar) {
+    const shown = Number(ldBar.dataset.shownAt || 0);
+    const elapsed = Date.now() - shown;
+    const delay = Math.max(0, 1200 - elapsed);
+    setTimeout(() => { ldBar.style.display = 'none'; }, delay);
+  }
 
   const updatedText = LEADSTOCKS_STATE.computedAt
     ? LEADSTOCKS_STATE.computedAt.toLocaleTimeString('ko-KR')
@@ -5718,9 +5723,14 @@ async function updateKRStockSignals() {
   if (useStatic) setStaticKrxBadgeText();
   if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
 
-  // Loading 배너 숨김
+  // Loading 배너 숨김 (최소 표시 보장)
   const loadingBar = document.getElementById('kr-stocks-loading');
-  if (loadingBar) loadingBar.style.display = 'none';
+  if (loadingBar) {
+    const shown = Number(loadingBar.dataset.shownAt || 0);
+    const elapsed = Date.now() - shown;
+    const delay = Math.max(0, 1200 - elapsed);
+    setTimeout(() => { loadingBar.style.display = 'none'; }, delay);
+  }
 }
 
 // computeLeadStocks는 위(원본)에서 정의됨. 아래는 static JSON 기반으로 확장 재정의.
@@ -5803,7 +5813,13 @@ refreshAll = async function refreshAllWithStaticKrx() {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  Logger.log('System', '마켓 레이더 초기화', 'ok');
+  // 첫 로드 시 배너 타임스탬프 초기화
+  ['kr-stocks-loading','leadstocks-loading'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = ''; el.dataset.shownAt = Date.now(); }
+  });
+  ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 </script>
