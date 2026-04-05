@@ -5597,33 +5597,123 @@ const STATIC_KRX_STATE = {
   loadedAt: 0,
 };
 
+// ── KST 장 운영 스케줄 유틸 ──────────────────────────────
+// 한국장 스케줄:
+//   07:50        : 전일 데이터 리셋 (등락률·거래대금 = 0)
+//   08:00~       : NXT 시작, Naver polling이 실시간 갱신
+//   09:00~15:30  : KRX 정규장
+//   15:30~20:20  : 시간외거래, 최종 데이터 유지
+//   20:20 이후   : 장마감 데이터 영구 유지 (다음날 07:50까지)
+//   공휴일/주말  : 직전 거래일 데이터를 다음 거래일 07:50까지 유지
+
+function getKstNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+}
+
+function getKstDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}${m}${dd}`;
+}
+
+function isWeekend(d) {
+  const day = d.getDay(); // 0=일,6=토
+  return day === 0 || day === 6;
+}
+
+function getKstMinutes(d) {
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+// 이 데이터를 리셋(0으로 초기화)해야 하는지 판단
+// 리셋 조건: KST 07:50 이후이고, embedded data의 trade_date가 오늘이 아닐 때
+function shouldResetEmbeddedData(tradeDate) {
+  const now = getKstNow();
+  const todayStr = getKstDateStr(now);
+  const kstMin = getKstMinutes(now);
+  const RESET_START = 7 * 60 + 50; // 07:50
+
+  // 주말이면 리셋 안 함 (직전 거래일 데이터 유지)
+  if (isWeekend(now)) return false;
+
+  // 평일 07:50 이후이고, 데이터가 오늘 것이 아니면 리셋
+  if (kstMin >= RESET_START && tradeDate !== todayStr) return true;
+
+  return false;
+}
+
+// embedded data를 리셋된 버전으로 복사 (종목명/코드 유지, 수치만 0)
+function makeResetData(src) {
+  const resetBySymbol = {};
+  for (const [sym, row] of Object.entries(src.by_symbol || {})) {
+    resetBySymbol[sym] = {
+      ...row,
+      pct: 0,
+      pct_text: '0.0%',
+      trade_value_eok: 0,
+      trade_value_text: '--',
+      close: null,
+      source_parts: [],
+    };
+  }
+  const now = getKstNow();
+  return {
+    ...src,
+    trade_date: getKstDateStr(now),
+    trade_date_display: getKstDateStr(now).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'),
+    generated_at: now.toISOString(),
+    leaders: [],
+    by_symbol: resetBySymbol,
+    status: 'reset',
+    message: '장 시작 전 초기화 상태 · Naver 실시간 갱신 대기 중',
+  };
+}
+
 async function fetchStaticKrxData(force=false) {
   if (!force && STATIC_KRX_STATE.data) return STATIC_KRX_STATE.data;
 
-  // 1차: 인라인 임베드 데이터 사용 (fetch 불필요, 항상 동작)
-  if (EMBEDDED_KRX_DATA && EMBEDDED_KRX_DATA.by_symbol) {
-    STATIC_KRX_STATE.data = EMBEDDED_KRX_DATA;
-    STATIC_KRX_STATE.loadedAt = Date.now();
-    Logger.log('KRX/Static', `임베드 데이터 사용: ${EMBEDDED_KRX_DATA.trade_date || '--'} / ${Object.keys(EMBEDDED_KRX_DATA.by_symbol).length}건`, 'ok');
-    return EMBEDDED_KRX_DATA;
-  }
-
-  // 2차: 외부 JSON fetch 시도 (서버 환경에서만 동작)
+  // 2차: 외부 JSON fetch 먼저 시도 (GitHub Pages 등 서버 환경)
   const url = `${CONFIG.KRX_STATIC_JSON}?v=${Date.now()}`;
   try {
-    const r = await fetchWithTimeout(url, 12000);
+    const r = await fetchWithTimeout(url, 8000);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     if (!data || !data.by_symbol) throw new Error('by_symbol 없음');
-    STATIC_KRX_STATE.data = data;
+    // 외부 fetch 성공 → 날짜 체크 후 사용
+    const fetchedDate = data.trade_date || '';
+    if (shouldResetEmbeddedData(fetchedDate)) {
+      const reset = makeResetData(data);
+      STATIC_KRX_STATE.data = reset;
+      Logger.log('KRX/Static', `외부 fetch: 리셋 상태 (${fetchedDate} → 오늘 초기화)`, 'ok');
+    } else {
+      STATIC_KRX_STATE.data = data;
+      Logger.log('KRX/Static', `외부 fetch 성공: ${fetchedDate} / ${Object.keys(data.by_symbol).length}건`, 'ok');
+    }
     STATIC_KRX_STATE.loadedAt = Date.now();
-    Logger.log('KRX/Static', `로드 성공: ${data.trade_date || '--'} / ${Object.keys(data.by_symbol || {}).length}건`, 'ok');
-    return data;
+    return STATIC_KRX_STATE.data;
   } catch (e) {
-    Logger.log('KRX/Static', `로드 실패: ${e.message}`, 'warn');
-    STATIC_KRX_STATE.data = null;
-    return null;
+    Logger.log('KRX/Static', `외부 fetch 실패: ${e.message} → 임베드 데이터 사용`, 'warn');
   }
+
+  // 1차 fallback: 인라인 임베드 데이터
+  if (EMBEDDED_KRX_DATA && EMBEDDED_KRX_DATA.by_symbol) {
+    const embDate = EMBEDDED_KRX_DATA.trade_date || '';
+    let useData = EMBEDDED_KRX_DATA;
+    if (shouldResetEmbeddedData(embDate)) {
+      useData = makeResetData(EMBEDDED_KRX_DATA);
+      Logger.log('KRX/Static', `임베드 데이터 리셋 (${embDate} → 오늘 07:50+ 초기화)`, 'ok');
+    } else {
+      Logger.log('KRX/Static', `임베드 데이터 사용: ${embDate} / ${Object.keys(EMBEDDED_KRX_DATA.by_symbol).length}건`, 'ok');
+    }
+    STATIC_KRX_STATE.data = useData;
+    STATIC_KRX_STATE.loadedAt = Date.now();
+    return useData;
+  }
+
+  Logger.log('KRX/Static', '데이터 없음', 'warn');
+  STATIC_KRX_STATE.data = null;
+  return null;
 }
 
 function getKSTParts(now=new Date()) {
@@ -5816,7 +5906,7 @@ computeLeadStocks = computeLeadStocksWithStaticFallback;
 
 const __originalRefreshAll = refreshAll;
 refreshAll = async function refreshAllWithStaticKrx() {
-  await fetchStaticKrxData(false);
+  await fetchStaticKrxData(true);  // 매 갱신마다 날짜/시간 재검사
   return __originalRefreshAll();
 };
 
