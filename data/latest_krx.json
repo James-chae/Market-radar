@@ -1,18 +1,28 @@
 {
-  "generated_at": "2026-04-05T16:56:01.662394+09:00",
-  "trade_date": "",
-  "trade_date_display": "",
-  "source": "KRX OTP 장마감 기준",
-  "universe_name": "KRX300",
-  "counts": {
-    "universe": 0,
-    "top_current_30": 0,
-    "top_rise_30": 0,
-    "leaders": 0
-  },
-  "leaders": [],
-  "by_symbol": {},
-  "status": "fallback",
-  "fallback_used": true,
-  "message": "KRX 갱신 실패: 최근 거래일 KRX CSV를 찾지 못했습니다. details=20260401: CSV 헤더를 찾지 못했습니다. | 20260331: CSV 헤더를 찾지 못했습니다. | 20260330: CSV 헤더를 찾지 못했습니다. | 20260327: CSV 헤더를 찾지 못했습니다. | 20260326: CSV 헤더를 찾지 못했습니다."
+  "generated_at": "2026-04-05T16:00:00+09:00",
+  "trade_date": "20260405",
+  "source": "KRX TEST",
+  "by_symbol": {
+    "005930.KS": {
+      "name": "삼성전자",
+      "pct": 2.3,
+      "pct_text": "+2.3%",
+      "trade_value_eok": 15200,
+      "trade_value_text": "1.52조"
+    },
+    "000660.KS": {
+      "name": "SK하이닉스",
+      "pct": 1.5,
+      "pct_text": "+1.5%",
+      "trade_value_eok": 9800,
+      "trade_value_text": "9800억"
+    },
+    "005380.KS": {
+      "name": "현대차",
+      "pct": -0.8,
+      "pct_text": "-0.8%",
+      "trade_value_eok": 5200,
+      "trade_value_text": "5200억"
+    }
+  }
 }
