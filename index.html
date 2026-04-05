@@ -4352,10 +4352,12 @@ function closeConsole() { document.getElementById('error-console').classList.rem
 async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
-  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
-  // 주도주 loading 배너 표시
+  // 두 로딩 배너 모두 갱신 시작 시 표시
+  const _krBar = document.getElementById('kr-stocks-loading');
+  if (_krBar) _krBar.style.display = '';
   const _ldBar = document.getElementById('leadstocks-loading');
   if (_ldBar) _ldBar.style.display = '';
+  await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
   await computeLeadStocks();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
