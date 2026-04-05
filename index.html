@@ -4592,34 +4592,7 @@ async function fetchNaverKRStockSignals(symbols) {
   return out;
 }
 
-async function updateKRStockSignals() {
-  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
-  if (!buttons.length) return;
-
-  const symbols = buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean);
-  let signals = {};
-  try {
-    signals = await fetchNaverKRStockSignalsDetailed(symbols);
-  } catch (e) {
-    Logger.log('NaverStockSignals', e.message || 'signal load failed', 'warn');
-    return;
-  }
-
-  const sectorTotals = {};
-  buttons.forEach(btn => {
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    const info = signals[sym];
-    const pctText = info ? `${info.pctText} · <span class="amt">${info.amountText}</span>` : '--';
-    setStockButtonSignal(btn, info?.state || 'flat', pctText);
-
-    const titleEl = btn.closest('.stock-group')?.querySelector('.stock-group-title');
-    const sector = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '';
-    if (sector) sectorTotals[sector] = (sectorTotals[sector] || 0) + Number(info?.amountEok || 0);
-  });
-
-  updateKRStockSectorTotals(sectorTotals);
-  if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
-}
+// updateKRStockSignals: 아래 정의된 버전 사용 (static overlay 포함)
 
 async function updateUSStockSignals() {
   const buttons = Array.from(document.querySelectorAll('.us-stock-btn'));
@@ -5914,7 +5887,8 @@ computeLeadStocks = computeLeadStocksWithStaticFallback;
 
 const __originalRefreshAll = refreshAll;
 refreshAll = async function refreshAllWithStaticKrx() {
-  await fetchStaticKrxData(true);  // 매 갱신마다 날짜/시간 재검사
+  // 캐시 무효화 (fetchStaticKrxData는 updateKRStockSignals 내에서 호출됨)
+  STATIC_KRX_STATE.data = null;
   return __originalRefreshAll();
 };
 
