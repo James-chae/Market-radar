@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 DEBUG_DIR = ROOT / "debug"
 
-OUTPUT_PATH = DATA_DIR / "universe_kr_top400.json"
+OUTPUT_PATH = DATA_DIR / "universe_kr_top1000.json"
 
 HEADERS = {
     "User-Agent": (
@@ -204,8 +204,8 @@ def dedupe_rows(rows: List[dict]) -> List[dict]:
 
 
 def build_payload(kospi_rows: List[dict], kosdaq_rows: List[dict]) -> dict:
-    kospi_top = dedupe_rows(kospi_rows)[:200]
-    kosdaq_top = dedupe_rows(kosdaq_rows)[:200]
+    kospi_top = dedupe_rows(kospi_rows)[:500]
+    kosdaq_top = dedupe_rows(kosdaq_rows)[:500]
     items = kospi_top + kosdaq_top
 
     return {
@@ -247,7 +247,7 @@ def main() -> None:
             sys.exit(2)
 
         # 400 미만이어도 일단 저장은 하되, 경고 출력
-        if total < 300:
+        if total < 800:
             print(f"[WARN] universe items too small: {total}")
 
     except Exception as e:
