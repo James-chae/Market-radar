@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import csv
 import json
-import os
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from io import StringIO
 from pathlib import Path
@@ -24,7 +22,11 @@ DOWNLOAD_URL = "https://data.krx.co.kr/comm/fileDn/download_csv/download.cmd"
 REFERER = "https://data.krx.co.kr/contents/MDC/MDI/mdiLoader"
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
     "Referer": REFERER,
     "Origin": "https://data.krx.co.kr",
 }
@@ -39,6 +41,10 @@ OTP_FORM = {
     "money": "1",
     "csvxls_isNo": "false",
 }
+
+
+def now_seoul() -> datetime:
+    return datetime.now(SEOUL)
 
 
 def load_universe() -> List[dict]:
@@ -100,7 +106,7 @@ def request_otp(session: requests.Session, trade_date: str) -> str:
     r.raise_for_status()
     otp = r.text.strip()
     if not otp:
-        raise RuntimeError("OTP 응답이 비어 있습니다.")
+        raise RuntimeError(f"OTP 응답이 비어 있습니다: {trade_date}")
     return otp
 
 
@@ -119,20 +125,29 @@ def parse_rows(csv_text: str) -> List[dict]:
 
 
 def pick_trade_date(session: requests.Session, max_back_days: int = 10) -> tuple[str, List[dict]]:
-    now = datetime.now(SEOUL)
+    now = now_seoul()
+    last_error_messages: List[str] = []
+
     for offset in range(max_back_days + 1):
         day = now - timedelta(days=offset)
         if day.weekday() >= 5:
             continue
+
         trade_date = day.strftime("%Y%m%d")
         try:
             otp = request_otp(session, trade_date)
             rows = parse_rows(download_csv(session, otp))
             if rows:
+                print(f"[KRX] success: {trade_date}, rows={len(rows)}")
                 return trade_date, rows
-        except Exception:
-            continue
-    raise RuntimeError("최근 거래일 KRX CSV를 찾지 못했습니다.")
+            last_error_messages.append(f"{trade_date}: rows empty")
+        except Exception as e:
+            msg = f"{trade_date}: {e}"
+            print(f"[KRX] fail: {msg}")
+            last_error_messages.append(msg)
+
+    joined = " | ".join(last_error_messages[-5:])
+    raise RuntimeError(f"최근 거래일 KRX CSV를 찾지 못했습니다. details={joined}")
 
 
 def build_payload(trade_date: str, rows: List[dict], universe: List[dict]) -> dict:
@@ -180,7 +195,7 @@ def build_payload(trade_date: str, rows: List[dict], universe: List[dict]) -> di
     ]
 
     payload = {
-        "generated_at": datetime.now(SEOUL).isoformat(),
+        "generated_at": now_seoul().isoformat(),
         "trade_date": trade_date,
         "trade_date_display": yyyy_mm_dd(trade_date),
         "source": "KRX OTP 장마감 기준",
@@ -193,18 +208,100 @@ def build_payload(trade_date: str, rows: List[dict], universe: List[dict]) -> di
         },
         "leaders": leaders,
         "by_symbol": by_symbol,
+        "status": "ok",
+        "fallback_used": False,
+        "message": "",
     }
     return payload
 
 
+def build_empty_payload(universe_name: str = "KRX300", message: str = "") -> dict:
+    return {
+        "generated_at": now_seoul().isoformat(),
+        "trade_date": "",
+        "trade_date_display": "",
+        "source": "KRX OTP 장마감 기준",
+        "universe_name": universe_name,
+        "counts": {
+            "universe": 0,
+            "top_current_30": 0,
+            "top_rise_30": 0,
+            "leaders": 0,
+        },
+        "leaders": [],
+        "by_symbol": {},
+        "status": "fallback",
+        "fallback_used": True,
+        "message": message,
+    }
+
+
+def load_existing_payload() -> Optional[dict]:
+    if not OUTPUT_PATH.exists():
+        return None
+    try:
+        return json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[WARN] 기존 latest_krx.json 읽기 실패: {e}")
+        return None
+
+
+def save_payload(payload: dict) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    session = get_session()
-    universe = load_universe()
-    trade_date, rows = pick_trade_date(session)
-    payload = build_payload(trade_date, rows, universe)
-    OUTPUT_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"saved {OUTPUT_PATH} ({payload['trade_date_display']}, {payload['counts']['universe']} symbols)")
+
+    try:
+        universe = load_universe()
+    except Exception as e:
+        msg = f"유니버스 로드 실패: {e}"
+        print(f"[ERROR] {msg}")
+        existing = load_existing_payload()
+        if existing is not None:
+            existing["generated_at"] = now_seoul().isoformat()
+            existing["status"] = "fallback"
+            existing["fallback_used"] = True
+            existing["message"] = msg
+            save_payload(existing)
+            print("[FALLBACK] 기존 latest_krx.json 유지")
+            return
+
+        payload = build_empty_payload(message=msg)
+        save_payload(payload)
+        print("[FALLBACK] 빈 latest_krx.json 생성")
+        return
+
+    try:
+        session = get_session()
+        trade_date, rows = pick_trade_date(session)
+        payload = build_payload(trade_date, rows, universe)
+        save_payload(payload)
+        print(f"[OK] saved {OUTPUT_PATH} ({payload['trade_date_display']}, {payload['counts']['universe']} symbols)")
+        return
+    except Exception as e:
+        msg = f"KRX 갱신 실패: {e}"
+        print(f"[WARN] {msg}")
+
+        existing = load_existing_payload()
+        if existing is not None:
+            existing["generated_at"] = now_seoul().isoformat()
+            existing["status"] = "fallback"
+            existing["fallback_used"] = True
+            existing["message"] = msg
+            save_payload(existing)
+            print("[FALLBACK] 기존 latest_krx.json 유지")
+            return
+
+        payload = build_empty_payload(message=msg)
+        save_payload(payload)
+        print("[FALLBACK] 빈 latest_krx.json 생성")
+        return
 
 
 if __name__ == "__main__":
