@@ -1541,31 +1541,54 @@
 
   .leadstocks-wrap {
     display: grid;
-    gap: 12px;
+    gap: 10px;
   }
   .leadstocks-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 6px;
   }
   .leadstocks-stat {
     background: rgba(255,255,255,0.02);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
+    border-radius: 8px;
+    padding: 7px 10px;
   }
   .leadstocks-stat-label {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text3);
-    margin-bottom: 6px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .leadstocks-stat-value {
     font-family: var(--mono);
-    font-size: 18px;
+    font-size: 13px;
     color: var(--yellow);
     font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* 주도주 loading bar (kr-loading-bar 스타일 재사용) */
+  #leadstocks-loading {
+    margin-bottom: 6px;
+  }
+  /* 급등 종목 하이라이트 (상승률 15% 이상) */
+  .lead-row.surge {
+    border: 2px solid var(--yellow);
+    border-radius: 6px;
+    padding-left: 2px;
+    padding-right: 2px;
+    margin: 2px 0;
+    background: rgba(227,168,37,0.07);
+  }
+  .lead-row.surge .lead-pct {
+    color: #ffdd44;
+    text-shadow: 0 0 8px rgba(255,221,68,0.5);
   }
   .leadstocks-grid {
     display: grid;
@@ -1726,12 +1749,26 @@
     text-align: center;
   }
   @media (max-width: 768px) {
-    .leadstocks-summary,
     .leadstocks-grid {
       grid-template-columns: 1fr;
     }
-    .leadstocks-sector-name {
-      font-size: 16px;
+    .leadstocks-sector-name { font-size: 16px; }
+  }
+  @media (max-width: 600px) {
+    /* summary: 3칸 그리드 유지하되 폰트·패딩 축소 */
+    .leadstocks-summary {
+      gap: 4px;
+    }
+    .leadstocks-stat {
+      padding: 5px 7px;
+      border-radius: 6px;
+    }
+    .leadstocks-stat-label {
+      font-size: 8px;
+      margin-bottom: 2px;
+    }
+    .leadstocks-stat-value {
+      font-size: 11px;
     }
   }
 
@@ -2751,6 +2788,11 @@
     <div class="data-note">
       <span class="badge live"><strong>거래대금 상위 30 ∩ 상승률 상위 50</strong> 교집합 · 거래대금순</span>
       <span class="badge"><strong>표시</strong> 종목 · 등락률 · 거래대금</span>
+    </div>
+
+    <div class="kr-loading-bar" id="leadstocks-loading">
+      <span class="kr-loading-dot"></span>
+      <span>거래대금 · 등락률 데이터 불러오는 중...</span>
     </div>
 
     <div class="leadstocks-wrap">
@@ -4311,6 +4353,9 @@ async function refreshAll() {
   Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
+  // 주도주 loading 배너 표시
+  const _ldBar = document.getElementById('leadstocks-loading');
+  if (_ldBar) _ldBar.style.display = '';
   await computeLeadStocks();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
@@ -4908,6 +4953,9 @@ function renderLeadStocks() {
   const summaryEl = document.getElementById('leadstocks-summary');
   const gridEl = document.getElementById('leadstocks-grid');
   if (!summaryEl || !gridEl) return;
+  // Loading 배너 숨김
+  const ldBar = document.getElementById('leadstocks-loading');
+  if (ldBar) ldBar.style.display = 'none';
 
   const updatedText = LEADSTOCKS_STATE.computedAt
     ? LEADSTOCKS_STATE.computedAt.toLocaleTimeString('ko-KR')
@@ -4919,11 +4967,11 @@ function renderLeadStocks() {
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.eligibleCount || 0}</div>
     </div>
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">편입 종목 (거래대금30 ∩ 상승률50)</div>
+      <div class="leadstocks-stat-label">편입종목 (C30∩E50)</div>
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.items.length || 0}</div>
     </div>
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">계산 시각 / 기준일</div>
+      <div class="leadstocks-stat-label">갱신 / 기준일</div>
       <div class="leadstocks-stat-value">${updatedText} / ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)}</div>
     </div>
   `;
@@ -4947,8 +4995,9 @@ function renderLeadStocks() {
         ${LEADSTOCKS_STATE.items.map((item, idx) => {
           const sector = getKrSector(item.code || item.symbol);
           const pctClass = Number(item.pct) >= 0 ? '' : ' down';
+          const surgeClass = Number(item.pct) >= 15 ? ' surge' : '';
           return `
-          <div class="lead-row">
+          <div class="lead-row${surgeClass}">
             <span class="lead-rank">${idx + 1}.</span>
             <span class="lead-name" title="${item.name}">${item.name}</span>
             <span class="lead-pct${pctClass}">${item.pctText}</span>
