@@ -3,7 +3,7 @@ name: Update KRX close data
 on:
   workflow_dispatch:
   schedule:
-    - cron: '10 7 * * 1-5'
+    - cron: '10 7 * * 1-5'  # UTC 07:10 = KST 16:10
 
 permissions:
   contents: write
@@ -13,23 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 코드 가져오기
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: true
 
-      - name: Python 설치
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: 라이브러리 설치
-        run: pip install requests pandas
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: KRX 데이터 생성
+      - name: Generate KRX JSON
         run: python scripts/generate_krx_json.py
 
-      - name: 결과 커밋
+      - name: Commit latest_krx.json if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -38,5 +38,5 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "update krx data"
+          git commit -m "update krx close data"
           git push
