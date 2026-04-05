@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-05T16:00:00+09:00",
+  "generated_at": "2026-04-05T18:09:32.999084+09:00",
   "trade_date": "20260405",
   "trade_date_display": "2026-04-05",
   "source": "KRX 장마감 기준",
@@ -168,7 +168,7 @@
       "trade_value_text": "5500억"
     }
   },
-  "status": "ok",
-  "fallback_used": false,
-  "message": ""
+  "status": "fallback",
+  "fallback_used": true,
+  "message": "KRX 갱신 실패: 최근 거래일 KRX CSV를 찾지 못했습니다. details=20260401: CSV 헤더를 찾지 못했습니다. | 20260331: CSV 헤더를 찾지 못했습니다. | 20260330: CSV 헤더를 찾지 못했습니다. | 20260327: CSV 헤더를 찾지 못했습니다. | 20260326: CSV 헤더를 찾지 못했습니다."
 }
