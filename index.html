@@ -4362,10 +4362,8 @@ function initChartsForTab(name) {
 function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
 function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
 async function refreshAll() {
-  // 캐시 선택적 초기화: KR/US signal은 유지, 나머지만 초기화
-Object.keys(Cache.data || {}).forEach(k => {
-  if (!k.startsWith('naver_stock_signals')) delete Cache.data[k];
-}); const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
+  // 캐시 초기화: naver signal 포함 전체 초기화 (빈 결과 캐시 재사용 방지)
+Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
   // 두 로딩 배너 표시 (탭이 active인 경우에만 display 상태 반영됨,
   //   숨겨진 탭이면 style 세팅만 해두고 showTab 시 보임)
@@ -4566,34 +4564,7 @@ function syncMobileStockPicker(tabKey) {
 
 
 
-async function fetchNaverKRStockSignals(symbols) {
-  const krSymbols = Array.from(new Set(
-    (symbols || [])
-      .filter(sym => /\.(KS|KQ)$/.test(sym))
-      .map(sym => sym.split('.')[0])
-  ));
-  if (!krSymbols.length) return {};
-
-  const cacheKey = 'naver_stock_signals_' + krSymbols.join('_');
-  const cached = Cache.get(cacheKey, 120000);
-  if (cached) return cached;
-
-  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
-  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
-  const rows = data?.result?.areas?.[0]?.datas || [];
-  const out = {};
-  rows.forEach(item => {
-    const code = String(item.cd || '').trim();
-    const change = Number(item.cv);
-    if (!code) return;
-    out[code + '.KS'] = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
-    out[code + '.KQ'] = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
-  });
-  Cache.set(cacheKey, out);
-  const firstKey = Object.keys(out)[0];
-  if (firstKey) Logger.log('NaverStockSignals', `sample ${firstKey}: ${out[firstKey].amountText}`, 'ok');
-  return out;
-}
+// fetchNaverKRStockSignals 구버전 제거 (fetchNaverKRStockSignalsDetailed 사용)
 
 // updateKRStockSignals: 아래 정의된 버전 사용 (static overlay 포함)
 
@@ -5032,7 +5003,10 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
     out[code + '.KS'] = { state, pctText, amountEok, amountText };
     out[code + '.KQ'] = { state, pctText, amountEok, amountText };
   });
-  Cache.set(cacheKey, out);
+  // 빈 결과는 캐시하지 않음 (다음 갱신 때 재시도)
+  if (Object.keys(out).length > 0) {
+    Cache.set(cacheKey, out);
+  }
   return out;
 }
 
