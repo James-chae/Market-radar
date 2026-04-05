@@ -10,7 +10,6 @@ from typing import Dict, List, Optional
 
 import requests
 
-
 SEOUL = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
@@ -47,13 +46,13 @@ def now_seoul() -> datetime:
     return datetime.now(SEOUL)
 
 
+def yyyy_mm_dd(date_str: str) -> str:
+    return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}" if len(date_str) == 8 else date_str
+
+
 def load_universe() -> List[dict]:
     with UNIVERSE_PATH.open("r", encoding="utf-8") as f:
         return json.load(f)
-
-
-def yyyy_mm_dd(date_str: str) -> str:
-    return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}" if len(date_str) == 8 else date_str
 
 
 def to_float(value: object) -> Optional[float]:
@@ -120,8 +119,7 @@ def download_csv(session: requests.Session, otp: str) -> str:
 
 
 def parse_rows(csv_text: str) -> List[dict]:
-    reader = csv.DictReader(StringIO(csv_text))
-    return [dict(row) for row in reader]
+    return [dict(row) for row in csv.DictReader(StringIO(csv_text))]
 
 
 def pick_trade_date(session: requests.Session, max_back_days: int = 10) -> tuple[str, List[dict]]:
@@ -156,8 +154,7 @@ def build_payload(trade_date: str, rows: List[dict], universe: List[dict]) -> di
     by_symbol: Dict[str, dict] = {}
 
     for row in rows:
-        code = pick(row, "ISU_SRT_CD", "종목코드", "단축코드", "단축코드 ")
-        code = code.zfill(6)
+        code = pick(row, "ISU_SRT_CD", "종목코드", "단축코드", "단축코드 ").zfill(6)
         if code not in universe_map:
             continue
 
@@ -186,15 +183,13 @@ def build_payload(trade_date: str, rows: List[dict], universe: List[dict]) -> di
 
     amount_ranked = sorted(filtered, key=lambda x: (-x["trade_value_eok"], -x["pct"]))
     rise_ranked = sorted(filtered, key=lambda x: (-x["pct"], -x["trade_value_eok"]))
-
-    top_current = {item["symbol"] for item in amount_ranked[:30]}
-    top_rise = {item["symbol"] for item in rise_ranked[:30]}
     leaders = [
         item for item in amount_ranked
-        if item["symbol"] in top_current and item["symbol"] in top_rise
+        if item["symbol"] in {x["symbol"] for x in amount_ranked[:30]}
+        and item["symbol"] in {x["symbol"] for x in rise_ranked[:30]}
     ]
 
-    payload = {
+    return {
         "generated_at": now_seoul().isoformat(),
         "trade_date": trade_date,
         "trade_date_display": yyyy_mm_dd(trade_date),
@@ -212,16 +207,15 @@ def build_payload(trade_date: str, rows: List[dict], universe: List[dict]) -> di
         "fallback_used": False,
         "message": "",
     }
-    return payload
 
 
-def build_empty_payload(universe_name: str = "KRX300", message: str = "") -> dict:
+def build_empty_payload(message: str = "") -> dict:
     return {
         "generated_at": now_seoul().isoformat(),
         "trade_date": "",
         "trade_date_display": "",
         "source": "KRX OTP 장마감 기준",
-        "universe_name": universe_name,
+        "universe_name": "KRX300",
         "counts": {
             "universe": 0,
             "top_current_30": 0,
@@ -261,7 +255,6 @@ def main() -> None:
         universe = load_universe()
     except Exception as e:
         msg = f"유니버스 로드 실패: {e}"
-        print(f"[ERROR] {msg}")
         existing = load_existing_payload()
         if existing is not None:
             existing["generated_at"] = now_seoul().isoformat()
@@ -272,8 +265,7 @@ def main() -> None:
             print("[FALLBACK] 기존 latest_krx.json 유지")
             return
 
-        payload = build_empty_payload(message=msg)
-        save_payload(payload)
+        save_payload(build_empty_payload(message=msg))
         print("[FALLBACK] 빈 latest_krx.json 생성")
         return
 
@@ -283,11 +275,9 @@ def main() -> None:
         payload = build_payload(trade_date, rows, universe)
         save_payload(payload)
         print(f"[OK] saved {OUTPUT_PATH} ({payload['trade_date_display']}, {payload['counts']['universe']} symbols)")
-        return
     except Exception as e:
         msg = f"KRX 갱신 실패: {e}"
         print(f"[WARN] {msg}")
-
         existing = load_existing_payload()
         if existing is not None:
             existing["generated_at"] = now_seoul().isoformat()
@@ -298,10 +288,8 @@ def main() -> None:
             print("[FALLBACK] 기존 latest_krx.json 유지")
             return
 
-        payload = build_empty_payload(message=msg)
-        save_payload(payload)
+        save_payload(build_empty_payload(message=msg))
         print("[FALLBACK] 빈 latest_krx.json 생성")
-        return
 
 
 if __name__ == "__main__":

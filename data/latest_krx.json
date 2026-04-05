@@ -1,28 +1,174 @@
 {
   "generated_at": "2026-04-05T16:00:00+09:00",
   "trade_date": "20260405",
-  "source": "KRX TEST REAL",
+  "trade_date_display": "2026-04-05",
+  "source": "KRX 장마감 기준",
+  "universe_name": "KRX300",
+  "counts": {
+    "universe": 7,
+    "top_current_30": 7,
+    "top_rise_30": 7,
+    "leaders": 7
+  },
+  "leaders": [
+    {
+      "code": "005930",
+      "symbol": "005930.KS",
+      "name": "삼성전자",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 2.3,
+      "pct_text": "+2.3%",
+      "trade_value_eok": 73600,
+      "trade_value_text": "7.36조"
+    },
+    {
+      "code": "000660",
+      "symbol": "000660.KS",
+      "name": "SK하이닉스",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 1.5,
+      "pct_text": "+1.5%",
+      "trade_value_eok": 42800,
+      "trade_value_text": "4.28조"
+    },
+    {
+      "code": "012450",
+      "symbol": "012450.KS",
+      "name": "한화에어로스페이스",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 3.8,
+      "pct_text": "+3.8%",
+      "trade_value_eok": 6800,
+      "trade_value_text": "6800억"
+    },
+    {
+      "code": "034020",
+      "symbol": "034020.KS",
+      "name": "두산에너빌리티",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 2.1,
+      "pct_text": "+2.1%",
+      "trade_value_eok": 6100,
+      "trade_value_text": "6100억"
+    },
+    {
+      "code": "373220",
+      "symbol": "373220.KS",
+      "name": "LG에너지솔루션",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 1.2,
+      "pct_text": "+1.2%",
+      "trade_value_eok": 5900,
+      "trade_value_text": "5900억"
+    },
+    {
+      "code": "068270",
+      "symbol": "068270.KS",
+      "name": "셀트리온",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 2.9,
+      "pct_text": "+2.9%",
+      "trade_value_eok": 5500,
+      "trade_value_text": "5500억"
+    },
+    {
+      "code": "005380",
+      "symbol": "005380.KS",
+      "name": "현대차",
+      "market": "KOSPI",
+      "close": null,
+      "pct": -0.8,
+      "pct_text": "-0.8%",
+      "trade_value_eok": 5200,
+      "trade_value_text": "5200억"
+    }
+  ],
   "by_symbol": {
     "005930.KS": {
+      "code": "005930",
+      "symbol": "005930.KS",
       "name": "삼성전자",
+      "market": "KOSPI",
+      "close": null,
       "pct": 2.3,
       "pct_text": "+2.3%",
       "trade_value_eok": 73600,
       "trade_value_text": "7.36조"
     },
     "000660.KS": {
+      "code": "000660",
+      "symbol": "000660.KS",
       "name": "SK하이닉스",
+      "market": "KOSPI",
+      "close": null,
       "pct": 1.5,
       "pct_text": "+1.5%",
       "trade_value_eok": 42800,
       "trade_value_text": "4.28조"
     },
     "005380.KS": {
+      "code": "005380",
+      "symbol": "005380.KS",
       "name": "현대차",
+      "market": "KOSPI",
+      "close": null,
       "pct": -0.8,
       "pct_text": "-0.8%",
       "trade_value_eok": 5200,
       "trade_value_text": "5200억"
+    },
+    "012450.KS": {
+      "code": "012450",
+      "symbol": "012450.KS",
+      "name": "한화에어로스페이스",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 3.8,
+      "pct_text": "+3.8%",
+      "trade_value_eok": 6800,
+      "trade_value_text": "6800억"
+    },
+    "034020.KS": {
+      "code": "034020",
+      "symbol": "034020.KS",
+      "name": "두산에너빌리티",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 2.1,
+      "pct_text": "+2.1%",
+      "trade_value_eok": 6100,
+      "trade_value_text": "6100억"
+    },
+    "373220.KS": {
+      "code": "373220",
+      "symbol": "373220.KS",
+      "name": "LG에너지솔루션",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 1.2,
+      "pct_text": "+1.2%",
+      "trade_value_eok": 5900,
+      "trade_value_text": "5900억"
+    },
+    "068270.KS": {
+      "code": "068270",
+      "symbol": "068270.KS",
+      "name": "셀트리온",
+      "market": "KOSPI",
+      "close": null,
+      "pct": 2.9,
+      "pct_text": "+2.9%",
+      "trade_value_eok": 5500,
+      "trade_value_text": "5500억"
     }
-  }
+  },
+  "status": "ok",
+  "fallback_used": false,
+  "message": ""
 }
