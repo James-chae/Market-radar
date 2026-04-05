@@ -2790,6 +2790,7 @@ const CONFIG = {
   FRED_BASE: 'https://fred.stlouisfed.org/graph/fredgraph.csv',
   REFRESH_INTERVAL: 300000,
   KR_STOCK_SIGNAL_CACHE_MS: 300000,
+  KRX_STATIC_JSON: 'data/latest_krx.json',
 };
 
 // 종목 심볼 정의
@@ -5406,6 +5407,202 @@ function changeScheduleMonth(delta) {
   SCHEDULE_STATE.month = m;
   renderSchedule();
 }
+
+const STATIC_KRX_STATE = {
+  data: null,
+  loadedAt: 0,
+};
+
+async function fetchStaticKrxData(force=false) {
+  if (!force && STATIC_KRX_STATE.data) return STATIC_KRX_STATE.data;
+  const url = `${CONFIG.KRX_STATIC_JSON}?v=${Date.now()}`;
+  try {
+    const r = await fetchWithTimeout(url, 12000);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    if (!data || !data.by_symbol) throw new Error('by_symbol 없음');
+    STATIC_KRX_STATE.data = data;
+    STATIC_KRX_STATE.loadedAt = Date.now();
+    Logger.log('KRX/Static', `로드 성공: ${data.trade_date || '--'} / ${Object.keys(data.by_symbol || {}).length}건`, 'ok');
+    return data;
+  } catch (e) {
+    Logger.log('KRX/Static', `로드 실패: ${e.message}`, 'warn');
+    STATIC_KRX_STATE.data = null;
+    return null;
+  }
+}
+
+function getKSTParts(now=new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now).reduce((acc, p) => {
+    if (p.type !== 'literal') acc[p.type] = p.value;
+    return acc;
+  }, {});
+  const y = Number(parts.year);
+  const m = Number(parts.month);
+  const d = Number(parts.day);
+  const hh = Number(parts.hour);
+  const mm = Number(parts.minute);
+  const ss = Number(parts.second);
+  return {
+    year: y,
+    month: m,
+    day: d,
+    hour: hh,
+    minute: mm,
+    second: ss,
+    dateStr: `${parts.year}${parts.month}${parts.day}`,
+    minutes: hh * 60 + mm,
+    weekday: new Date(Date.UTC(y, m - 1, d)).getUTCDay(),
+  };
+}
+
+function shouldUseStaticKrxOverlay(staticData=null) {
+  const kst = getKSTParts();
+  const isWeekend = kst.weekday === 0 || kst.weekday === 6;
+  const marketOpen = !isWeekend && kst.minutes >= (9 * 60) && kst.minutes < (15 * 60 + 40);
+  if (marketOpen) return false;
+  if (!staticData?.trade_date) return false;
+  return true;
+}
+
+function getStaticKrxRow(sym) {
+  const data = STATIC_KRX_STATE.data;
+  if (!data?.by_symbol) return null;
+  return data.by_symbol[sym] || null;
+}
+
+function setStaticKrxBadgeText() {
+  const data = STATIC_KRX_STATE.data;
+  if (!data?.trade_date) return;
+  const label = `KRX 장마감 기준 · ${formatKrxTradeDate(data.trade_date)}`;
+  const sec = document.querySelector('#sec-krstocks .data-note');
+  if (!sec) return;
+  let badge = sec.querySelector('.badge.krx-static-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'badge krx-static-badge';
+    sec.appendChild(badge);
+  }
+  badge.innerHTML = `<strong>거래대금</strong> ${label}`;
+}
+
+async function updateKRStockSignals() {
+  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
+  if (!buttons.length) return;
+
+  const symbols = buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean);
+
+  let signals = {};
+  try {
+    signals = await fetchNaverKRStockSignalsDetailed(symbols);
+  } catch (e) {
+    Logger.log('NaverStockSignals', e.message || 'signal load failed', 'warn');
+  }
+
+  const staticData = await fetchStaticKrxData(false);
+  const useStatic = shouldUseStaticKrxOverlay(staticData);
+
+  const sectorTotals = {};
+  buttons.forEach(btn => {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    const naverInfo = signals[sym] || null;
+    const staticRow = useStatic ? getStaticKrxRow(sym) : null;
+
+    let state = naverInfo?.state || 'flat';
+    let pctText = naverInfo?.pctText || '--';
+    let amountEok = Number(naverInfo?.amountEok || 0);
+    let amountText = naverInfo?.amountText || '--';
+
+    if (staticRow) {
+      state = Number(staticRow.pct) > 0 ? 'up' : Number(staticRow.pct) < 0 ? 'down' : 'flat';
+      pctText = staticRow.pct_text || `${Number(staticRow.pct) > 0 ? '+' : ''}${Number(staticRow.pct || 0).toFixed(1)}%`;
+      amountEok = Number(staticRow.trade_value_eok || 0);
+      amountText = staticRow.trade_value_text || formatLeadAmount(amountEok);
+    }
+
+    setStockButtonSignal(btn, state, `${pctText} · <span class="amt">${amountText}</span>`);
+
+    const titleEl = btn.closest('.stock-group')?.querySelector('.stock-group-title');
+    const sector = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '';
+    if (sector) sectorTotals[sector] = (sectorTotals[sector] || 0) + amountEok;
+  });
+
+  updateKRStockSectorTotals(sectorTotals);
+  if (useStatic) setStaticKrxBadgeText();
+  if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
+}
+
+async function computeLeadStocks() {
+  try {
+    const staticData = await fetchStaticKrxData(false);
+    if (!staticData?.by_symbol) throw new Error('정적 KRX JSON 없음');
+
+    const rows = Object.values(staticData.by_symbol || {}).filter(row =>
+      row && Number.isFinite(Number(row.pct)) && Number.isFinite(Number(row.trade_value_eok))
+    );
+
+    if (!rows.length) throw new Error('KRX 정적 데이터 비어있음');
+
+    const amountRanked = [...rows].sort((a, b) =>
+      Number(b.trade_value_eok) - Number(a.trade_value_eok) || Number(b.pct) - Number(a.pct)
+    );
+    amountRanked.forEach((row, idx) => { row.currentRank = idx + 1; row.cPass = idx < 30; });
+
+    const riseRanked = [...rows].sort((a, b) =>
+      Number(b.pct) - Number(a.pct) || Number(b.trade_value_eok) - Number(a.trade_value_eok)
+    );
+    riseRanked.forEach((row, idx) => { row.eRank = idx + 1; row.ePass = idx < 30; });
+
+    const passed = rows
+      .filter(row => row.cPass && row.ePass)
+      .sort((a, b) => Number(b.trade_value_eok) - Number(a.trade_value_eok) || Number(b.pct) - Number(a.pct))
+      .map(row => ({
+        code: row.code,
+        symbol: row.symbol,
+        name: row.name,
+        pct: Number(row.pct),
+        pctText: row.pct_text || `${Number(row.pct) > 0 ? '+' : ''}${Number(row.pct).toFixed(1)}%`,
+        currentAmountEok: Number(row.trade_value_eok),
+        amountText: row.trade_value_text || formatLeadAmount(Number(row.trade_value_eok)),
+      }));
+
+    LEADSTOCKS_STATE.items = passed;
+    LEADSTOCKS_STATE.eligibleCount = rows.length;
+    LEADSTOCKS_STATE.cPassCount = amountRanked.filter(x => x.cPass).length;
+    LEADSTOCKS_STATE.ePassCount = riseRanked.filter(x => x.ePass).length;
+    LEADSTOCKS_STATE.computedAt = new Date();
+    LEADSTOCKS_STATE.rendered = false;
+    LEADSTOCKS_STATE.sourceLabel = staticData.source || 'KRX 장마감 기준';
+    LEADSTOCKS_STATE.tradeDate = staticData.trade_date || '';
+  } catch (e) {
+    Logger.log('LeadStocks', e.message || '계산 실패', 'warn');
+    LEADSTOCKS_STATE.items = [];
+    LEADSTOCKS_STATE.eligibleCount = 0;
+    LEADSTOCKS_STATE.cPassCount = 0;
+    LEADSTOCKS_STATE.ePassCount = 0;
+    LEADSTOCKS_STATE.computedAt = new Date();
+    LEADSTOCKS_STATE.rendered = false;
+    LEADSTOCKS_STATE.sourceLabel = 'KRX 장마감 기준';
+    LEADSTOCKS_STATE.tradeDate = '';
+  }
+}
+
+const __originalRefreshAll = refreshAll;
+refreshAll = async function refreshAllWithStaticKrx() {
+  await fetchStaticKrxData(true);
+  return __originalRefreshAll();
+};
+
+
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok'); ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
