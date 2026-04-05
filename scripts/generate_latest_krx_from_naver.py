@@ -97,6 +97,10 @@ def format_eok(eok: float) -> str:
     return f"{eok:.1f}억"
 
 
+# 유니버스 필터 기준: 시가총액 3000억원 이상
+MIN_MARKET_CAP_EOK = 3000  # 억원
+
+
 def load_universe() -> List[dict]:
     with UNIVERSE_PATH.open("r", encoding="utf-8") as f:
         data = json.load(f)
@@ -106,11 +110,22 @@ def load_universe() -> List[dict]:
     elif isinstance(data, list):
         items = data
     else:
-        raise ValueError("universe_kr_top400.json 형식이 올바르지 않습니다.")
+        raise ValueError("universe_kr_top1000.json 형식이 올바르지 않습니다.")
 
     if not isinstance(items, list):
         raise ValueError("universe items 형식이 리스트가 아닙니다.")
-    return items
+
+    # 시총 필터: market_cap_eok 정보가 있으면 3000억 이상만 사용
+    before = len(items)
+    filtered = [
+        item for item in items
+        if item.get("market_cap_eok") is None  # 시총 정보 없으면 포함 (안전 fallback)
+        or float(item["market_cap_eok"]) >= MIN_MARKET_CAP_EOK
+    ]
+    if before != len(filtered):
+        print(f"[UNIVERSE] 시총 {MIN_MARKET_CAP_EOK}억 미만 제외: {before} → {len(filtered)}종목")
+
+    return filtered
 
 
 def load_existing_payload() -> Optional[dict]:
@@ -139,7 +154,7 @@ def build_error_payload(message: str) -> dict:
         "trade_date": trade_date,
         "trade_date_display": yyyy_mm_dd(trade_date),
         "source": "Naver KRX+NXT table 기준",
-        "universe_name": "KOSPI500 + KOSDAQ500 by market cap",
+        "universe_name": f"시총 {MIN_MARKET_CAP_EOK}억원 이상 유니버스 (KOSPI+KOSDAQ)",
         "counts": {
             "universe": 0,
             "top_current_30": 0,
@@ -568,7 +583,7 @@ def build_payload(merged_rows: List[dict]) -> dict:
         "trade_date": trade_date,
         "trade_date_display": yyyy_mm_dd(trade_date),
         "source": "Naver KRX+NXT table 기준",
-        "universe_name": "KOSPI500 + KOSDAQ500 by market cap",
+        "universe_name": f"시총 {MIN_MARKET_CAP_EOK}억원 이상 유니버스 (KOSPI+KOSDAQ)",
         "counts": {
             "universe": len(merged_rows),
             "top_current_30": min(30, len(amount_ranked)),
