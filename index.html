@@ -4362,7 +4362,10 @@ function initChartsForTab(name) {
 function toggleConsole() { const el = document.getElementById('error-console'); el.classList.toggle('has-errors'); document.body.classList.toggle('console-open', el.classList.contains('has-errors')); Logger.render(); }
 function closeConsole() { document.getElementById('error-console').classList.remove('has-errors'); document.body.classList.remove('console-open'); }
 async function refreshAll() {
-  Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
+  // 캐시 선택적 초기화: KR/US signal은 유지, 나머지만 초기화
+Object.keys(Cache.data || {}).forEach(k => {
+  if (!k.startsWith('naver_stock_signals')) delete Cache.data[k];
+}); const btn = document.querySelector('.refresh-btn'); if (btn) { btn.textContent = '↺ 로딩 중...'; btn.disabled = true; }
   Logger.log('System', '데이터 갱신 시작', 'ok');
   // 두 로딩 배너 표시 (탭이 active인 경우에만 display 상태 반영됨,
   //   숨겨진 탭이면 style 세팅만 해두고 showTab 시 보임)
@@ -4576,7 +4579,7 @@ async function fetchNaverKRStockSignals(symbols) {
   if (cached) return cached;
 
   const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
-  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 15000);
+  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
   const rows = data?.result?.areas?.[0]?.datas || [];
   const out = {};
   rows.forEach(item => {
@@ -5010,11 +5013,11 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
   if (!krSymbols.length) return {};
 
   const cacheKey = 'naver_stock_signals_detail_' + krSymbols.join('_');
-  const cached = Cache.get(cacheKey, (CONFIG.KR_STOCK_SIGNAL_CACHE_MS || 300000));
+  const cached = Cache.get(cacheKey, 240000); // 4분 캐시 (5분 갱신 주기보다 짧게)
   if (cached) return cached;
 
   const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
-  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 15000);
+  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
   const rows = data?.result?.areas?.[0]?.datas || [];
   const out = {};
   rows.forEach(item => {
@@ -5779,17 +5782,25 @@ async function updateKRStockSignals() {
     let amountText = '--';
 
     if (naverInfo) {
-      // Naver 실시간 데이터 우선 사용
+      // Naver 실시간: 등락률은 항상 사용, 거래대금은 0이면 static fallback
       state = naverInfo.state || 'flat';
       pctText = naverInfo.pctText || '--';
-      amountEok = Number(naverInfo.amountEok || 0);
-      amountText = naverInfo.amountText || '--';
+      const naverAmt = Number(naverInfo.amountEok || 0);
+      if (naverAmt > 0) {
+        // Naver 거래대금이 실제로 있으면 사용
+        amountEok = naverAmt;
+        amountText = naverInfo.amountText || formatLeadAmount(naverAmt);
+      } else if (staticRow && Number(staticRow.trade_value_eok) > 0) {
+        // NXT 초반 등 Naver 거래대금=0이면 static(전일) 값으로 참고 표시
+        amountEok = Number(staticRow.trade_value_eok);
+        amountText = `~${staticRow.trade_value_text || formatLeadAmount(amountEok)}`;
+      }
     } else if (staticRow && Number(staticRow.trade_value_eok) > 0) {
-      // Naver 실패 시 static 데이터 fallback (리셋 상태=0이면 사용 안 함)
+      // Naver API 완전 실패 시 static 전체 fallback
       state = Number(staticRow.pct) > 0 ? 'up' : Number(staticRow.pct) < 0 ? 'down' : 'flat';
       pctText = staticRow.pct_text || `${Number(staticRow.pct) > 0 ? '+' : ''}${Number(staticRow.pct || 0).toFixed(1)}%`;
-      amountEok = Number(staticRow.trade_value_eok || 0);
-      amountText = staticRow.trade_value_text || formatLeadAmount(amountEok);
+      amountEok = Number(staticRow.trade_value_eok);
+      amountText = `~${staticRow.trade_value_text || formatLeadAmount(amountEok)}`;
     }
 
     setStockButtonSignal(btn, state, `${pctText} · <span class="amt">${amountText}</span>`);
