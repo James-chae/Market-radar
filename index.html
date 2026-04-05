@@ -2652,20 +2652,20 @@
   <!-- ══════════════ 10. 오늘의 주도주 ══════════════ -->
   <div class="section" id="sec-leadstocks">
     <p class="section-title">TODAY'S LEADERS</p>
-    <p class="section-desc">한국종목 등록 리스트 기준 · C=당일 거래대금 상위 30 · E=당일 상승률 순위 30 · C and E</p>
+    <p class="section-desc">TOP400 유니버스 기준 · C=당일 거래대금 상위 30 · E=당일 상승률 순위 30 · C and E</p>
     <div class="data-note">
       <span class="badge live"><strong>C</strong> 당일 거래대금 상위 30</span>
       <span class="badge live"><strong>E</strong> 당일 상승률 순위 30</span>
-      <span class="badge"><strong>표시</strong> 종목 · 등락률</span>
+      <span class="badge"><strong>표시</strong> 종목 · 등락률 · 거래대금</span>
     </div>
 
     <div class="leadstocks-wrap">
       <div class="leadstocks-summary" id="leadstocks-summary"></div>
       <div class="leadstocks-grid" id="leadstocks-grid"></div>
       <div class="info-panel">
-        📌 <strong>산출 방식</strong>: 현재 파일에 이미 등록된 한국종목 리스트만 대상으로 계산함.<br>
-        📌 <strong>C</strong>: 네이버 실시간 거래대금 기준 상위 30.<br>
-        📌 <strong>E</strong>: 네이버 실시간 당일 상승률 기준 상위 30.<br>
+        📌 <strong>산출 방식</strong>: data/latest_krx.json에 저장된 유니버스 전체를 대상으로 계산함.<br>
+        📌 <strong>C</strong>: 최신 저장 데이터 기준 거래대금 상위 30.<br>
+        📌 <strong>E</strong>: 최신 저장 데이터 기준 당일 상승률 상위 30.<br>
         📌 <strong>정렬</strong>: C와 E를 모두 만족한 종목만 남긴 뒤, 최종은 당일 거래대금 순으로 정렬함.
       </div>
     </div>
@@ -4630,7 +4630,8 @@ const LEADSTOCKS_STATE = {
   cPassCount: 0,
   ePassCount: 0,
   rendered: false,
-  sourceLabel: 'KRX 장마감 기준',
+  sourceLabel: '저장 데이터 기준',
+  universeLabel: 'TOP400 유니버스',
   tradeDate: '',
 };
 
@@ -4789,7 +4790,8 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.ePassCount = 0;
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
-    LEADSTOCKS_STATE.sourceLabel = 'KRX 장마감 기준';
+    LEADSTOCKS_STATE.sourceLabel = '저장 데이터 기준';
+    LEADSTOCKS_STATE.universeLabel = 'TOP400 유니버스';
     LEADSTOCKS_STATE.tradeDate = '';
   }
 }
@@ -4805,7 +4807,7 @@ function renderLeadStocks() {
 
   summaryEl.innerHTML = `
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">KRX300 유니버스</div>
+      <div class="leadstocks-stat-label">${LEADSTOCKS_STATE.universeLabel || "유니버스"}</div>
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.eligibleCount || 0}</div>
     </div>
     <div class="leadstocks-stat">
@@ -4828,7 +4830,7 @@ function renderLeadStocks() {
     <div class="leadstocks-sector-card" style="grid-column:1 / -1">
       <div class="leadstocks-sector-head">
         <div class="leadstocks-sector-name">거래대금순 정렬</div>
-        <div class="leadstocks-sector-meta">KRX300 후보군 기준 · ${LEADSTOCKS_STATE.sourceLabel} · 기준일 ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)} · C=당일 거래대금 상위 30 · E=당일 상승률 순위 30 · C and E</div>
+        <div class="leadstocks-sector-meta">${LEADSTOCKS_STATE.universeLabel || "유니버스"} 기준 · ${LEADSTOCKS_STATE.sourceLabel} · 기준일 ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)} · C=당일 거래대금 상위 30 · E=당일 상승률 순위 30 · C and E</div>
       </div>
       <div class="leadstocks-list">
         ${LEADSTOCKS_STATE.items.map((item, idx) => `
@@ -5466,12 +5468,9 @@ function getKSTParts(now=new Date()) {
 }
 
 function shouldUseStaticKrxOverlay(staticData=null) {
-  const kst = getKSTParts();
-  const isWeekend = kst.weekday === 0 || kst.weekday === 6;
-  const marketOpen = !isWeekend && kst.minutes >= (9 * 60) && kst.minutes < (15 * 60 + 40);
-  if (marketOpen) return false;
-  if (!staticData?.trade_date) return false;
-  return true;
+  if (!staticData?.by_symbol) return false;
+  const count = Number(staticData?.counts?.universe || Object.keys(staticData.by_symbol || {}).length || 0);
+  return count >= 100;
 }
 
 function getStaticKrxRow(sym) {
@@ -5482,8 +5481,9 @@ function getStaticKrxRow(sym) {
 
 function setStaticKrxBadgeText() {
   const data = STATIC_KRX_STATE.data;
-  if (!data?.trade_date) return;
-  const label = `KRX 장마감 기준 · ${formatKrxTradeDate(data.trade_date)}`;
+  if (!data) return;
+  const tradeDate = data.trade_date ? formatKrxTradeDate(data.trade_date) : '--';
+  const label = `${data.source || '저장 데이터 기준'} · ${tradeDate}`;
   const sec = document.querySelector('#sec-krstocks .data-note');
   if (!sec) return;
   let badge = sec.querySelector('.badge.krx-static-badge');
@@ -5581,7 +5581,8 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.ePassCount = riseRanked.filter(x => x.ePass).length;
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
-    LEADSTOCKS_STATE.sourceLabel = staticData.source || 'KRX 장마감 기준';
+    LEADSTOCKS_STATE.sourceLabel = staticData.source || '저장 데이터 기준';
+    LEADSTOCKS_STATE.universeLabel = staticData.universe_name || 'TOP400 유니버스';
     LEADSTOCKS_STATE.tradeDate = staticData.trade_date || '';
   } catch (e) {
     Logger.log('LeadStocks', e.message || '계산 실패', 'warn');
@@ -5591,7 +5592,8 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.ePassCount = 0;
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
-    LEADSTOCKS_STATE.sourceLabel = 'KRX 장마감 기준';
+    LEADSTOCKS_STATE.sourceLabel = '저장 데이터 기준';
+    LEADSTOCKS_STATE.universeLabel = 'TOP400 유니버스';
     LEADSTOCKS_STATE.tradeDate = '';
   }
 }
