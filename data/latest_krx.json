@@ -1,21 +1,21 @@
 {
   "generated_at": "2026-04-05T16:00:00+09:00",
   "trade_date": "20260405",
-  "source": "KRX TEST",
+  "source": "KRX TEST REAL",
   "by_symbol": {
     "005930.KS": {
       "name": "삼성전자",
       "pct": 2.3,
       "pct_text": "+2.3%",
-      "trade_value_eok": 15200,
-      "trade_value_text": "1.52조"
+      "trade_value_eok": 73600,
+      "trade_value_text": "7.36조"
     },
     "000660.KS": {
       "name": "SK하이닉스",
       "pct": 1.5,
       "pct_text": "+1.5%",
-      "trade_value_eok": 9800,
-      "trade_value_text": "9800억"
+      "trade_value_eok": 42800,
+      "trade_value_text": "4.28조"
     },
     "005380.KS": {
       "name": "현대차",
