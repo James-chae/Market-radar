@@ -2735,9 +2735,9 @@
   <!-- ══════════════ 10. 오늘의 주도주 ══════════════ -->
   <div class="section" id="sec-leadstocks">
     <p class="section-title">TODAY'S LEADERS</p>
-    <p class="section-desc">시총 3000억원 이상 유니버스 · 거래대금 상위 30 AND 상승률 상위 50 (교집합) · 거래대금순 정렬</p>
+    <p class="section-desc">시총 1000억원 이상 유니버스 · 상승률 상위 종목 (장중: 상승률순 / 장마감: 거래대금30∩상승률50)</p>
     <div class="data-note">
-      <span class="badge live"><strong>거래대금 상위 30 ∩ 상승률 상위 50</strong> 교집합 · 거래대금순</span>
+      <span class="badge live"><strong>상승률 상위</strong> 장중·Naver 실시간 / 장마감·KRX 정확값</span>
       <span class="badge"><strong>표시</strong> 종목 · 등락률 · 거래대금</span>
     </div>
 
@@ -2750,8 +2750,8 @@
       <div class="leadstocks-summary" id="leadstocks-summary"></div>
       <div class="leadstocks-grid" id="leadstocks-grid"></div>
       <div class="info-panel">
-        📌 <strong>유니버스</strong>: 시총 3000억원 이상 KOSPI·KOSDAQ 전 종목<br>
-        📌 <strong>거래대금 상위 30</strong>: 당일 거래대금 기준 상위 30위 이내<br>
+        📌 <strong>유니버스</strong>: 시총 1000억원 이상 KOSPI·KOSDAQ 전 종목<br>
+        📌 <strong>상승률 필터</strong>: 당일 상승률 > 0% 종목만 포함<br>
         📌 <strong>상승률 상위 50</strong>: 당일 상승률 기준 상위 50위 이내<br>
         📌 <strong>편입 조건</strong>: 두 조건 모두 충족(교집합) · 거래대금 내림차순 정렬
       </div>
@@ -3065,6 +3065,7 @@ function getNaverProxyUrls(url) {
     `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
     `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    `https://proxy.cors.sh/${url}`,
   ];
 }
 
@@ -4942,6 +4943,15 @@ async function updateKRStockSignals() {
     Logger.log('NaverStockSignals', e.message || 'failed', 'warn');
   }
 
+  // 신호 없으면 모든 버튼 초기화 (이전 캐시값 유지 방지)
+  if (Object.keys(signals).length === 0) {
+    buttons.forEach(btn => setStockButtonSignal(btn, 'flat', '--'));
+    Logger.log('NaverStockSignals', '신호 없음 - 버튼 초기화', 'warn');
+    const lb = document.getElementById('kr-stocks-loading');
+    if (lb) { const e = Date.now()-Number(lb.dataset.shownAt||0); setTimeout(()=>lb.style.setProperty('display','none','important'), Math.max(0,1500-e)); }
+    return;
+  }
+
   // Naver signals를 주도주 계산에서도 쓸 수 있도록 저장
   if (Object.keys(signals).length > 0) {
     window._naverKRSignals = signals;
@@ -5071,11 +5081,13 @@ async function computeLeadStocks() {
         amountRanked.forEach((r,i) => {
           r.cPass = hasAmount ? i < 30 : true; // 거래대금 없으면 전체 통과
         });
-        const riseRanked = [...rows].sort((a,b) => b.pct - a.pct || b.amountEok - a.amountEok);
+        const riseRanked = [...rows].filter(r => r.pct > 0).sort((a,b) => b.pct - a.pct || b.amountEok - a.amountEok);
         riseRanked.forEach((r,i) => { r.ePass = i < 50; });
+        // ePass 미설정 종목은 false 처리
+        rows.forEach(r => { if (r.ePass === undefined) r.ePass = false; });
 
         const merged = rows
-          .filter(r => r.cPass && r.ePass)
+          .filter(r => r.cPass && r.ePass && r.pct > 0)
           .sort((a,b) => b.pct - a.pct || b.amountEok - a.amountEok)
           .map((row, idx) => ({
             code: row.code, symbol: row.symbol, name: row.name,
@@ -5094,7 +5106,7 @@ async function computeLeadStocks() {
         LEADSTOCKS_STATE.computedAt = new Date();
         LEADSTOCKS_STATE.rendered = false;
         LEADSTOCKS_STATE.sourceLabel = '장중 Naver 실시간 (참고값)';
-        LEADSTOCKS_STATE.universeLabel = '시총 3000억원 이상 유니버스';
+        LEADSTOCKS_STATE.universeLabel = '시총 1000억원 이상 유니버스';
         LEADSTOCKS_STATE.tradeDate = getKstDateStr(getKstNow());
         Logger.log('LeadStocks', `장중 모드: 거래대금30∩상승률50 → ${merged.length}종목`, 'ok');
         return;
@@ -5117,7 +5129,7 @@ async function computeLeadStocks() {
         riseRanked.forEach((r,i) => { r.eRank=i+1; r.ePass=i<50; });
 
         const merged = rows
-          .filter(r => r.cPass && r.ePass)
+          .filter(r => r.cPass && r.ePass && Number(r.pct) > 0)
           .sort((a,b) => Number(b.trade_value_eok)-Number(a.trade_value_eok) || Number(b.pct)-Number(a.pct))
           .map(r => ({
             code: r.code, symbol: r.symbol, name: r.name,
