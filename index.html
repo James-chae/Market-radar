@@ -5532,5 +5532,45 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
+
+<script>
+// === PATCH: stable KR signals with amount (override) ===
+async function updateKRStockSignals() {
+  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
+  if (!buttons.length) return;
+
+  const symbols = Array.from(new Set(
+    buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean)
+  ));
+
+  let signals = null;
+  try {
+    signals = await fetchNaverKRStockSignalsDetailed(symbols);
+  } catch (e) {
+    console.warn('KR signals fetch failed', e);
+  }
+
+  if (!signals) return;
+
+  buttons.forEach(btn => {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    const nv = signals[sym];
+
+    if (nv && nv.pctText && nv.state) {
+      let text = nv.pctText;
+      if (nv.amountEok) {
+        const amt = (typeof formatEok === 'function') ? formatEok(nv.amountEok) : nv.amountEok;
+        text = `${text} · ${amt}`;
+      }
+      setStockButtonSignal(btn, nv.state, text);
+    }
+  });
+
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    syncMobileStockPicker('krstocks');
+  }
+}
+</script>
+
 </body>
 </html>
