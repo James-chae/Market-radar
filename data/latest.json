@@ -1,0 +1,18 @@
+{
+  "generated_at": "Run workflow once",
+  "timezone": "Asia/Seoul",
+  "mode": "snapshot",
+  "repo_note": "Run workflow after replacing files.",
+  "logs": [
+    "Run workflow once to populate real data."
+  ],
+  "fear_greed": {
+    "score": null,
+    "label": "Run workflow",
+    "as_of": null,
+    "source": "alternative.me",
+    "status": "error",
+    "error": "Run workflow once"
+  },
+  "assets": {}
+}
