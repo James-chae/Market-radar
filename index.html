@@ -4734,6 +4734,12 @@ function getKrSector(code) {
   if (!code) return '';
   return KR_CODE_SECTOR[String(code).replace(/\.(KS|KQ)$/, '')] || '';
 }
+// Naver 실시간 종목 signals 공유 (updateKRStockSignals → computeLeadStocks)
+const NAVER_SIGNALS_STATE = {
+  data: {},        // { '005930.KS': { state, pctText, amountEok, amountText }, ... }
+  updatedAt: 0,
+};
+
 const LEADSTOCKS_STATE = {
   computedAt: null,
   items: [],
@@ -5746,6 +5752,11 @@ async function updateKRStockSignals() {
   let signals = {};
   try {
     signals = await fetchNaverKRStockSignalsDetailed(symbols);
+    // 주도주 계산에서 활용할 수 있도록 공유 상태에 저장
+    if (signals && Object.keys(signals).length > 0) {
+      NAVER_SIGNALS_STATE.data = signals;
+      NAVER_SIGNALS_STATE.updatedAt = Date.now();
+    }
   } catch (e) {
     Logger.log('NaverStockSignals', e.message || 'signal load failed', 'warn');
   }
@@ -5812,15 +5823,83 @@ async function updateKRStockSignals() {
 const __origComputeLeadStocks = computeLeadStocks;
 async function computeLeadStocksWithStaticFallback() {
   try {
-    // 먼저 embedded/static JSON으로 시도 (항상 동작)
+    // Naver 실시간 signals가 있으면 이를 우선 사용 (장중 정확한 데이터)
+    const naverSignals = NAVER_SIGNALS_STATE.data || {};
+    const naverCount = Object.keys(naverSignals).length;
     const staticData = await fetchStaticKrxData(false);
+
+    // Naver 실시간 데이터 기반 계산 (장중)
+    if (naverCount >= 20) {
+      // static by_symbol에서 종목 메타(이름, 시장) 가져오고, 수치는 Naver로 덮어씀
+      const bySymbol = staticData?.by_symbol || {};
+      const rows = [];
+      const seenCodes = new Set();
+
+      for (const [sym, nv] of Object.entries(naverSignals)) {
+        if (!sym.endsWith('.KS') && !sym.endsWith('.KQ')) continue;
+        const code = sym.split('.')[0];
+        if (seenCodes.has(code)) continue;  // KS/KQ 중복 방지
+        seenCodes.add(code);
+        if (!/^\d{6}$/.test(code)) continue;
+        const sector = getKrSector(code);
+        if (sector === 'ETF' || sector === 'ETF/스팩') continue;
+
+        const pct = Number(nv.amountEok > 0 ? (nv.state === 'up' ? Math.abs : (nv.state === 'down' ? -Math.abs : () => 0))(parseFloat(nv.pctText)) : 0);
+        // pctText에서 수치 파싱
+        const pctVal = parseFloat((nv.pctText || '0').replace(/[^0-9.\-+]/g, '')) || 0;
+        const amountEok = Number(nv.amountEok || 0);
+        if (!Number.isFinite(pctVal) || !Number.isFinite(amountEok)) continue;
+
+        const meta = bySymbol[sym] || {};
+        rows.push({
+          code,
+          symbol: sym,
+          name: meta.name || code,
+          market: meta.market || (sym.endsWith('.KQ') ? 'KOSDAQ' : 'KOSPI'),
+          pct: pctVal,
+          pct_text: nv.pctText,
+          trade_value_eok: amountEok,
+          trade_value_text: nv.amountText,
+        });
+      }
+
+      if (rows.length >= 10) {
+        const amountRanked = [...rows].sort((a, b) => b.trade_value_eok - a.trade_value_eok || b.pct - a.pct);
+        amountRanked.forEach((row, idx) => { row.currentRank = idx + 1; row.cPass = idx < 30; });
+        const riseRanked = [...rows].sort((a, b) => b.pct - a.pct || b.trade_value_eok - a.trade_value_eok);
+        riseRanked.forEach((row, idx) => { row.eRank = idx + 1; row.ePass = idx < 50; });
+        const merged = rows.filter(r => r.cPass && r.ePass)
+          .sort((a, b) => b.trade_value_eok - a.trade_value_eok || b.pct - a.pct)
+          .map(row => ({
+            code: row.code, symbol: row.symbol, name: row.name,
+            pct: row.pct,
+            pctText: row.pct_text || `${row.pct > 0 ? '+' : ''}${row.pct.toFixed(1)}%`,
+            currentAmountEok: row.trade_value_eok,
+            amountText: row.trade_value_text || formatLeadAmount(row.trade_value_eok),
+            cPass: true, ePass: true,
+            currentRank: row.currentRank, eRank: row.eRank,
+          }));
+        LEADSTOCKS_STATE.items = merged;
+        LEADSTOCKS_STATE.eligibleCount = rows.length;
+        LEADSTOCKS_STATE.cPassCount = amountRanked.filter(x => x.cPass).length;
+        LEADSTOCKS_STATE.ePassCount = riseRanked.filter(x => x.ePass).length;
+        LEADSTOCKS_STATE.computedAt = new Date();
+        LEADSTOCKS_STATE.rendered = false;
+        LEADSTOCKS_STATE.sourceLabel = 'Naver 실시간';
+        LEADSTOCKS_STATE.universeLabel = '시총 3000억원 이상 유니버스';
+        LEADSTOCKS_STATE.tradeDate = new Date().toISOString().slice(0,10).replace(/-/g,'');
+        Logger.log('LeadStocks', `Naver 실시간 사용: ${merged.length}종목 (유니버스 ${rows.length})`, 'ok');
+        return;
+      }
+    }
+
+    // fallback: static/embedded JSON (전일 마감 데이터)
     if (staticData?.by_symbol && Object.keys(staticData.by_symbol).length >= 100) {
       const rows = Object.values(staticData.by_symbol).filter(row => {
         if (!row || !Number.isFinite(Number(row.pct)) || !Number.isFinite(Number(row.trade_value_eok))) return false;
-        // ETF 제외: 코드가 숫자 6자리가 아니면 ETF/스팩으로 간주
+        if (Number(row.trade_value_eok) === 0) return false;  // 리셋된 데이터 제외
         const code = String(row.code || '');
         if (!/^\d{6}$/.test(code)) return false;
-        // 섹터 마스터에서 ETF로 분류된 종목 제외
         const sector = getKrSector(code);
         if (sector === 'ETF' || sector === 'ETF/스팩') return false;
         return true;
