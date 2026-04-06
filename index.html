@@ -4964,41 +4964,18 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
 }
 
 // ── 한국종목탭 버튼 시그널 업데이트 ───────────────────────────
-
 async function updateKRStockSignals() {
   const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
   if (!buttons.length) return;
 
-  const symbols = Array.from(new Set(
-    buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean)
-  ));
+  const symbols = buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean);
 
-  let signals = null;
+  let signals = {};
   try {
     signals = await fetchNaverKRStockSignalsDetailed(symbols);
   } catch (e) {
-    console.warn('KR signals fetch failed', e);
+    Logger.log('NaverStockSignals', e.message || 'failed', 'warn');
   }
-
-  if (!signals) return;
-
-  buttons.forEach(btn => {
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    const nv = signals[sym];
-
-    if (nv && nv.pctText && nv.state) {
-      setStockButtonSignal(btn, nv.state, nv.pctText);
-    }
-  });
-
-  const bar = document.getElementById('kr-stocks-loading');
-  if (bar) bar.style.display = 'none';
-
-  if (window.matchMedia('(max-width: 600px)').matches) {
-    syncMobileStockPicker('krstocks');
-  }
-}
-
 
   // 신호 없으면 모든 버튼 초기화 (이전 캐시값 유지 방지)
   if (Object.keys(signals).length === 0) {
@@ -5507,6 +5484,43 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setTimeout(bootstrapOverrides, 1200);
 })();
+</script>
+
+
+<script>
+// SAFE OVERRIDE (does not break original)
+window.updateKRStockSignals = async function() {
+  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
+  if (!buttons.length) return;
+
+  const symbols = Array.from(new Set(
+    buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean)
+  ));
+
+  let signals = null;
+  try {
+    signals = await fetchNaverKRStockSignalsDetailed(symbols);
+  } catch (e) {
+    console.warn('KR signals fetch failed', e);
+  }
+
+  if (!signals) return;
+
+  buttons.forEach(btn => {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    const nv = signals[sym];
+    if (nv && nv.pctText && nv.state) {
+      setStockButtonSignal(btn, nv.state, nv.pctText);
+    }
+  });
+
+  const bar = document.getElementById('kr-stocks-loading');
+  if (bar) bar.style.display = 'none';
+
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    syncMobileStockPicker('krstocks');
+  }
+};
 </script>
 
 </body>
