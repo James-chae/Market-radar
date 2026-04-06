@@ -3062,8 +3062,8 @@ async function fetchYahoo(sym) {
 
 function getNaverProxyUrls(url) {
   return [
-    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
     `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
   ];
 }
@@ -5277,45 +5277,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return /우B?$|우C$|\d+우B?$|우\d+$/.test(n);
   }
   async function loadSectorFiles() {
-    if (sectorReady) return true;
-    try {
-      const [metaRes, mapRes] = await Promise.all([fetch(META_URL), fetch(MAP_URL)]);
-      if (metaRes.ok) sectorMetaFile = await metaRes.json();
-      if (mapRes.ok) sectorMapFile = await mapRes.json();
-      sectorReady = !!(sectorMetaFile || sectorMapFile);
-      if (sectorReady) console.log('sector files loaded');
-      return sectorReady;
-    } catch (e) {
-      console.warn('sector file load failed', e);
-      return false;
-    }
+    // 인라인 KR_SECTOR_META 사용 - 외부 파일 불필요
+    sectorReady = true;
+    return true;
   }
-
-  window.getKrMeta = function(code) {
-    const c = normalizeCode(code);
-    if (!c) return null;
-    if (sectorMetaFile && sectorMetaFile[c]) return sectorMetaFile[c];
-    return null;
-  };
-  window.getKrSector = function(code) {
-    const c = normalizeCode(code);
-    if (!c) return '';
-    const meta = window.getKrMeta(c);
-    if (meta && meta.sector1) return meta.sector1;
-    if (sectorMapFile && sectorMapFile[c]) return sectorMapFile[c];
-    return '';
-  };
-  window.isExcludedKRAsset = function(code, embeddedBySymbol) {
-    const c = normalizeCode(code);
-    if (!c || !/^\w{6}$/.test(c)) return true;
-    const meta = window.getKrMeta(c);
-    const row = embeddedBySymbol?.[c+'.KS'] || embeddedBySymbol?.[c+'.KQ'] || {};
-    const name = String(row.name || meta?.name || '').trim();
-    if (meta?.etf) return true;
-    if (isPreferredName(name)) return true;
-    if (window.isEtfCode && window.isEtfCode(c, embeddedBySymbol)) return true;
-    return false;
-  };
+  // getKrMeta, getKrSector, isExcludedKRAsset: 인라인 데이터 기반 함수 사용
 
   function getManualEvents() {
     try {
