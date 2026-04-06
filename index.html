@@ -1113,7 +1113,11 @@
   .stock-btn-pct.up { color: #f85149; }
   .stock-btn-pct.down { color: #4A9EFF; }
   .stock-btn-pct.flat { color: #9aa4af; }
-  /* KR 종목탭: 등락률 yellow, 거래대금 white */
+  /* KR 종목탭: 등락률 강조 */
+  #sec-krstocks .stock-btn-pct {
+    font-size: 13px;
+    font-weight: 800;
+  }
   #sec-krstocks .stock-btn-pct.up   { color: var(--yellow); }
   #sec-krstocks .stock-btn-pct.down { color: #4A9EFF; }
   #sec-krstocks .stock-btn-pct.flat { color: #9aa4af; }
@@ -1160,63 +1164,6 @@
   .mobile-stock-current .pct.up { color: #f85149; }
   .mobile-stock-current .pct.down { color: #4A9EFF; }
   .mobile-stock-current .pct.flat { color: #9aa4af; }
-
-
-  /* 한국종목 섹터 거래대금 합계 + TOP2 강조 */
-  #sec-krstocks .stock-group-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  #sec-krstocks .stock-group-title .title-left {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-  }
-  #sec-krstocks .stock-group-title .crown {
-    font-size: 11px;
-    line-height: 1;
-  }
-  #sec-krstocks .stock-group-title .title-amt {
-    font-size: 10px;
-    color: var(--text3);
-    font-family: var(--mono);
-  }
-  #sec-krstocks .stock-group.sector-rank-1 {
-    border-color: rgba(227,168,37,0.95);
-    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.45), 0 0 0 1px rgba(227,168,37,0.12);
-  }
-  #sec-krstocks .stock-group.sector-rank-2 {
-    border-color: rgba(227,168,37,0.62);
-    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.22);
-  }
-
-
-  /* 한국 종목 거래대금 색상/배치 조정 */
-  #sec-krstocks .stock-group-title .title-left {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    flex-wrap: wrap;
-  }
-  #sec-krstocks .stock-group-title .title-amt {
-    font-size: 10px;
-    color: var(--yellow) !important;
-    font-family: var(--mono);
-    font-weight: 700;
-  }
-  .kr-stock-btn .stock-btn-pct .amt {
-    color: #ffffff !important;
-    font-weight: 600;
-  }
-  .mobile-stock-current .pct .amt {
-    color: #ffffff !important;
-    font-weight: 600;
-  }
 
 
   .news-list {
@@ -2836,8 +2783,7 @@
       <span class="badge live"><strong>등락률</strong> Naver</span>
       <span class="badge delay"><strong>차트</strong> Yahoo 지연 가능</span>
       <span class="badge"><strong>해석</strong> 당일 방향은 시그널 우선</span>
-      <span class="badge" id="kr-amount-note" style="display:none"><strong>거래대금</strong> 장중 참고값 · 별도 확인 필요 (08:00~20:00)</span>
-    </div>
+          </div>
 
     <div class="kr-loading-bar" id="kr-stocks-loading">
       <span class="kr-loading-dot"></span>
@@ -3000,7 +2946,7 @@
       <div class="ranking-grid" id="rankings-grid"></div>
       <div class="info-panel">
         📌 <strong>장중</strong>: Naver polling 실시간 기준으로 거래대금 상위 종목을 참고용으로 표시<br>
-        📌 <strong>장마감 후</strong>: latest_krx.json 반영 시 KRX+NXT 통합 거래대금 순위로 자동 전환<br>
+        📌 <strong>장마감 후</strong>: latest_krx.json 반영 시 KRX+NXT 통합 거래대금 순위로 정확하게 전환<br>
         📌 <strong>구성</strong>: 전체 TOP30을 섹터별로 재그룹화하고, 상위 섹터는 강조 표시
       </div>
     </div>
@@ -3035,8 +2981,7 @@
         <div class="schedule-title" id="schedule-title">2026년 4월</div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end">
           <span class="schedule-update-status" id="schedule-update-status">자동 업데이트 대기</span>
-          <button class="mini-tool-btn" id="schedule-refresh-btn" onclick="refreshScheduleData(true)">🔄 일정 업데이트</button>
-          <button class="mini-tool-btn" onclick="toggleScheduleAdmin()">➕ 일정 추가</button>
+          <button class="mini-tool-btn" onclick="unlockScheduleAdmin()">🔐 일정 관리</button>
         </div>
         <button class="mini-tool-btn" id="sched-next-btn" onclick="changeScheduleMonth(1)">다음달</button>
       </div>
@@ -3078,10 +3023,10 @@
           <button class="mini-tool-btn" onclick="addManualScheduleEvent()">저장</button>
           <button class="mini-tool-btn" onclick="clearManualScheduleEvents()">직접 추가 일정 전체삭제</button>
         </div>
-        <div class="schedule-admin-help">입력한 일정은 이 브라우저에 저장되며, 해당 월 캘린더와 이번 주 요약에 함께 반영됩니다.</div>
+        <div class="schedule-admin-help">관리자 비밀번호를 입력한 브라우저에서만 직접 일정을 추가/삭제할 수 있습니다. 일반 접속자는 조회만 가능합니다.</div>
       </div>
       <div class="schedule-calendar"><div class="schedule-weekdays"><div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div></div><div class="schedule-grid" id="schedule-grid"><div class="day-cell other-month" data-date="2026-03-29"><div class="day-num">29</div><div class="day-events" id="day-2026-03-29"></div></div><div class="day-cell other-month" data-date="2026-03-30"><div class="day-num">30</div><div class="day-events" id="day-2026-03-30"></div></div><div class="day-cell other-month" data-date="2026-03-31"><div class="day-num">31</div><div class="day-events" id="day-2026-03-31"></div></div><div class="day-cell " data-date="2026-04-01"><div class="day-num">1</div><div class="day-events" id="day-2026-04-01"></div></div><div class="day-cell " data-date="2026-04-02"><div class="day-num">2</div><div class="day-events" id="day-2026-04-02"></div></div><div class="day-cell today" data-date="2026-04-03"><div class="day-num">3</div><div class="day-events" id="day-2026-04-03"></div></div><div class="day-cell " data-date="2026-04-04"><div class="day-num">4</div><div class="day-events" id="day-2026-04-04"></div></div><div class="day-cell " data-date="2026-04-05"><div class="day-num">5</div><div class="day-events" id="day-2026-04-05"></div></div><div class="day-cell " data-date="2026-04-06"><div class="day-num">6</div><div class="day-events" id="day-2026-04-06"></div></div><div class="day-cell " data-date="2026-04-07"><div class="day-num">7</div><div class="day-events" id="day-2026-04-07"></div></div><div class="day-cell " data-date="2026-04-08"><div class="day-num">8</div><div class="day-events" id="day-2026-04-08"></div></div><div class="day-cell " data-date="2026-04-09"><div class="day-num">9</div><div class="day-events" id="day-2026-04-09"></div></div><div class="day-cell " data-date="2026-04-10"><div class="day-num">10</div><div class="day-events" id="day-2026-04-10"></div></div><div class="day-cell " data-date="2026-04-11"><div class="day-num">11</div><div class="day-events" id="day-2026-04-11"></div></div><div class="day-cell " data-date="2026-04-12"><div class="day-num">12</div><div class="day-events" id="day-2026-04-12"></div></div><div class="day-cell " data-date="2026-04-13"><div class="day-num">13</div><div class="day-events" id="day-2026-04-13"></div></div><div class="day-cell " data-date="2026-04-14"><div class="day-num">14</div><div class="day-events" id="day-2026-04-14"></div></div><div class="day-cell " data-date="2026-04-15"><div class="day-num">15</div><div class="day-events" id="day-2026-04-15"></div></div><div class="day-cell " data-date="2026-04-16"><div class="day-num">16</div><div class="day-events" id="day-2026-04-16"></div></div><div class="day-cell " data-date="2026-04-17"><div class="day-num">17</div><div class="day-events" id="day-2026-04-17"></div></div><div class="day-cell " data-date="2026-04-18"><div class="day-num">18</div><div class="day-events" id="day-2026-04-18"></div></div><div class="day-cell " data-date="2026-04-19"><div class="day-num">19</div><div class="day-events" id="day-2026-04-19"></div></div><div class="day-cell " data-date="2026-04-20"><div class="day-num">20</div><div class="day-events" id="day-2026-04-20"></div></div><div class="day-cell " data-date="2026-04-21"><div class="day-num">21</div><div class="day-events" id="day-2026-04-21"></div></div><div class="day-cell " data-date="2026-04-22"><div class="day-num">22</div><div class="day-events" id="day-2026-04-22"></div></div><div class="day-cell " data-date="2026-04-23"><div class="day-num">23</div><div class="day-events" id="day-2026-04-23"></div></div><div class="day-cell " data-date="2026-04-24"><div class="day-num">24</div><div class="day-events" id="day-2026-04-24"></div></div><div class="day-cell " data-date="2026-04-25"><div class="day-num">25</div><div class="day-events" id="day-2026-04-25"></div></div><div class="day-cell " data-date="2026-04-26"><div class="day-num">26</div><div class="day-events" id="day-2026-04-26"></div></div><div class="day-cell " data-date="2026-04-27"><div class="day-num">27</div><div class="day-events" id="day-2026-04-27"></div></div><div class="day-cell " data-date="2026-04-28"><div class="day-num">28</div><div class="day-events" id="day-2026-04-28"></div></div><div class="day-cell " data-date="2026-04-29"><div class="day-num">29</div><div class="day-events" id="day-2026-04-29"></div></div><div class="day-cell " data-date="2026-04-30"><div class="day-num">30</div><div class="day-events" id="day-2026-04-30"></div></div><div class="day-cell other-month" data-date="2026-05-01"><div class="day-num">1</div><div class="day-events" id="day-2026-05-01"></div></div><div class="day-cell other-month" data-date="2026-05-02"><div class="day-num">2</div><div class="day-events" id="day-2026-05-02"></div></div></div></div>
-      <div class="schedule-note">※ 모든 일정은 미국 현지시간(ET) 기준. 실적·이벤트 일부는 공식 확정 전까지 '예상'으로 표시되며, 공식 일정 변경 시 업데이트가 필요합니다.</div>
+      <div class="schedule-note">※ 핵심 일정은 연준·고용·옵션만기·대형 실적·바이오 이벤트 중심으로 유지됩니다. 일반 사용자는 조회만 가능하며, 관리자만 추가 일정을 저장할 수 있습니다.</div>
     </div>
 
     <div class="chart-card" style="padding:14px 16px; margin-top:14px">
@@ -4820,55 +4765,6 @@ function normalizeNaverAmountToEok(amountRaw) {
   return amountRaw;                                           // already compact amount
 }
 
-function ensureKRStockGroupTitles() {
-  document.querySelectorAll('#sec-krstocks .stock-group-title').forEach(el => {
-    if (!el.dataset.baseTitle) {
-      el.dataset.baseTitle = el.textContent.trim();
-    }
-  });
-}
-
-function renderKRStockGroupTitle(el, amountEok=0, rank=0) {
-  if (!el) return;
-  const base = el.dataset.baseTitle || el.textContent.trim();
-  const crown = rank === 1 ? '👑👑👑' : rank === 2 ? '👑👑' : '';
-  el.innerHTML = `
-    <span class="title-left">
-      ${crown ? `<span class="crown">${crown}</span>` : ''}
-      <span class="title-main">${base}</span>
-      <span class="title-amt">${formatEok(amountEok)}</span>
-    </span>
-  `;
-}
-
-function updateKRStockSectorTotals(sectorTotals) {
-  const groups = Array.from(document.querySelectorAll('#sec-krstocks .stock-group'));
-  const ranked = groups.map(group => {
-    const titleEl = group.querySelector('.stock-group-title');
-    const base = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '';
-    const amount = Number(sectorTotals?.[base] || 0);
-    return { group, titleEl, base, amount };
-  });
-
-  const rankedForTop = ranked
-    .filter(item => item.base !== '0. ETF')
-    .sort((a, b) => b.amount - a.amount);
-
-  const top1 = rankedForTop[0]?.amount > 0 ? rankedForTop[0].base : '';
-  const top2 = rankedForTop[1]?.amount > 0 ? rankedForTop[1].base : '';
-
-  groups.forEach(group => group.classList.remove('sector-rank-1', 'sector-rank-2'));
-
-  ranked.forEach(item => {
-    let rank = 0;
-    if (item.base === top1) rank = 1;
-    else if (item.base === top2) rank = 2;
-    if (rank === 1) item.group.classList.add('sector-rank-1');
-    if (rank === 2) item.group.classList.add('sector-rank-2');
-    renderKRStockGroupTitle(item.titleEl, item.amount, rank);
-  });
-}
-
 function ensureStockButtonMarkup() {
   document.querySelectorAll('.us-stock-btn, .kr-stock-btn').forEach(btn => {
     const raw = btn.dataset.baseLabel || btn.textContent.trim();
@@ -5226,7 +5122,6 @@ async function updateKRStockSignals() {
   const staticData = await fetchStaticKrxData(false);
   const useStatic = shouldUseStaticKrxOverlay(staticData);
 
-  const sectorTotals = {};
   buttons.forEach(btn => {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
     const nv = signals[sym] || null;
@@ -5248,19 +5143,11 @@ async function updateKRStockSignals() {
       amountText = st.trade_value_text || formatLeadAmount(amountEok);
     }
 
-    setStockButtonSignal(btn, state, `${pctText} · <span class="amt">${amountText}</span>`);
-    const titleEl = btn.closest('.stock-group')?.querySelector('.stock-group-title');
-    const sector = titleEl?.dataset.baseTitle || titleEl?.textContent?.trim() || '';
-    if (sector) sectorTotals[sector] = (sectorTotals[sector] || 0) + amountEok;
+    setStockButtonSignal(btn, state, pctText);
   });
 
-  updateKRStockSectorTotals(sectorTotals);
   if (useStatic) setStaticKrxBadgeText();
   if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
-
-  // 장중 거래대금 참고 배지 표시/숨김
-  const amtNote = document.getElementById('kr-amount-note');
-  if (amtNote) amtNote.style.display = isMarketSession() ? '' : 'none';
 
   // Loading 배너 숨김
   const lb = document.getElementById('kr-stocks-loading');
@@ -5575,7 +5462,7 @@ function renderLeadStocks() {
               <span class="lch-name">종목</span>
               <span class="lch-pct">등락률</span>
               <span class="lch-amt">거래대금${inSession ? '*' : ''}</span>
-              <span class="lch-sector">비고</span>
+              <span class="lch-sector">섹터</span>
             </div>
             ${group.items.slice(0, 6).map((item, idx) => {
               const pctClass = Number(item.pct) >= 15 ? ' surge' : (Number(item.pct) < 0 ? ' down' : '');
@@ -5585,7 +5472,7 @@ function renderLeadStocks() {
                   <span class="lead-name" title="${item.name}">${item.name}</span>
                   <span class="lead-pct${pctClass}">${item.pctText}</span>
                   <span class="lead-amt">${item.amountText}</span>
-                  <span class="lead-sector">${item.currentRank ? 'C'+item.currentRank : ''}${item.eRank ? ' · E'+item.eRank : ''}</span>
+                  <span class="lead-sector">${item.sector || group.sector}</span>
                 </div>`;
             }).join('')}
             ${group.rank === 1 && inSession ? '<div class="leader-note">* 장중 거래대금은 Naver 실시간 참고값으로 KRX+NXT 통합 마감값과 차이 날 수 있음</div>' : ''}
@@ -5671,6 +5558,173 @@ refreshAll = async function() {
 
 
 
+
+// ── 일정 탭: 핵심 일정 자동 구성 + 관리자만 수동추가 ──────────────────────
+const SCHEDULE_ADMIN_PASSWORD = 'radar2026';
+const SCHEDULE_STORAGE_KEY = 'market_radar_manual_schedule_v2';
+const SCHEDULE_ADMIN_KEY = 'market_radar_schedule_admin_v2';
+let SCHEDULE_STATE = { current: new Date(2026, 3, 1), autoEvents: [], manualEvents: [] };
+
+function scheduleToDateKey(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function addDays(date, n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
+function nthWeekdayOfMonth(year, month, weekday, nth){
+  const first = new Date(year, month, 1);
+  const delta = (weekday - first.getDay() + 7) % 7;
+  return new Date(year, month, 1 + delta + (nth-1)*7);
+}
+function buildAutoScheduleEvents(){
+  const events = [];
+  const push=(date, type, text, source='Investing.com / 공식 일정')=>events.push({date, type, text, source, locked:true});
+  // FOMC 2026 (official/Fed + Investing calendar reviewed)
+  [
+    ['2026-01-28','연준 금리결정 · 성명 · 기자회견'],
+    ['2026-02-18','FOMC 의사록'],
+    ['2026-03-18','연준 금리결정 · 점도표 · 기자회견'],
+    ['2026-04-08','FOMC 의사록'],
+    ['2026-04-29','연준 금리결정'],
+    ['2026-06-17','연준 금리결정 · 점도표 · 기자회견'],
+    ['2026-07-08','FOMC 의사록'],
+    ['2026-07-29','연준 금리결정'],
+    ['2026-08-19','FOMC 의사록'],
+    ['2026-09-16','연준 금리결정 · 점도표 · 기자회견'],
+    ['2026-10-07','FOMC 의사록'],
+    ['2026-10-28','연준 금리결정'],
+    ['2026-11-18','FOMC 의사록'],
+    ['2026-12-09','연준 금리결정 · 점도표 · 기자회견'],
+    ['2026-12-30','FOMC 의사록']
+  ].forEach(([d,t])=>push(d,'fed',t,'Investing.com / Federal Reserve'));
+
+  // Monthly Employment Situation (BLS official release schedule)
+  [
+    ['2026-01-09','미국 고용보고서 (12월)'],['2026-02-11','미국 고용보고서 (1월)'],['2026-03-06','미국 고용보고서 (2월)'],
+    ['2026-04-03','미국 고용보고서 (3월)'],['2026-05-08','미국 고용보고서 (4월)'],['2026-06-05','미국 고용보고서 (5월)'],
+    ['2026-07-02','미국 고용보고서 (6월)'],['2026-08-07','미국 고용보고서 (7월)'],['2026-09-04','미국 고용보고서 (8월)'],
+    ['2026-10-02','미국 고용보고서 (9월)'],['2026-11-06','미국 고용보고서 (10월)'],['2026-12-04','미국 고용보고서 (11월)']
+  ].forEach(([d,t])=>push(d,'macro',t,'BLS / Investing.com'));
+
+  // Monthly options expiry (3rd Friday)
+  for(let m=0;m<12;m++){
+    const d = nthWeekdayOfMonth(2026, m, 5, 3);
+    push(scheduleToDateKey(d), 'opex', '미국 옵션만기 (월간)', 'OCC / Investing.com');
+  }
+
+  // Major earnings / events (confirmed near-term + expected windows)
+  [
+    ['2026-01-15','TSMC 실적발표','earnings'],['2026-01-28','Microsoft 실적발표(예상)','earnings'],['2026-01-29','Apple 실적발표(예상)','earnings'],
+    ['2026-01-29','Meta 실적발표(예상)','earnings'],['2026-02-03','Alphabet 실적발표(예상)','earnings'],['2026-02-05','Amazon 실적발표(예상)','earnings'],
+    ['2026-02-25','NVIDIA 실적발표','earnings'],['2026-03-05','Broadcom 실적발표(예상)','earnings'],
+    ['2026-04-16','TSMC 실적발표(예상)','earnings'],['2026-04-22','Tesla 실적발표(예상)','earnings'],['2026-04-29','Microsoft/Meta 실적발표(예상)','earnings'],
+    ['2026-04-30','Apple/Amazon 실적발표(예상)','earnings'],['2026-04-30','Alphabet 실적발표(예상)','earnings'],
+    ['2026-05-06','Berkshire Hathaway 실적발표(예상)','earnings'],['2026-05-20','NVIDIA 실적발표','earnings'],
+    ['2026-06-04','Broadcom 실적발표(예상)','earnings'],['2026-07-16','TSMC 실적발표(예상)','earnings'],['2026-07-29','Microsoft/Meta 실적발표(예상)','earnings'],
+    ['2026-07-30','Apple/Amazon 실적발표(예상)','earnings'],['2026-07-30','Alphabet 실적발표(예상)','earnings'],['2026-07-22','Tesla 실적발표(예상)','earnings'],
+    ['2026-08-05','Berkshire Hathaway 실적발표(예상)','earnings'],['2026-08-26','NVIDIA 실적발표(예상)','earnings'],['2026-09-03','Broadcom 실적발표(예상)','earnings'],
+    ['2026-10-15','TSMC 실적발표(예상)','earnings'],['2026-10-21','Tesla 실적발표(예상)','earnings'],['2026-10-28','Microsoft/Meta 실적발표(예상)','earnings'],
+    ['2026-10-29','Apple/Amazon 실적발표(예상)','earnings'],['2026-10-29','Alphabet 실적발표(예상)','earnings'],['2026-11-04','Berkshire Hathaway 실적발표(예상)','earnings'],
+    ['2026-11-18','NVIDIA 실적발표(예상)','earnings'],['2026-12-03','Broadcom 실적발표(예상)','earnings'],
+    ['2026-05-29','ASCO 2026 개막(예상)','event'],['2026-06-01','ASCO 2026 진행','event'],['2026-09-12','ESMO 2026 개막(예상)','event']
+  ].forEach(([d,t,type])=>push(d,type,t,'Investing.com / 기업 IR / 이벤트 캘린더'));
+
+  return events.sort((a,b)=>a.date.localeCompare(b.date)||a.text.localeCompare(b.text));
+}
+function loadManualScheduleEvents(){
+  try { return JSON.parse(localStorage.getItem(SCHEDULE_STORAGE_KEY) || '[]'); } catch(e){ return []; }
+}
+function saveManualScheduleEvents(events){ localStorage.setItem(SCHEDULE_STORAGE_KEY, JSON.stringify(events||[])); }
+function isScheduleAdmin(){ return localStorage.getItem(SCHEDULE_ADMIN_KEY) === '1'; }
+function unlockScheduleAdmin(){
+  if (isScheduleAdmin()) { toggleScheduleAdmin(); return; }
+  const input = prompt('일정 관리 비밀번호를 입력하세요');
+  if (input === SCHEDULE_ADMIN_PASSWORD) {
+    localStorage.setItem(SCHEDULE_ADMIN_KEY, '1');
+    toggleScheduleAdmin(true);
+    alert('일정 관리가 활성화되었습니다.');
+  } else if (input != null) {
+    alert('비밀번호가 올바르지 않습니다.');
+  }
+}
+function refreshScheduleData(force=false){
+  SCHEDULE_STATE.autoEvents = buildAutoScheduleEvents();
+  SCHEDULE_STATE.manualEvents = loadManualScheduleEvents();
+  const st = document.getElementById('schedule-update-status');
+  if (st) st.textContent = `핵심 일정 내장 완료 · ${new Date().toLocaleTimeString('ko-KR')}`;
+  renderSchedule();
+}
+function getAllScheduleEvents(){ return [...(SCHEDULE_STATE.autoEvents||[]), ...(SCHEDULE_STATE.manualEvents||[])].sort((a,b)=>a.date.localeCompare(b.date)||a.text.localeCompare(b.text)); }
+function toggleScheduleAdmin(forceOpen){
+  const panel = document.getElementById('schedule-admin-panel');
+  if (!panel) return;
+  if (!isScheduleAdmin()) { alert('관리자 권한이 필요합니다.'); return; }
+  const next = forceOpen === true ? true : panel.style.display === 'none';
+  panel.style.display = next ? 'block' : 'none';
+}
+function addManualScheduleEvent(){
+  if (!isScheduleAdmin()) return alert('관리자 권한이 필요합니다.');
+  const date = document.getElementById('manual-event-date')?.value;
+  const type = document.getElementById('manual-event-type')?.value || 'event';
+  const text = document.getElementById('manual-event-text')?.value?.trim();
+  const source = document.getElementById('manual-event-source')?.value?.trim() || '직접 입력';
+  if (!date || !text) return alert('날짜와 일정명을 입력하세요.');
+  const manual = loadManualScheduleEvents();
+  manual.push({date, type, text, source, locked:false});
+  saveManualScheduleEvents(manual);
+  refreshScheduleData(true);
+}
+function clearManualScheduleEvents(){
+  if (!isScheduleAdmin()) return alert('관리자 권한이 필요합니다.');
+  if (!confirm('직접 추가한 일정을 모두 삭제할까요?')) return;
+  saveManualScheduleEvents([]);
+  refreshScheduleData(true);
+}
+function changeScheduleMonth(delta){
+  const d = new Date(SCHEDULE_STATE.current);
+  d.setMonth(d.getMonth()+delta);
+  SCHEDULE_STATE.current = new Date(d.getFullYear(), d.getMonth(), 1);
+  renderSchedule();
+}
+function renderSchedule(){
+  if (!SCHEDULE_STATE.autoEvents.length) refreshScheduleData();
+  const current = SCHEDULE_STATE.current || new Date(2026,3,1);
+  const year = current.getFullYear(), month = current.getMonth();
+  const title = document.getElementById('schedule-title');
+  if (title) title.textContent = `${year}년 ${month+1}월`;
+  const first = new Date(year, month, 1), last = new Date(year, month+1, 0);
+  const start = addDays(first, -first.getDay());
+  const grid = document.getElementById('schedule-grid');
+  const todayKey = scheduleToDateKey(new Date());
+  const events = getAllScheduleEvents();
+  const byDate = {};
+  events.forEach(ev => { (byDate[ev.date] ||= []).push(ev); });
+  if (grid) {
+    let html='';
+    for(let i=0;i<35;i++){
+      const d = addDays(start, i);
+      const key = scheduleToDateKey(d);
+      const other = d.getMonth() !== month ? 'other-month' : '';
+      const today = key === todayKey ? 'today' : '';
+      const dayEvents = (byDate[key]||[]).slice(0,4).map(ev => `<div class="sched-event ${ev.type}">${ev.text}</div>`).join('');
+      html += `<div class="day-cell ${other} ${today}" data-date="${key}"><div class="day-num">${d.getDate()}</div><div class="day-events" id="day-${key}">${dayEvents}</div></div>`;
+    }
+    grid.innerHTML = html;
+  }
+  const weekList = document.getElementById('schedule-week-list');
+  if (weekList) {
+    const now = new Date();
+    const weekEnd = addDays(now, 10);
+    const items = events.filter(ev => ev.date >= scheduleToDateKey(now) && ev.date <= scheduleToDateKey(weekEnd)).slice(0,12);
+    weekList.innerHTML = items.length ? items.map(ev => `<div class="schedule-week-item"><div class="schedule-week-date">${ev.date.slice(5)}</div><div>${ev.text}</div></div>`).join('') : '<div class="schedule-week-empty">예정된 핵심 일정이 없습니다.</div>';
+  }
+  const krList = document.getElementById('kr-earnings-list');
+  if (krList) {
+    krList.innerHTML = `
+      <div class="kr-earnings-item"><div class="kr-earnings-date">상시</div><div class="kr-earnings-name">한국 실적은 별도 직접 관리 권장</div><div class="kr-earnings-tag">관리자 직접 입력</div></div>
+      <div class="kr-earnings-item"><div class="kr-earnings-date">참고</div><div class="kr-earnings-name">삼성전자 / SK하이닉스 / 현대차 / KB금융 등은 공시 확정 후 직접 추가</div><div class="kr-earnings-tag">수동 관리</div></div>`;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   Logger.log('System', '마켓 레이더 초기화', 'ok');
   // 현재 KST 시각 1초마다 업데이트
@@ -5681,7 +5735,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   updateCurrentTime();
   setInterval(updateCurrentTime, 1000);
-  ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  ensureStockButtonMarkup(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshScheduleData(); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
   window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
 });
 
