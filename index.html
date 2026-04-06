@@ -5745,9 +5745,14 @@ function setStaticKrxBadgeText() {
 
 async function updateKRStockSignals() {
   const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
-  if (!buttons.length) return;
+  Logger.log('KRStocks', `updateKRStockSignals 시작: 버튼 ${buttons.length}개`, 'ok');
+  if (!buttons.length) {
+    Logger.log('KRStocks', '버튼 없음 - 종료', 'warn');
+    return;
+  }
 
   const symbols = buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean);
+  Logger.log('KRStocks', `symbols 추출: ${symbols.length}개`, 'ok');
 
   let signals = {};
   try {
@@ -5830,32 +5835,38 @@ async function computeLeadStocksWithStaticFallback() {
 
     // Naver 실시간 데이터 기반 계산 (장중)
     if (naverCount >= 20) {
-      // static by_symbol에서 종목 메타(이름, 시장) 가져오고, 수치는 Naver로 덮어씀
-      const bySymbol = staticData?.by_symbol || {};
+      // 종목 메타(이름·시장)는 EMBEDDED_KRX_DATA에서 직접 참조 (리셋 영향 없음)
+      const embSrc = (typeof EMBEDDED_KRX_DATA !== 'undefined' && EMBEDDED_KRX_DATA.by_symbol) || {};
+      // ETF 이름 키워드 (섹터 마스터에 미등록된 ETF까지 커버)
+      const ETF_NAME_KW = ['KODEX','TIGER','KBSTAR','ARIRANG','HANARO','KOSEF',
+                           'PLUS ','ACE ','RISE ','SOL ','TIMEFOLIO','SMART','TREX','WINDEX'];
       const rows = [];
       const seenCodes = new Set();
 
       for (const [sym, nv] of Object.entries(naverSignals)) {
         if (!sym.endsWith('.KS') && !sym.endsWith('.KQ')) continue;
         const code = sym.split('.')[0];
-        if (seenCodes.has(code)) continue;  // KS/KQ 중복 방지
+        if (seenCodes.has(code)) continue;
         seenCodes.add(code);
         if (!/^\d{6}$/.test(code)) continue;
+
+        // ETF 제외: 섹터 마스터 기준 + 이름 키워드 기준
         const sector = getKrSector(code);
         if (sector === 'ETF' || sector === 'ETF/스팩') continue;
+        const embRow = embSrc[sym] || embSrc[code + '.KS'] || embSrc[code + '.KQ'] || {};
+        const embName = embRow.name || '';
+        if (ETF_NAME_KW.some(k => embName.includes(k))) continue;
 
-        const pct = Number(nv.amountEok > 0 ? (nv.state === 'up' ? Math.abs : (nv.state === 'down' ? -Math.abs : () => 0))(parseFloat(nv.pctText)) : 0);
-        // pctText에서 수치 파싱
-        const pctVal = parseFloat((nv.pctText || '0').replace(/[^0-9.\-+]/g, '')) || 0;
+        // pctText '+3.6%' → 3.6, '-1.2%' → -1.2
+        const pctVal = parseFloat((nv.pctText || '0').replace('%','')) || 0;
         const amountEok = Number(nv.amountEok || 0);
         if (!Number.isFinite(pctVal) || !Number.isFinite(amountEok)) continue;
+        if (amountEok === 0 && pctVal === 0) continue;
 
-        const meta = bySymbol[sym] || {};
         rows.push({
-          code,
-          symbol: sym,
-          name: meta.name || code,
-          market: meta.market || (sym.endsWith('.KQ') ? 'KOSDAQ' : 'KOSPI'),
+          code, symbol: sym,
+          name: embName || code,
+          market: embRow.market || (sym.endsWith('.KQ') ? 'KOSDAQ' : 'KOSPI'),
           pct: pctVal,
           pct_text: nv.pctText,
           trade_value_eok: amountEok,
@@ -5960,6 +5971,7 @@ computeLeadStocks = computeLeadStocksWithStaticFallback;
 
 const __originalRefreshAll = refreshAll;
 refreshAll = async function refreshAllWithStaticKrx() {
+  Logger.log('System', 'refreshAllWithStaticKrx 실행', 'ok');
   // 캐시 무효화 (fetchStaticKrxData는 updateKRStockSignals 내에서 호출됨)
   STATIC_KRX_STATE.data = null;
   return __originalRefreshAll();
