@@ -5487,40 +5487,75 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
+<div class="section" id="sec-krtop">
+  <p class="section-title">KOREA TOP 30</p>
+  <p class="section-desc">한국 상승률 상위 30 종목 (Naver 기준)</p>
+
+  <div class="kr-loading-bar" id="krtop-loading">
+    <span class="kr-loading-dot"></span>
+    <span>상승률 데이터 불러오는 중...</span>
+  </div>
+
+  <div class="leadstocks-grid" id="krtop-list"></div>
+</div>
+
 <script>
-// SAFE OVERRIDE (does not break original)
-window.updateKRStockSignals = async function() {
-  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
-  if (!buttons.length) return;
+async function loadKRTop30() {
+  const container = document.getElementById('krtop-list');
+  const loading = document.getElementById('krtop-loading');
 
-  const symbols = Array.from(new Set(
-    buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean)
-  ));
+  if (!container) return;
 
-  let signals = null;
   try {
-    signals = await fetchNaverKRStockSignalsDetailed(symbols);
+    const url = "https://finance.naver.com/sise/sise_rise.naver?sosok=0";
+    const proxy = "https://corsproxy.io/?url=" + encodeURIComponent(url);
+
+    const res = await fetch(proxy);
+    const text = await res.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
+
+    const rows = Array.from(doc.querySelectorAll(".type_2 tr"));
+
+    const data = [];
+
+    rows.forEach(row => {
+      const cols = row.querySelectorAll("td");
+
+      if (cols.length > 0) {
+        const name = cols[1]?.innerText.trim();
+        const pct = cols[3]?.innerText.trim();
+
+        if (name && pct && pct.includes('%')) {
+          const val = parseFloat(pct.replace('%','').replace('+',''));
+          if (!isNaN(val)) {
+            data.push({ name, pct: val });
+          }
+        }
+      }
+    });
+
+    data.sort((a,b) => b.pct - a.pct);
+    const top30 = data.slice(0,30);
+
+    container.innerHTML = top30.map((item, idx) => `
+      <div class="lead-row">
+        <div class="lead-rank">${idx+1}</div>
+        <div class="lead-name">${item.name}</div>
+        <div class="lead-pct ${item.pct>=0?'up':'down'}">
+          ${item.pct>=0?'+':''}${item.pct.toFixed(1)}%
+        </div>
+      </div>
+    `).join('');
+
   } catch (e) {
-    console.warn('KR signals fetch failed', e);
+    container.innerHTML = `<div class="leadstocks-empty">데이터 오류</div>`;
+    console.error(e);
   }
 
-  if (!signals) return;
-
-  buttons.forEach(btn => {
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    const nv = signals[sym];
-    if (nv && nv.pctText && nv.state) {
-      setStockButtonSignal(btn, nv.state, nv.pctText);
-    }
-  });
-
-  const bar = document.getElementById('kr-stocks-loading');
-  if (bar) bar.style.display = 'none';
-
-  if (window.matchMedia('(max-width: 600px)').matches) {
-    syncMobileStockPicker('krstocks');
-  }
-};
+  if (loading) loading.style.display = 'none';
+}
 </script>
 
 </body>
