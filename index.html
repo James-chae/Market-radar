@@ -4981,11 +4981,18 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
       .filter(sym => /\.(KS|KQ)$/.test(sym))
       .map(sym => sym.split('.')[0])
   ));
-  if (!krSymbols.length) return {};
+  Logger.log('NaverStockSignals', `호출됨: ${krSymbols.length}개 코드`, 'ok');
+  if (!krSymbols.length) {
+    Logger.log('NaverStockSignals', '코드 없음 - 빈 결과 반환', 'warn');
+    return {};
+  }
 
-  const cacheKey = 'naver_stock_signals_detail_' + krSymbols.join('_');
-  const cached = Cache.get(cacheKey, 240000); // 4분 캐시 (5분 갱신 주기보다 짧게)
-  if (cached) return cached;
+  const cacheKey = 'naver_stock_signals_detail_' + krSymbols.length + '_codes';
+  const cached = Cache.get(cacheKey, 240000);
+  if (cached) {
+    Logger.log('NaverStockSignals', `캐시 히트: ${Object.keys(cached).length}건`, 'ok');
+    return cached;
+  }
 
   const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
   const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
@@ -5003,8 +5010,10 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
     out[code + '.KS'] = { state, pctText, amountEok, amountText };
     out[code + '.KQ'] = { state, pctText, amountEok, amountText };
   });
+  const resultCount = Object.keys(out).length;
+  Logger.log('NaverStockSignals', `결과: ${resultCount}건 (rows=${rows.length})`, resultCount > 0 ? 'ok' : 'warn');
   // 빈 결과는 캐시하지 않음 (다음 갱신 때 재시도)
-  if (Object.keys(out).length > 0) {
+  if (resultCount > 0) {
     Cache.set(cacheKey, out);
   }
   return out;
