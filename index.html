@@ -5356,5 +5356,241 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 
+
+<script>
+(() => {
+  const META_URL = 'kr_sector_meta.json';
+  const MAP_URL = 'kr_sector_map.json';
+  const SCHEDULE_ADMIN_PASSWORD = 'radar2026';
+  const MANUAL_KEY = 'market_radar_manual_events_v2';
+  let sectorMetaFile = null;
+  let sectorMapFile = null;
+  let sectorReady = false;
+  let scheduleMonthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let scheduleAdminUnlocked = false;
+
+  function normalizeCode(code) {
+    return String(code || '').replace(/\.(KS|KQ)$/i, '').trim();
+  }
+  function isPreferredName(name='') {
+    const n = String(name || '').trim();
+    return /(\d+우B?|우B?|우C|우\(|우$)/.test(n);
+  }
+  async function loadSectorFiles() {
+    if (sectorReady) return true;
+    try {
+      const [metaRes, mapRes] = await Promise.all([fetch(META_URL), fetch(MAP_URL)]);
+      if (metaRes.ok) sectorMetaFile = await metaRes.json();
+      if (mapRes.ok) sectorMapFile = await mapRes.json();
+      sectorReady = !!(sectorMetaFile || sectorMapFile);
+      if (sectorReady) console.log('sector files loaded');
+      return sectorReady;
+    } catch (e) {
+      console.warn('sector file load failed', e);
+      return false;
+    }
+  }
+
+  window.getKrMeta = function(code) {
+    const c = normalizeCode(code);
+    if (!c) return null;
+    if (sectorMetaFile && sectorMetaFile[c]) return sectorMetaFile[c];
+    return null;
+  };
+  window.getKrSector = function(code) {
+    const c = normalizeCode(code);
+    if (!c) return '';
+    const meta = window.getKrMeta(c);
+    if (meta && meta.sector1) return meta.sector1;
+    if (sectorMapFile && sectorMapFile[c]) return sectorMapFile[c];
+    return '';
+  };
+  window.isExcludedKRAsset = function(code, embeddedBySymbol) {
+    const c = normalizeCode(code);
+    if (!c || !/^\w{6}$/.test(c)) return true;
+    const meta = window.getKrMeta(c);
+    const row = embeddedBySymbol?.[c+'.KS'] || embeddedBySymbol?.[c+'.KQ'] || {};
+    const name = String(row.name || meta?.name || '').trim();
+    if (meta?.etf) return true;
+    if (isPreferredName(name)) return true;
+    if (window.isEtfCode && window.isEtfCode(c, embeddedBySymbol)) return true;
+    return false;
+  };
+
+  function cleanKRStockTitles() {
+    document.querySelectorAll('#sec-krstocks .stock-group-title').forEach(el => {
+      const base = el.dataset.baseTitle || el.textContent.replace(/👑/g, '').replace(/[\d,]+억/g, '').trim();
+      el.dataset.baseTitle = base;
+      el.textContent = base;
+    });
+    document.querySelectorAll('#sec-krstocks .stock-group').forEach(el => {
+      el.classList.remove('sector-rank-1', 'sector-rank-2');
+    });
+    const note = document.getElementById('kr-amount-note');
+    if (note) note.style.display = 'none';
+  }
+
+  window.ensureKRStockGroupTitles = function() { cleanKRStockTitles(); };
+  window.renderKRStockGroupTitle = function(el) {
+    if (!el) return;
+    const base = el.dataset.baseTitle || el.textContent.trim();
+    el.textContent = base;
+  };
+  window.updateKRStockSectorTotals = function() { cleanKRStockTitles(); };
+
+  function getManualEvents() {
+    try {
+      return JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
+  function setManualEvents(events) {
+    localStorage.setItem(MANUAL_KEY, JSON.stringify(events || []));
+  }
+  function coreScheduleEvents() {
+    return [
+      {date:'2026-04-10', type:'macro', text:'미국 3월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-04-17', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-04-29', type:'earnings', text:'MSFT 실적', source:'core'},
+      {date:'2026-04-29', type:'earnings', text:'META 실적', source:'core'},
+      {date:'2026-04-30', type:'earnings', text:'AAPL 실적', source:'core'},
+      {date:'2026-04-30', type:'earnings', text:'AMZN 실적', source:'core'},
+      {date:'2026-04-30', type:'earnings', text:'TSMC 실적 체크', source:'core'},
+      {date:'2026-05-01', type:'macro', text:'미국 4월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-05-06', type:'fed', text:'FOMC 금리결정', source:'Fed'},
+      {date:'2026-05-15', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-06-05', type:'macro', text:'미국 5월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-06-17', type:'fed', text:'FOMC 금리결정', source:'Fed'},
+      {date:'2026-06-19', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-07-02', type:'macro', text:'미국 6월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-07-29', type:'fed', text:'FOMC 금리결정', source:'Fed'},
+      {date:'2026-07-17', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-08-07', type:'macro', text:'미국 7월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-08-21', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-09-04', type:'macro', text:'미국 8월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-09-16', type:'fed', text:'FOMC 금리결정', source:'Fed'},
+      {date:'2026-09-18', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-10-02', type:'macro', text:'미국 9월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-10-16', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-11-06', type:'macro', text:'미국 10월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-11-05', type:'fed', text:'FOMC 금리결정', source:'Fed'},
+      {date:'2026-11-20', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-12-04', type:'macro', text:'미국 11월 고용보고서(BLS)', source:'BLS'},
+      {date:'2026-12-11', type:'opex', text:'미국 월간 옵션만기', source:'Monthly OPEX'},
+      {date:'2026-12-16', type:'fed', text:'FOMC 금리결정', source:'Fed'},
+      {date:'2026-04-20', type:'event', text:'바이오/헬스케어 주요 학회 체크', source:'event'}
+    ];
+  }
+  function allScheduleEvents() {
+    return [...coreScheduleEvents(), ...getManualEvents()].sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  function eventTypeClass(type) {
+    return ['fed','earnings','opex','macro','event'].includes(type) ? type : 'event';
+  }
+  function renderScheduleMonth() {
+    const grid = document.getElementById('schedule-grid');
+    const title = document.getElementById('schedule-title');
+    const weekList = document.getElementById('schedule-week-list');
+    const status = document.getElementById('schedule-update-status');
+    if (!grid || !title || !weekList) return;
+    const events = allScheduleEvents();
+    const map = {};
+    for (const ev of events) {
+      (map[ev.date] ||= []).push(ev);
+    }
+    title.textContent = `${scheduleMonthCursor.getFullYear()}년 ${scheduleMonthCursor.getMonth()+1}월`;
+    if (status) status.textContent = '핵심 일정 고정 + 수동 일정 유지';
+    const first = new Date(scheduleMonthCursor.getFullYear(), scheduleMonthCursor.getMonth(), 1);
+    const last = new Date(scheduleMonthCursor.getFullYear(), scheduleMonthCursor.getMonth()+1, 0);
+    const start = new Date(first);
+    start.setDate(first.getDate() - first.getDay());
+    const end = new Date(last);
+    end.setDate(last.getDate() + (6 - last.getDay()));
+    const today = new Date();
+    const fmt = (d)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    let html = '';
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      const ds = fmt(d);
+      const other = d.getMonth() !== scheduleMonthCursor.getMonth();
+      const isToday = ds === fmt(today);
+      html += `<div class="day-cell ${other ? 'other-month' : ''} ${isToday ? 'today' : ''}" data-date="${ds}"><div class="day-num">${d.getDate()}</div><div class="day-events">`;
+      const dayEvents = (map[ds] || []).slice(0,4);
+      for (const ev of dayEvents) {
+        html += `<div class="event-item ${eventTypeClass(ev.type)}">${ev.text}</div>`;
+      }
+      html += `</div></div>`;
+    }
+    grid.innerHTML = html;
+
+    const now = new Date();
+    const upcoming = events.filter(ev => ev.date >= fmt(now)).slice(0,8);
+    weekList.innerHTML = upcoming.length ? upcoming.map(ev => `<div class="schedule-week-item"><div class="schedule-week-date">${ev.date.slice(5)}</div><div>${ev.text}</div></div>`).join('') : '<div class="schedule-week-empty">예정된 핵심 일정 없음</div>';
+  }
+
+  window.renderSchedule = function() { renderScheduleMonth(); };
+  window.refreshScheduleData = async function() { renderScheduleMonth(); };
+  window.changeScheduleMonth = function(delta) {
+    scheduleMonthCursor = new Date(scheduleMonthCursor.getFullYear(), scheduleMonthCursor.getMonth() + Number(delta || 0), 1);
+    renderScheduleMonth();
+  };
+  window.toggleScheduleAdmin = function() {
+    const panel = document.getElementById('schedule-admin-panel');
+    if (!panel) return;
+    if (!scheduleAdminUnlocked) {
+      const entered = prompt('관리자 비밀번호를 입력하세요');
+      if (entered !== SCHEDULE_ADMIN_PASSWORD) return;
+      scheduleAdminUnlocked = true;
+    }
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  };
+  window.addManualScheduleEvent = function() {
+    if (!scheduleAdminUnlocked) return;
+    const date = document.getElementById('manual-event-date')?.value;
+    const type = document.getElementById('manual-event-type')?.value || 'event';
+    const text = document.getElementById('manual-event-text')?.value?.trim();
+    const source = document.getElementById('manual-event-source')?.value?.trim() || 'manual';
+    if (!date || !text) return;
+    const current = getManualEvents();
+    current.push({date, type, text, source});
+    setManualEvents(current);
+    renderScheduleMonth();
+  };
+  window.clearManualScheduleEvents = function() {
+    if (!scheduleAdminUnlocked) return;
+    setManualEvents([]);
+    renderScheduleMonth();
+  };
+
+  const oldRenderLeadStocks = window.renderLeadStocks;
+  window.renderLeadStocks = function() {
+    if (typeof oldRenderLeadStocks === 'function') oldRenderLeadStocks();
+    const gridEl = document.getElementById('leadstocks-grid');
+    if (!gridEl) return;
+    gridEl.querySelectorAll('.lead-row').forEach(row => {
+      const amt = row.querySelector('.lead-amt');
+      if (amt) amt.style.display = '';
+    });
+  };
+
+  async function bootstrapOverrides() {
+    await loadSectorFiles();
+    cleanKRStockTitles();
+    renderScheduleMonth();
+    if (typeof window.computeLeadStocks === 'function') {
+      try { await window.computeLeadStocks(); } catch(e) { console.warn(e); }
+      if (typeof window.renderLeadStocks === 'function') window.renderLeadStocks();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrapOverrides, {once:true});
+  } else {
+    bootstrapOverrides();
+  }
+  setTimeout(bootstrapOverrides, 1200);
+})();
+</script>
+
 </body>
 </html>
