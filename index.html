@@ -1776,6 +1776,172 @@
     }
   }
 
+
+  /* ── 거래대금 랭킹 탭 ── */
+  .ranking-wrap {
+    display: grid;
+    gap: 10px;
+  }
+  .ranking-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .ranking-stat {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+  .ranking-stat-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text3);
+    margin-bottom: 3px;
+  }
+  .ranking-stat-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--yellow);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ranking-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .ranking-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .ranking-card.rank-1 {
+    border-color: rgba(227,168,37,0.95);
+    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.28);
+  }
+  .ranking-card.rank-2 {
+    border-color: rgba(227,168,37,0.60);
+    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.16);
+  }
+  .ranking-card-head {
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+    padding:10px 12px 8px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .ranking-card-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--yellow);
+    font-weight: 700;
+  }
+  .ranking-card-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #fff;
+    font-weight: 700;
+  }
+  .ranking-list {
+    padding: 4px 10px 10px;
+    display:flex;
+    flex-direction:column;
+  }
+  .ranking-row {
+    display:flex;
+    align-items:center;
+    gap:0;
+    padding:8px 4px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    line-height:1.3;
+  }
+  .ranking-row:last-child { border-bottom:none; }
+  .ranking-rank { width: 28px; flex-shrink:0; text-align:right; margin-right:10px; color:var(--text3); font-family:var(--mono); font-size:13px; }
+  .ranking-name { min-width: 92px; max-width: 132px; flex-shrink:0; margin-right:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text2); font-size:13px; font-weight:600; }
+  .ranking-pct { width: 60px; flex-shrink:0; text-align:right; margin-right:14px; font-family:var(--mono); font-size:13px; font-weight:700; color:#f85149; }
+  .ranking-pct.down { color:#4A9EFF; }
+  .ranking-amt { width: 76px; flex-shrink:0; text-align:right; margin-right:14px; font-family:var(--mono); font-size:13px; font-weight:700; color:var(--yellow); }
+  .ranking-tag { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#4caf7d; font-size:12px; }
+  .ranking-empty {
+    padding:18px;
+    border:1px dashed var(--border2);
+    border-radius:12px;
+    color:var(--text3);
+    font-family:var(--mono);
+    font-size:11px;
+    text-align:center;
+  }
+  .leader-sector-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:12px;
+  }
+  .leader-sector-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .leader-sector-card.rank-1 {
+    border-color: rgba(227,168,37,0.95);
+    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.28);
+  }
+  .leader-sector-card.rank-2 {
+    border-color: rgba(227,168,37,0.60);
+    box-shadow: inset 0 0 0 1px rgba(227,168,37,0.16);
+  }
+  .leader-sector-head {
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+    padding:10px 12px 8px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .leader-sector-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--yellow);
+    font-weight: 700;
+  }
+  .leader-sector-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #fff;
+    font-weight: 700;
+  }
+  .leader-sector-list {
+    padding:4px 10px 10px;
+    display:flex;
+    flex-direction:column;
+  }
+  .leader-note {
+    padding:6px 4px 0;
+    font-size:10px;
+    color:var(--text3);
+    font-family:var(--mono);
+  }
+  @media (max-width: 768px) {
+    .ranking-grid, .leader-sector-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .ranking-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap:4px; }
+    .ranking-stat { padding:5px 7px; }
+    .ranking-stat-label { font-size:8px; }
+    .ranking-stat-value { font-size:11px; }
+    .ranking-rank { width:22px; margin-right:8px; }
+    .ranking-name { min-width:72px; max-width:88px; margin-right:8px; font-size:13px; }
+    .ranking-pct { width:52px; margin-right:8px; }
+    .ranking-amt { width:58px; margin-right:8px; }
+    .ranking-tag { font-size:11px; }
+  }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -1807,6 +1973,7 @@
   <div class="tab mobile-row-2" onclick="showTab('schedule', this)">🗓️ <span class="tab-label-pc">일정</span><span class="tab-label-mobile">일정</span></div>
 
   <div class="tab mobile-row-3" onclick="showTab('leadstocks', this)">🔥 <span class="tab-label-pc">오늘의 주도주</span><span class="tab-label-mobile">주도주</span></div>
+  <div class="tab mobile-row-3" onclick="showTab('rankings', this)">💰 <span class="tab-label-pc">거래대금 랭킹</span><span class="tab-label-mobile">대금랭킹</span></div>
   <div class="tab mobile-row-3" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션변동성</span><span class="tab-label-mobile">옵션변동성</span></div>
 </nav>
 
@@ -2812,6 +2979,33 @@
       </div>
     </div>
   </div>
+
+  <!-- ══════════════ 11. 거래대금 랭킹 ══════════════ -->
+  <div class="section" id="sec-rankings">
+    <p class="section-title">TURNOVER RANKING</p>
+    <p class="section-desc">한국 종목 거래대금 상위 랭킹 · 장중은 Naver 참고값 / 장마감 후 KRX+NXT 통합 기준</p>
+    <div class="data-note">
+      <span class="badge live"><strong>장중</strong> Naver 실시간 참고값</span>
+      <span class="badge"><strong>장마감</strong> latest_krx.json · KRX+NXT 통합</span>
+      <span class="badge"><strong>표시</strong> 섹터별 묶음 + 컬러 강조</span>
+    </div>
+
+    <div class="kr-loading-bar" id="rankings-loading">
+      <span class="kr-loading-dot"></span>
+      <span>거래대금 랭킹 계산 중...</span>
+    </div>
+
+    <div class="ranking-wrap">
+      <div class="ranking-summary" id="rankings-summary"></div>
+      <div class="ranking-grid" id="rankings-grid"></div>
+      <div class="info-panel">
+        📌 <strong>장중</strong>: Naver polling 실시간 기준으로 거래대금 상위 종목을 참고용으로 표시<br>
+        📌 <strong>장마감 후</strong>: latest_krx.json 반영 시 KRX+NXT 통합 거래대금 순위로 자동 전환<br>
+        📌 <strong>구성</strong>: 전체 TOP30을 섹터별로 재그룹화하고, 상위 섹터는 강조 표시
+      </div>
+    </div>
+  </div>
+
 
   <!-- ══════════════ 11. 일정 ══════════════ -->
 
@@ -4338,6 +4532,11 @@ function showTab(name, btn) {
     const hasData = LEADSTOCKS_STATE && LEADSTOCKS_STATE.items && LEADSTOCKS_STATE.items.length > 0;
     if (bar && !hasData) { bar.style.display = ''; bar.dataset.shownAt = Date.now(); }
   }
+  if (name === 'rankings') {
+    const bar = document.getElementById('rankings-loading');
+    const hasData = TURNOVER_RANKING_STATE && TURNOVER_RANKING_STATE.items && TURNOVER_RANKING_STATE.items.length > 0;
+    if (bar && !hasData) { bar.style.display = ''; bar.dataset.shownAt = Date.now(); }
+  }
   requestAnimationFrame(() => { initChartsForTab(name); if (name === 'usstocks') resizeChartToContainer('tv-usstocks-chart'); if (name === 'krstocks') resizeChartToContainer('tv-krstocks-chart'); });
   if (name === 'charts') {
     syncMainToolbar();
@@ -4353,6 +4552,7 @@ function initChartsForTab(name) {
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
   if (name === 'schedule') renderSchedule();
   if (name === 'leadstocks') renderLeadStocks();
+  if (name === 'rankings') renderTurnoverRankings();
   if (name === 'usstocks') {
     buildMobileStockPicker('usstocks');
     syncMobileStockPicker('usstocks');
@@ -4377,6 +4577,8 @@ Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { 
   if (_krBar) { _krBar.style.removeProperty('display'); _krBar.dataset.shownAt = _now; }
   const _ldBar = document.getElementById('leadstocks-loading');
   if (_ldBar) { _ldBar.style.removeProperty('display'); _ldBar.dataset.shownAt = _now; }
+  const _rkBar = document.getElementById('rankings-loading');
+  if (_rkBar) { _rkBar.style.removeProperty('display'); _rkBar.dataset.shownAt = _now; }
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
   // allSettled 완료 = Naver API 완료 시점. 주도주 배너도 이때 숨김 (KR탭과 동일 타이밍)
   const _ldBarHide = document.getElementById('leadstocks-loading');
@@ -4384,7 +4586,7 @@ Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { 
   await computeLeadStocks();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } if (activeName === 'leadstocks') { renderLeadStocks(); } }
+  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } if (activeName === 'leadstocks') { renderLeadStocks(); } if (activeName === 'rankings') { renderTurnoverRankings(); } }
   const now = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
 
@@ -4758,6 +4960,17 @@ const LEADSTOCKS_STATE = {
   tradeDate: '',
 };
 
+const TURNOVER_RANKING_STATE = {
+  computedAt: null,
+  items: [],
+  sectors: [],
+  eligibleCount: 0,
+  sourceLabel: '데이터 없음',
+  tradeDate: '',
+  mode: 'closed',
+  rendered: false,
+};
+
 function formatLeadAmount(amountEok) {
   if (!Number.isFinite(amountEok)) return '--';
   if (amountEok >= 10000) return `${(amountEok / 10000).toFixed(2)}조`;
@@ -5065,6 +5278,71 @@ function isEtfCode(code, embeddedBySymbol) {
   return ETF_NAME_KEYWORDS.some(k => (row.name||'').includes(k));
 }
 
+// ── 공용 정렬/그룹 헬퍼 ───────────────────────────────────────
+function makeLeaderLikeRow(src, mode='closed') {
+  const code = String(src.code || '').trim();
+  const pct = Number(src.pct || 0);
+  const amountEok = Number(src.amountEok ?? src.trade_value_eok ?? src.currentAmountEok ?? 0);
+  return {
+    code,
+    symbol: src.symbol || (code ? code + '.KS' : ''),
+    name: src.name || code,
+    market: src.market || '',
+    pct,
+    pctText: src.pctText || src.pct_text || `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`,
+    currentAmountEok: amountEok,
+    amountText: src.amountText || src.trade_value_text || formatLeadAmount(amountEok),
+    sector: getKrSector(code) || src.market || '기타',
+    mode,
+  };
+}
+
+function getTopSectorGroups(items, limit=6) {
+  const map = new Map();
+  items.forEach(item => {
+    const sector = item.sector || getKrSector(item.code) || item.market || '기타';
+    if (!map.has(sector)) map.set(sector, { sector, totalAmountEok: 0, maxPct: -Infinity, items: [] });
+    const g = map.get(sector);
+    g.totalAmountEok += Number(item.currentAmountEok || 0);
+    g.maxPct = Math.max(g.maxPct, Number(item.pct || 0));
+    g.items.push(item);
+  });
+  const groups = Array.from(map.values())
+    .map(g => ({
+      ...g,
+      items: g.items.sort((a,b) => Number(b.currentAmountEok || 0) - Number(a.currentAmountEok || 0) || Number(b.pct || 0) - Number(a.pct || 0))
+    }))
+    .sort((a,b) => b.totalAmountEok - a.totalAmountEok || b.maxPct - a.maxPct)
+    .slice(0, limit);
+  groups.forEach((g, i) => g.rank = i + 1);
+  return groups;
+}
+
+function setRankingLoadingHidden() {
+  ['leadstocks-loading','rankings-loading'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const e = Date.now() - Number(el.dataset.shownAt || 0);
+    setTimeout(() => el.style.setProperty('display', 'none', 'important'), Math.max(0, 1500 - e));
+  });
+}
+
+function computeTurnoverRankingsFromItems(items, mode='closed', meta={}) {
+  const normalized = items.map(item => makeLeaderLikeRow(item, mode))
+    .filter(item => item.code && !isEtfCode(item.code, typeof EMBEDDED_KRX_DATA !== 'undefined' ? EMBEDDED_KRX_DATA.by_symbol : null) && Number(item.currentAmountEok || 0) > 0)
+    .sort((a,b) => Number(b.currentAmountEok || 0) - Number(a.currentAmountEok || 0) || Number(b.pct || 0) - Number(a.pct || 0))
+    .slice(0, 30);
+  normalized.forEach((item, idx) => item.rank = idx + 1);
+  TURNOVER_RANKING_STATE.items = normalized;
+  TURNOVER_RANKING_STATE.sectors = getTopSectorGroups(normalized, 6);
+  TURNOVER_RANKING_STATE.eligibleCount = meta.eligibleCount ?? normalized.length;
+  TURNOVER_RANKING_STATE.sourceLabel = meta.sourceLabel || '데이터 없음';
+  TURNOVER_RANKING_STATE.tradeDate = meta.tradeDate || '';
+  TURNOVER_RANKING_STATE.computedAt = new Date();
+  TURNOVER_RANKING_STATE.mode = mode;
+  TURNOVER_RANKING_STATE.rendered = false;
+}
+
 // ── 오늘의 주도주 계산 ─────────────────────────────────────────
 async function computeLeadStocks() {
   try {
@@ -5159,7 +5437,8 @@ async function computeLeadStocks() {
             currentRank: idx+1, eRank: idx+1,
           }));
 
-        LEADSTOCKS_STATE.items = merged;
+        LEADSTOCKS_STATE.items = merged.map(item => ({ ...item, sector: getKrSector(item.code || item.symbol) || item.market || '기타' }));
+        LEADSTOCKS_STATE.sectors = getTopSectorGroups(LEADSTOCKS_STATE.items, 6);
         LEADSTOCKS_STATE.eligibleCount = rows.length;
         LEADSTOCKS_STATE.cPassCount = rows.filter(r=>r.cPass).length;
         LEADSTOCKS_STATE.ePassCount = rows.filter(r=>r.ePass).length;
@@ -5168,6 +5447,7 @@ async function computeLeadStocks() {
         LEADSTOCKS_STATE.sourceLabel = '장중 Naver 실시간 (참고값)';
         LEADSTOCKS_STATE.universeLabel = '시총 3000억원 이상 유니버스';
         LEADSTOCKS_STATE.tradeDate = getKstDateStr(getKstNow());
+        computeTurnoverRankingsFromItems(rows, 'live', { eligibleCount: rows.length, sourceLabel: '장중 Naver 실시간 (참고값)', tradeDate: getKstDateStr(getKstNow()) });
         Logger.log('LeadStocks', `장중 모드: 거래대금30∩상승률50 → ${merged.length}종목`, 'ok');
         return;
       }
@@ -5201,7 +5481,8 @@ async function computeLeadStocks() {
             currentRank: r.currentRank, eRank: r.eRank,
           }));
 
-        LEADSTOCKS_STATE.items = merged;
+        LEADSTOCKS_STATE.items = merged.map(item => ({ ...item, sector: getKrSector(item.code || item.symbol) || item.market || '기타' }));
+        LEADSTOCKS_STATE.sectors = getTopSectorGroups(LEADSTOCKS_STATE.items, 6);
         LEADSTOCKS_STATE.eligibleCount = rows.length;
         LEADSTOCKS_STATE.cPassCount = amountRanked.filter(x=>x.cPass).length;
         LEADSTOCKS_STATE.ePassCount = riseRanked.filter(x=>x.ePass).length;
@@ -5210,6 +5491,7 @@ async function computeLeadStocks() {
         LEADSTOCKS_STATE.sourceLabel = staticData.source || '저장 데이터 기준';
         LEADSTOCKS_STATE.universeLabel = staticData.universe_name || '시총 3000억원 이상 유니버스';
         LEADSTOCKS_STATE.tradeDate = staticData.trade_date || '';
+        computeTurnoverRankingsFromItems(rows, 'closed', { eligibleCount: rows.length, sourceLabel: staticData.source || '저장 데이터 기준', tradeDate: staticData.trade_date || '' });
         Logger.log('LeadStocks', `장마감 모드: 거래대금30∩상승률50 → ${merged.length}종목`, 'ok');
         return;
       }
@@ -5221,6 +5503,13 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
     LEADSTOCKS_STATE.sourceLabel = '데이터 없음';
+    TURNOVER_RANKING_STATE.items = [];
+    TURNOVER_RANKING_STATE.sectors = [];
+    TURNOVER_RANKING_STATE.eligibleCount = 0;
+    TURNOVER_RANKING_STATE.sourceLabel = '데이터 없음';
+    TURNOVER_RANKING_STATE.tradeDate = '';
+    TURNOVER_RANKING_STATE.computedAt = new Date();
+    TURNOVER_RANKING_STATE.rendered = false;
     Logger.log('LeadStocks', '계산 가능한 데이터 없음', 'warn');
 
   } catch (e) {
@@ -5228,6 +5517,11 @@ async function computeLeadStocks() {
     LEADSTOCKS_STATE.items = [];
     LEADSTOCKS_STATE.computedAt = new Date();
     LEADSTOCKS_STATE.rendered = false;
+    TURNOVER_RANKING_STATE.items = [];
+    TURNOVER_RANKING_STATE.sectors = [];
+    TURNOVER_RANKING_STATE.eligibleCount = 0;
+    TURNOVER_RANKING_STATE.computedAt = new Date();
+    TURNOVER_RANKING_STATE.rendered = false;
   }
 }
 
@@ -5237,14 +5531,13 @@ function renderLeadStocks() {
   const gridEl = document.getElementById('leadstocks-grid');
   if (!summaryEl || !gridEl) return;
 
-  const lb = document.getElementById('leadstocks-loading');
-  if (lb) lb.style.setProperty('display', 'none', 'important');
+  setRankingLoadingHidden();
 
   const updatedText = LEADSTOCKS_STATE.computedAt
     ? LEADSTOCKS_STATE.computedAt.toLocaleTimeString('ko-KR') : '--:--:--';
 
   const inSession = isMarketSession();
-  const modeLabel = inSession ? '📡 장중 (상승률 기준)' : '📊 장마감 (거래대금30∩상승률50)';
+  const summaryLabel = inSession ? '장중 교집합' : '장마감 교집합';
 
   summaryEl.innerHTML = `
     <div class="leadstocks-stat">
@@ -5252,12 +5545,12 @@ function renderLeadStocks() {
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.eligibleCount||0}</div>
     </div>
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">${inSession ? '상승률 상위' : '편입종목 (C30∩E50)'}</div>
+      <div class="leadstocks-stat-label">${summaryLabel}</div>
       <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.items.length||0}</div>
     </div>
     <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">갱신 / 기준일</div>
-      <div class="leadstocks-stat-value">${updatedText} / ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)}</div>
+      <div class="leadstocks-stat-label">데이터 기준</div>
+      <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.sourceLabel||'--'}</div>
     </div>
   `;
 
@@ -5267,33 +5560,100 @@ function renderLeadStocks() {
     return;
   }
 
+  const groups = LEADSTOCKS_STATE.sectors?.length ? LEADSTOCKS_STATE.sectors : getTopSectorGroups(LEADSTOCKS_STATE.items, 6);
   gridEl.innerHTML = `
-    <div class="leadstocks-sector-card" style="grid-column:1/-1">
-      <div class="leadstocks-list">
-        <div class="lead-col-header">
-          <span class="lch-rank">#</span>
-          <span class="lch-name">종목</span>
-          <span class="lch-pct">${inSession ? '상승률' : '등락률'}</span>
-          <span class="lch-amt">거래대금${inSession ? '*' : ''}</span>
-          <span class="lch-sector">섹터</span>
+    <div class="leader-sector-grid" style="grid-column:1/-1">
+      ${groups.map(group => `
+        <div class="leader-sector-card ${group.rank === 1 ? 'rank-1' : group.rank === 2 ? 'rank-2' : ''}">
+          <div class="leader-sector-head">
+            <div class="leader-sector-name">${group.rank === 1 ? '👑👑👑 ' : group.rank === 2 ? '👑👑 ' : ''}${group.sector}</div>
+            <div class="leader-sector-meta">${formatLeadAmount(group.totalAmountEok)}</div>
+          </div>
+          <div class="leader-sector-list">
+            <div class="lead-col-header">
+              <span class="lch-rank">#</span>
+              <span class="lch-name">종목</span>
+              <span class="lch-pct">등락률</span>
+              <span class="lch-amt">거래대금${inSession ? '*' : ''}</span>
+              <span class="lch-sector">비고</span>
+            </div>
+            ${group.items.slice(0, 6).map((item, idx) => {
+              const pctClass = Number(item.pct) >= 15 ? ' surge' : (Number(item.pct) < 0 ? ' down' : '');
+              return `
+                <div class="lead-row${Number(item.pct)>=15?' surge':''}">
+                  <span class="lead-rank">${idx+1}.</span>
+                  <span class="lead-name" title="${item.name}">${item.name}</span>
+                  <span class="lead-pct${pctClass}">${item.pctText}</span>
+                  <span class="lead-amt">${item.amountText}</span>
+                  <span class="lead-sector">${item.currentRank ? 'C'+item.currentRank : ''}${item.eRank ? ' · E'+item.eRank : ''}</span>
+                </div>`;
+            }).join('')}
+            ${group.rank === 1 && inSession ? '<div class="leader-note">* 장중 거래대금은 Naver 실시간 참고값으로 KRX+NXT 통합 마감값과 차이 날 수 있음</div>' : ''}
+          </div>
         </div>
-        ${LEADSTOCKS_STATE.items.map((item, idx) => {
-          const sector = getKrSector(item.code || item.symbol);
-          const pctClass = Number(item.pct) >= 15 ? ' surge' : (Number(item.pct) < 0 ? ' down' : '');
-          return `
-          <div class="lead-row${Number(item.pct)>=15?' surge':''}">
-            <span class="lead-rank">${idx+1}.</span>
-            <span class="lead-name" title="${item.name}">${item.name}</span>
-            <span class="lead-pct${pctClass}">${item.pctText}</span>
-            <span class="lead-amt">${item.amountText}</span>
-            <span class="lead-sector">${sector||item.market||''}</span>
-          </div>`;
-        }).join('')}
-        ${inSession ? '<div style="padding:6px 4px;font-size:10px;color:var(--text3);font-family:var(--mono)">* 거래대금은 Naver 실시간 참고값 (KRX+NXT 합산과 차이 있을 수 있음)</div>' : ''}
-      </div>
+      `).join('')}
     </div>
   `;
   LEADSTOCKS_STATE.rendered = true;
+}
+
+function renderTurnoverRankings() {
+  const summaryEl = document.getElementById('rankings-summary');
+  const gridEl = document.getElementById('rankings-grid');
+  if (!summaryEl || !gridEl) return;
+
+  setRankingLoadingHidden();
+
+  const updatedText = TURNOVER_RANKING_STATE.computedAt
+    ? TURNOVER_RANKING_STATE.computedAt.toLocaleTimeString('ko-KR') : '--:--:--';
+  const modeText = TURNOVER_RANKING_STATE.mode === 'live' ? '장중 참고값' : '장마감 확정값';
+
+  summaryEl.innerHTML = `
+    <div class="ranking-stat">
+      <div class="ranking-stat-label">모드</div>
+      <div class="ranking-stat-value">${modeText}</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-stat-label">표시 종목</div>
+      <div class="ranking-stat-value">${TURNOVER_RANKING_STATE.items.length || 0}</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-stat-label">데이터 기준</div>
+      <div class="ranking-stat-value">${TURNOVER_RANKING_STATE.sourceLabel || '--'}</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-stat-label">갱신 / 기준일</div>
+      <div class="ranking-stat-value">${updatedText} / ${formatKrxTradeDate(TURNOVER_RANKING_STATE.tradeDate)}</div>
+    </div>
+  `;
+
+  if (!TURNOVER_RANKING_STATE.items.length) {
+    gridEl.innerHTML = '<div class="ranking-empty">거래대금 랭킹 데이터가 아직 없습니다.</div>';
+    TURNOVER_RANKING_STATE.rendered = true;
+    return;
+  }
+
+  const groups = TURNOVER_RANKING_STATE.sectors?.length ? TURNOVER_RANKING_STATE.sectors : getTopSectorGroups(TURNOVER_RANKING_STATE.items, 6);
+  gridEl.innerHTML = groups.map(group => `
+    <div class="ranking-card ${group.rank === 1 ? 'rank-1' : group.rank === 2 ? 'rank-2' : ''}">
+      <div class="ranking-card-head">
+        <div class="ranking-card-title">${group.rank === 1 ? '👑👑👑 ' : group.rank === 2 ? '👑👑 ' : ''}${group.sector}</div>
+        <div class="ranking-card-meta">${formatLeadAmount(group.totalAmountEok)}</div>
+      </div>
+      <div class="ranking-list">
+        ${group.items.slice(0, 6).map(item => `
+          <div class="ranking-row">
+            <span class="ranking-rank">${item.rank}.</span>
+            <span class="ranking-name" title="${item.name}">${item.name}</span>
+            <span class="ranking-pct ${Number(item.pct) < 0 ? 'down' : ''}">${item.pctText}</span>
+            <span class="ranking-amt">${item.amountText}</span>
+            <span class="ranking-tag">${item.market || group.sector}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  TURNOVER_RANKING_STATE.rendered = true;
 }
 
 // ── refreshAll override (단순화) ──────────────────────────────
@@ -5302,7 +5662,7 @@ refreshAll = async function() {
   STATIC_KRX_STATE.data = null; // 매 갱신마다 재검사
   // 두 배너 표시
   const now = Date.now();
-  ['kr-stocks-loading','leadstocks-loading'].forEach(id => {
+  ['kr-stocks-loading','leadstocks-loading','rankings-loading'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.style.removeProperty('display'); el.dataset.shownAt = now; }
   });
