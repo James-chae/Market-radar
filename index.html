@@ -4907,20 +4907,27 @@ function parseNaverRealtimeSignedPct(item) {
   //   rf = 등락구분  ← '1'상한/'2'상승/'3'보합/'4'하한/'5'하락
   const rawPct = Number(item?.cr);   // 절대값
   const cv     = Number(item?.cv);   // 등락금액 (부호 있음)
+  const nv     = Number(item?.nv);   // 현재가
   const rf     = String(item?.rf ?? ''); // 등락 구분 코드
 
-  // 방법1: rf 코드 최우선 — 가장 신뢰도 높음
-  if (isFinite(rawPct) && rawPct !== 0 && rf) {
+  // 방법1: cv(등락금액) 부호로 직접 계산 — 가장 정확
+  if (isFinite(cv) && isFinite(nv) && nv > 0) {
+    const prevPrice = nv - cv;
+    if (prevPrice > 0) {
+      const pct = (cv / prevPrice) * 100;
+      if (isFinite(pct)) return pct; // cv가 음수이면 pct도 음수
+    }
+  }
+
+  // 방법2: rf 코드로 cr(절대값)에 부호 적용
+  if (isFinite(rawPct) && rawPct !== 0) {
     if (rf === '5' || rf === '4') return -Math.abs(rawPct); // 하락 / 하한
     if (rf === '2' || rf === '1') return  Math.abs(rawPct); // 상승 / 상한
     if (rf === '3') return 0;                                // 보합
-  }
-
-  // 방법2: cv(등락금액) 부호로 판별
-  if (isFinite(rawPct) && isFinite(cv)) {
-    if (cv < 0) return -Math.abs(rawPct);
-    if (cv > 0) return  Math.abs(rawPct);
-    if (cv === 0) return 0;
+    // rf 없을 때: cv 부호로 판별
+    if (isFinite(cv) && cv < 0) return -Math.abs(rawPct);
+    if (isFinite(cv) && cv > 0) return  Math.abs(rawPct);
+    return rawPct; // 최후 폴백 (그대로)
   }
 
   return isFinite(rawPct) ? rawPct : null;
@@ -4939,6 +4946,10 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
   const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
   const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
   const rows = data?.result?.areas?.[0]?.datas || [];
+  // [DEBUG] 처음 3개 종목 raw 값 확인 (등락률 진단용)
+  rows.slice(0, 3).forEach(item => {
+    console.log(`[NaverRAW] cd:${item.cd} nv:${item.nv} cv:${item.cv} cr:${item.cr} rf:${item.rf} aq:${item.aq}`);
+  });
   const out = {};
   rows.forEach(item => {
     const code = String(item.cd || '').trim();
