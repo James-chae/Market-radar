@@ -4879,6 +4879,11 @@ async function fetchStaticKrxData(force = false) {
 
 function shouldUseStaticKrxOverlay(staticData) {
   if (!staticData?.by_symbol) return false;
+  // 장중에는 Naver 실시간 등락률을 우선 사용해야 함.
+  // latest_krx.json 은 장마감/배치 산출물이라 장중에는 0.0% 또는 stale 값으로
+  // 버튼 등락률을 덮어쓸 수 있으므로, static overlay 는 장마감 시간대에만 허용.
+  if (isMarketSession()) return false;
+  if (staticData.status === 'reset') return false;
   return Object.keys(staticData.by_symbol).length >= 100;
 }
 
@@ -5034,6 +5039,11 @@ async function updateKRStockSignals() {
   });
 
   if (hasStatic) setStaticKrxBadgeText();
+  else {
+    const sec = document.querySelector('#sec-krstocks .data-note');
+    const badge = sec?.querySelector('.badge.krx-static-badge');
+    if (badge) badge.remove();
+  }
   updateKRStockSectorTotals();
   if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
 
