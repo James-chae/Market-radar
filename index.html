@@ -1753,6 +1753,10 @@
   <div class="tab mobile-row-2" onclick="showTab('schedule', this)">🗓️ <span class="tab-label-pc">일정</span><span class="tab-label-mobile">일정</span></div>
 
   <div class="tab mobile-row-3" onclick="showTab('leadstocks', this)">🔥 <span class="tab-label-pc">오늘의 주도주</span><span class="tab-label-mobile">주도주</span></div>
+  <div class="tab mobile-row-3" onclick="showTab('krtop', this)">
+    📈 <span class="tab-label-pc">한국 상승률</span><span class="tab-label-mobile">상승률</span>
+  </div>
+
   <div class="tab mobile-row-3" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션변동성</span><span class="tab-label-mobile">옵션변동성</span></div>
 </nav>
 
@@ -2840,6 +2844,20 @@
       </div>
       <div class="kr-earnings-list" id="kr-earnings-list"></div>
     </div>
+  </div>
+
+
+  <!-- ══════════════ 한국 상승률 TOP30 ══════════════ -->
+  <div class="section" id="sec-krtop">
+    <p class="section-title">KOREA TOP 30</p>
+    <p class="section-desc">한국 상승률 상위 30 종목 (Naver 기준)</p>
+
+    <div class="kr-loading-bar" id="krtop-loading">
+      <span class="kr-loading-dot"></span>
+      <span>상승률 데이터 불러오는 중...</span>
+    </div>
+
+    <div class="leadstocks-grid" id="krtop-list"></div>
   </div>
 
 </main>
@@ -4297,6 +4315,7 @@ function initChartsForTab(name) {
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
   if (name === 'schedule') renderSchedule();
   if (name === 'leadstocks') renderLeadStocks();
+  if (name === 'krtop') loadKRTop30();
   if (name === 'usstocks') {
     buildMobileStockPicker('usstocks');
     syncMobileStockPicker('usstocks');
@@ -5486,18 +5505,6 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
-
-<div class="section" id="sec-krtop">
-  <p class="section-title">KOREA TOP 30</p>
-  <p class="section-desc">한국 상승률 상위 30 종목 (Naver 기준)</p>
-
-  <div class="kr-loading-bar" id="krtop-loading">
-    <span class="kr-loading-dot"></span>
-    <span>상승률 데이터 불러오는 중...</span>
-  </div>
-
-  <div class="leadstocks-grid" id="krtop-list"></div>
-</div>
 
 <script>
 async function loadKRTop30() {
