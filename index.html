@@ -4693,7 +4693,7 @@ const LEADSTOCKS_STATE = {
   ePassCount: 0,
   rendered: false,
   sourceLabel: '저장 데이터 기준',
-  universeLabel: '시총 3000억원 이상 유니버스',
+  universeLabel: '시총 1000억원 이상 유니버스',
   tradeDate: '',
 };
 
@@ -4905,7 +4905,7 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
   ));
   if (!krSymbols.length) return {};
 
-  const cacheKey = 'naver_kr_signals_' + krSymbols.length;
+  const cacheKey = 'naver_kr_signals_' + getKstDateStr(getKstNow()) + '_' + krSymbols.join(',');
   const cached = Cache.get(cacheKey, 270000); // 4.5분 (갱신주기 5분보다 짧게)
   if (cached) { Logger.log('NaverStockSignals', `캐시 히트: ${Object.keys(cached).length}건`, 'ok'); return cached; }
 
@@ -4959,7 +4959,7 @@ async function updateKRStockSignals() {
   }
 
   const staticData = await fetchStaticKrxData(false);
-  const useStatic = shouldUseStaticKrxOverlay(staticData);
+  const useStatic = (!isMarketSession()) && shouldUseStaticKrxOverlay(staticData) && !shouldResetEmbeddedData(staticData?.trade_date || '');
 
   buttons.forEach(btn => {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
@@ -5114,7 +5114,7 @@ async function computeLeadStocks() {
     }
 
     // ── 장마감 후: 거래대금30 ∩ 상승률50 (정확한 데이터) ────────
-    if (staticData?.by_symbol && Object.keys(staticData.by_symbol).length >= 100) {
+    if (!inSession && staticData?.by_symbol && Object.keys(staticData.by_symbol).length >= 100) {
       const rows = Object.values(staticData.by_symbol).filter(row => {
         if (!row || !isFinite(Number(row.pct)) || !isFinite(Number(row.trade_value_eok))) return false;
         if (Number(row.trade_value_eok) === 0) return false; // 리셋 데이터 제외
@@ -5148,7 +5148,7 @@ async function computeLeadStocks() {
         LEADSTOCKS_STATE.computedAt = new Date();
         LEADSTOCKS_STATE.rendered = false;
         LEADSTOCKS_STATE.sourceLabel = staticData.source || '저장 데이터 기준';
-        LEADSTOCKS_STATE.universeLabel = staticData.universe_name || '시총 3000억원 이상 유니버스';
+        LEADSTOCKS_STATE.universeLabel = '시총 1000억원 이상 유니버스';
         LEADSTOCKS_STATE.tradeDate = staticData.trade_date || '';
         Logger.log('LeadStocks', `장마감 모드: 거래대금30∩상승률50 → ${merged.length}종목`, 'ok');
         return;
@@ -5156,6 +5156,11 @@ async function computeLeadStocks() {
     }
 
     // 데이터 없음
+    if (inSession) {
+      LEADSTOCKS_STATE.sourceLabel = '장중 Naver 실시간 대기중';
+      LEADSTOCKS_STATE.universeLabel = '시총 1000억원 이상 유니버스';
+      LEADSTOCKS_STATE.tradeDate = getKstDateStr(getKstNow());
+    }
     LEADSTOCKS_STATE.items = [];
     LEADSTOCKS_STATE.eligibleCount = 0;
     LEADSTOCKS_STATE.computedAt = new Date();
