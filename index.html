@@ -4879,11 +4879,6 @@ async function fetchStaticKrxData(force = false) {
 
 function shouldUseStaticKrxOverlay(staticData) {
   if (!staticData?.by_symbol) return false;
-  // 장중에는 Naver 실시간 등락률을 우선 사용해야 함.
-  // latest_krx.json 은 장마감/배치 산출물이라 장중에는 0.0% 또는 stale 값으로
-  // 버튼 등락률을 덮어쓸 수 있으므로, static overlay 는 장마감 시간대에만 허용.
-  if (isMarketSession()) return false;
-  if (staticData.status === 'reset') return false;
   return Object.keys(staticData.by_symbol).length >= 100;
 }
 
@@ -4969,89 +4964,71 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
 }
 
 // ── 한국종목탭 버튼 시그널 업데이트 ───────────────────────────
+
 async function updateKRStockSignals() {
   const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
   if (!buttons.length) return;
 
-  const symbols = buttons
-    .map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || ''))
-    .filter(Boolean);
+  const symbols = Array.from(new Set(
+    buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean)
+  ));
 
-  let signals = {};
+  let signals = null;
   try {
     signals = await fetchNaverKRStockSignalsDetailed(symbols);
   } catch (e) {
-    Logger.log('NaverStockSignals', e.message || 'failed', 'warn');
+    console.warn('KR signals fetch failed', e);
   }
 
-  let staticData = null;
-  let useStatic = false;
-  try {
-    staticData = await fetchStaticKrxData(false);
-    useStatic = shouldUseStaticKrxOverlay(staticData);
-  } catch (e) {
-    Logger.log('KRX/Static', e.message || 'static load failed', 'warn');
-  }
+  if (!signals) return;
 
-  const hasSignals = Object.keys(signals).length > 0;
-  const hasStatic = !!useStatic;
+  buttons.forEach(btn => {
+    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
+    const nv = signals[sym];
 
-  // 둘 다 없을 때만 전체 초기화
-  if (!hasSignals && !hasStatic) {
-    buttons.forEach(btn => setStockButtonSignal(btn, 'flat', '--'));
-    Logger.log('NaverStockSignals', '신호/장마감 데이터 없음 - 버튼 초기화', 'warn');
-    const lb = document.getElementById('kr-stocks-loading');
-    if (lb) {
-      const elapsed = Date.now() - Number(lb.dataset.shownAt || 0);
-      setTimeout(() => lb.style.setProperty('display', 'none', 'important'), Math.max(0, 1500 - elapsed));
+    if (nv && nv.pctText && nv.state) {
+      setStockButtonSignal(btn, nv.state, nv.pctText);
     }
+  });
+
+  const bar = document.getElementById('kr-stocks-loading');
+  if (bar) bar.style.display = 'none';
+
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    syncMobileStockPicker('krstocks');
+  }
+}
+
+
+  // 신호 없으면 모든 버튼 초기화 (이전 캐시값 유지 방지)
+  if (Object.keys(signals).length === 0) {
+    buttons.forEach(btn => setStockButtonSignal(btn, 'flat', '--'));
+    Logger.log('NaverStockSignals', '신호 없음 - 버튼 초기화', 'warn');
+    const lb = document.getElementById('kr-stocks-loading');
+    if (lb) { const e = Date.now()-Number(lb.dataset.shownAt||0); setTimeout(()=>lb.style.setProperty('display','none','important'), Math.max(0,1500-e)); }
     return;
   }
 
-  if (hasSignals) {
+  // Naver signals를 주도주 계산에서도 쓸 수 있도록 저장
+  if (Object.keys(signals).length > 0) {
     window._naverKRSignals = signals;
     window._naverKRSignalsAt = Date.now();
   }
 
   buttons.forEach(btn => {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    const naverInfo = signals[sym] || null;
-    const staticRow = hasStatic ? getStaticKrxRow(sym) : null;
-
-    let state = naverInfo?.state || 'flat';
-    let pctText = naverInfo?.pctText || '--';
-
-    // 장마감 static 데이터가 있으면 그 값을 우선 적용
-    if (staticRow && Number.isFinite(Number(staticRow.pct))) {
-      const pct = Number(staticRow.pct);
-      state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-      pctText = staticRow.pct_text || `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-    }
-
-    // Naver 값이 있고 하락이면 무조건 유지 (마이너스가 flat으로 덮이지 않도록)
-    if (naverInfo && naverInfo.state === 'down' && Number.isFinite(Number(naverInfo.pct))) {
-      const pct = Number(naverInfo.pct);
-      state = 'down';
-      pctText = naverInfo.pctText || `${pct.toFixed(1)}%`;
-    }
-
+    const nv = signals[sym] || null;
+    const state = nv?.state || 'flat';
+    const pctText = nv?.pctText || '--';
     setStockButtonSignal(btn, state, pctText);
   });
 
-  if (hasStatic) setStaticKrxBadgeText();
-  else {
-    const sec = document.querySelector('#sec-krstocks .data-note');
-    const badge = sec?.querySelector('.badge.krx-static-badge');
-    if (badge) badge.remove();
-  }
   updateKRStockSectorTotals();
   if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
 
+  // Loading 배너 숨김
   const lb = document.getElementById('kr-stocks-loading');
-  if (lb) {
-    const elapsed = Date.now() - Number(lb.dataset.shownAt || 0);
-    setTimeout(() => lb.style.setProperty('display', 'none', 'important'), Math.max(0, 1500 - elapsed));
-  }
+  if (lb) { const e = Date.now()-Number(lb.dataset.shownAt||0); setTimeout(()=>lb.style.setProperty('display','none','important'), Math.max(0,1500-e)); }
 }
 
 // ── ETF 판별 ───────────────────────────────────────────────────
@@ -5530,46 +5507,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setTimeout(bootstrapOverrides, 1200);
 })();
-</script>
-
-
-<script>
-// === PATCH: stable KR signals with amount (override) ===
-async function updateKRStockSignals() {
-  const buttons = Array.from(document.querySelectorAll('.kr-stock-btn'));
-  if (!buttons.length) return;
-
-  const symbols = Array.from(new Set(
-    buttons.map(btn => extractSymbolFromOnclick(btn.getAttribute('onclick') || '')).filter(Boolean)
-  ));
-
-  let signals = null;
-  try {
-    signals = await fetchNaverKRStockSignalsDetailed(symbols);
-  } catch (e) {
-    console.warn('KR signals fetch failed', e);
-  }
-
-  if (!signals) return;
-
-  buttons.forEach(btn => {
-    const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
-    const nv = signals[sym];
-
-    if (nv && nv.pctText && nv.state) {
-      let text = nv.pctText;
-      if (nv.amountEok) {
-        const amt = (typeof formatEok === 'function') ? formatEok(nv.amountEok) : nv.amountEok;
-        text = `${text} · ${amt}`;
-      }
-      setStockButtonSignal(btn, nv.state, text);
-    }
-  });
-
-  if (window.matchMedia('(max-width: 600px)').matches) {
-    syncMobileStockPicker('krstocks');
-  }
-}
 </script>
 
 </body>
