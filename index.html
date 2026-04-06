@@ -5250,6 +5250,21 @@ refreshAll = async function() {
 };
 
 
+
+document.addEventListener('DOMContentLoaded', () => {
+  Logger.log('System', '마켓 레이더 초기화', 'ok');
+  // 현재 KST 시각 1초마다 업데이트
+  function updateCurrentTime() {
+    const el = document.getElementById('current-time');
+    if (!el) return;
+    el.textContent = new Date().toLocaleTimeString('ko-KR', { timeZone: 'Asia/Seoul', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  }
+  updateCurrentTime();
+  setInterval(updateCurrentTime, 1000);
+  ensureStockButtonMarkup(); ensureKRStockGroupTitles(); buildMobileStockPicker('usstocks'); buildMobileStockPicker('krstocks'); renderSectorReferenceList('usstocks'); renderSectorReferenceList('krstocks'); refreshAll(); setInterval(refreshAll, CONFIG.REFRESH_INTERVAL);
+  window.addEventListener('resize', () => { clearTimeout(window.__yfResizeTimer); window.__yfResizeTimer = setTimeout(() => { Object.entries(chartState).forEach(([id,state]) => { const el = document.getElementById(id); if (!el || !state?.chart) return; state.chart.applyOptions({ width: Math.max(el.clientWidth, 280), height: Math.max(el.clientHeight, 180) }); state.chart.timeScale().fitContent(); }); }, 120); });
+});
+
 </script>
 
 </body>
