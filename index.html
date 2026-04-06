@@ -5071,8 +5071,45 @@ async function computeLeadStocks() {
     const staticData = await fetchStaticKrxData(false);
     const embSrc = (typeof EMBEDDED_KRX_DATA !== 'undefined' && EMBEDDED_KRX_DATA?.by_symbol) || {};
     const inSession = isMarketSession();
-    const naverSignals = (window._naverKRSignals && Date.now() - window._naverKRSignalsAt < 600000)
-      ? window._naverKRSignals : {};
+    // 장중: EMBEDDED 400개 전체를 Naver에 요청 (탭 버튼 60개 한계 극복)
+    let naverSignals = (window._naverKRSignals && Date.now() - window._naverKRSignalsAt < 600000)
+      ? { ...window._naverKRSignals } : {};
+
+    if (inSession && Object.keys(embSrc).length >= 100) {
+      const cacheKey400 = 'naver_kr_400_' + getKstDateStr(getKstNow());
+      const cached400 = Cache.get(cacheKey400, 270000);
+      if (cached400) {
+        naverSignals = cached400;
+        Logger.log('LeadStocks', `400종목 캐시: ${Object.keys(cached400).length / 2}종목`, 'ok');
+      } else {
+        // 400개 코드를 60개씩 나눠 병렬 요청
+        const allCodes = Array.from(new Set(Object.keys(embSrc).map(s => s.split('.')[0])));
+        const chunks = [];
+        for (let i = 0; i < allCodes.length; i += 60) chunks.push(allCodes.slice(i, i + 60));
+        const results = await Promise.allSettled(chunks.map(chunk => {
+          const url = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
+          return fetchJSONViaProxies(getNaverProxyUrls(url), 'NaverSignals400', 8000);
+        }));
+        const merged = {};
+        results.forEach(r => {
+          if (r.status !== 'fulfilled' || !r.value) return;
+          (r.value?.result?.areas?.[0]?.datas || []).forEach(item => {
+            const code = String(item.cd || '').trim();
+            const pct = Number(item.cr);
+            if (!code || !isFinite(pct)) return;
+            const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+            const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
+            const amountEok = normalizeNaverAmountToEok(Number(item.aq)) ?? 0;
+            merged[code + '.KS'] = { state, pctText, amountEok, amountText: formatEok(amountEok) };
+            merged[code + '.KQ'] = { state, pctText, amountEok, amountText: formatEok(amountEok) };
+          });
+        });
+        const cnt = Object.keys(merged).length / 2;
+        Logger.log('LeadStocks', `400종목 Naver 수신: ${cnt}종목`, cnt > 50 ? 'ok' : 'warn');
+        if (cnt > 50) { Cache.set(cacheKey400, merged); naverSignals = merged; }
+      }
+    }
+
     const naverCount = Object.keys(naverSignals).length;
 
     // ── 장중 + Naver 데이터 있음: 상승률 상위 기준 ──────────────
