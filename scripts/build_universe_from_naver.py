@@ -21,7 +21,7 @@ DEBUG_DIR = ROOT / "debug"
 OUTPUT_PATH = DATA_DIR / "universe_kr_top1000.json"
 
 # 유니버스 필터 기준: 시가총액 3000억원 이상
-MIN_MARKET_CAP_EOK = 3000  # 억원
+MIN_MARKET_CAP_EOK = 1000  # 억원
 
 HEADERS = {
     "User-Agent": (
