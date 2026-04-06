@@ -4899,6 +4899,20 @@ function setStaticKrxBadgeText() {
 }
 
 // ── Naver 종목 시그널 (등락률 + 거래대금) ──────────────────────
+function parseNaverRealtimeSignedPct(item) {
+  const rawPct = Number(item?.cr);
+  const signedChange = Number(item?.cv);
+  const nowPrice = Number(item?.nv);
+
+  if (isFinite(signedChange) && isFinite(nowPrice) && (nowPrice - signedChange) !== 0) {
+    const prevPrice = nowPrice - signedChange;
+    const pct = (signedChange / prevPrice) * 100;
+    if (isFinite(pct)) return pct;
+  }
+  if (isFinite(rawPct)) return rawPct;
+  return null;
+}
+
 async function fetchNaverKRStockSignalsDetailed(symbols) {
   const krSymbols = Array.from(new Set(
     (symbols || []).filter(s => /\.(KS|KQ)$/.test(s)).map(s => s.split('.')[0])
@@ -4915,14 +4929,14 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
   const out = {};
   rows.forEach(item => {
     const code = String(item.cd || '').trim();
-    const pct = Number(item.cr);
+    const pct = parseNaverRealtimeSignedPct(item);
     if (!code || !isFinite(pct)) return;
     const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
     const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
     const amountEok = normalizeNaverAmountToEok(Number(item.aq));
     const amountText = amountEok != null ? formatEok(amountEok) : '--';
-    out[code + '.KS'] = { state, pctText, amountEok: amountEok ?? 0, amountText };
-    out[code + '.KQ'] = { state, pctText, amountEok: amountEok ?? 0, amountText };
+    out[code + '.KS'] = { state, pctText, amountEok: amountEok ?? 0, amountText, pct };
+    out[code + '.KQ'] = { state, pctText, amountEok: amountEok ?? 0, amountText, pct };
   });
   Logger.log('NaverStockSignals', `결과: ${Object.keys(out).length}건 (rows=${rows.length})`, Object.keys(out).length > 0 ? 'ok' : 'warn');
   if (Object.keys(out).length > 0) Cache.set(cacheKey, out); // 빈 결과 캐시 안 함
@@ -4958,29 +4972,15 @@ async function updateKRStockSignals() {
     window._naverKRSignalsAt = Date.now();
   }
 
-  const staticData = await fetchStaticKrxData(false);
-  const useStatic = (!isMarketSession()) && shouldUseStaticKrxOverlay(staticData) && !shouldResetEmbeddedData(staticData?.trade_date || '');
-
   buttons.forEach(btn => {
     const sym = extractSymbolFromOnclick(btn.getAttribute('onclick') || '');
     const nv = signals[sym] || null;
-    const st = useStatic ? getStaticKrxRow(sym) : null;
-
-    let state = 'flat', pctText = '--';
-
-    if (nv) {
-      state = nv.state || 'flat';
-      pctText = nv.pctText || '--';
-    } else if (st && Number(st.trade_value_eok) > 0) {
-      state = Number(st.pct) > 0 ? 'up' : Number(st.pct) < 0 ? 'down' : 'flat';
-      pctText = st.pct_text || `${Number(st.pct)>0?'+':''}${Number(st.pct||0).toFixed(1)}%`;
-    }
-
+    const state = nv?.state || 'flat';
+    const pctText = nv?.pctText || '--';
     setStockButtonSignal(btn, state, pctText);
   });
 
   updateKRStockSectorTotals();
-  if (useStatic) setStaticKrxBadgeText();
   if (window.matchMedia('(max-width: 600px)').matches) syncMobileStockPicker('krstocks');
 
   // Loading 배너 숨김
@@ -5033,13 +5033,13 @@ async function computeLeadStocks() {
           if (r.status !== 'fulfilled' || !r.value) return;
           (r.value?.result?.areas?.[0]?.datas || []).forEach(item => {
             const code = String(item.cd || '').trim();
-            const pct = Number(item.cr);
+            const pct = parseNaverRealtimeSignedPct(item);
             if (!code || !isFinite(pct)) return;
             const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
             const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
             const amountEok = normalizeNaverAmountToEok(Number(item.aq)) ?? 0;
-            merged[code + '.KS'] = { state, pctText, amountEok, amountText: formatEok(amountEok) };
-            merged[code + '.KQ'] = { state, pctText, amountEok, amountText: formatEok(amountEok) };
+            merged[code + '.KS'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
+            merged[code + '.KQ'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
           });
         });
         const cnt = Object.keys(merged).length / 2;
