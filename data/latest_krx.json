@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-06T12:59:30.046338+09:00",
+  "generated_at": "2026-04-06T13:41:55.312346+09:00",
   "trade_date": "20260406",
   "trade_date_display": "2026-04-06",
   "source": "Naver KRX+NXT table 기준",
@@ -17,10 +17,10 @@
       "name": "삼성전자",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.74,
-      "pct_text": "+2.7%",
-      "trade_value_eok": 63011.55,
-      "trade_value_text": "6.30조",
+      "pct": 3.17,
+      "pct_text": "+3.2%",
+      "trade_value_eok": 66807.41,
+      "trade_value_text": "6.68조",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -32,10 +32,10 @@
       "name": "SK하이닉스",
       "market": "KOSPI",
       "close": null,
-      "pct": 0.11,
-      "pct_text": "+0.1%",
-      "trade_value_eok": 31654.03,
-      "trade_value_text": "3.17조",
+      "pct": 0.23,
+      "pct_text": "+0.2%",
+      "trade_value_eok": 35978.31,
+      "trade_value_text": "3.60조",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -47,10 +47,10 @@
       "name": "삼성SDI",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.85,
-      "pct_text": "+2.9%",
-      "trade_value_eok": 8245.74,
-      "trade_value_text": "8,246억",
+      "pct": 3.42,
+      "pct_text": "+3.4%",
+      "trade_value_eok": 8662.1,
+      "trade_value_text": "8,662억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -62,10 +62,10 @@
       "name": "현대차",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.53,
-      "pct_text": "-0.5%",
-      "trade_value_eok": 3357.55,
-      "trade_value_text": "3,358억",
+      "pct": -0.21,
+      "pct_text": "-0.2%",
+      "trade_value_eok": 3621.55,
+      "trade_value_text": "3,622억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -77,10 +77,10 @@
       "name": "두산에너빌리티",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.83,
-      "pct_text": "-0.8%",
-      "trade_value_eok": 2952.4,
-      "trade_value_text": "2,952억",
+      "pct": -0.52,
+      "pct_text": "-0.5%",
+      "trade_value_eok": 3104.9,
+      "trade_value_text": "3,105억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -92,10 +92,10 @@
       "name": "삼성전자우",
       "market": "KOSPI",
       "close": null,
-      "pct": 3.14,
-      "pct_text": "+3.1%",
-      "trade_value_eok": 2467.27,
-      "trade_value_text": "2,467억",
+      "pct": 3.54,
+      "pct_text": "+3.5%",
+      "trade_value_eok": 2630.52,
+      "trade_value_text": "2,631억",
       "source_parts": [
         "KRX_KOSPI"
       ]
@@ -106,10 +106,10 @@
       "name": "삼성전기",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.99,
-      "pct_text": "-1.0%",
-      "trade_value_eok": 2014.87,
-      "trade_value_text": "2,015억",
+      "pct": 0.33,
+      "pct_text": "+0.3%",
+      "trade_value_eok": 2143.94,
+      "trade_value_text": "2,144억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -121,10 +121,10 @@
       "name": "LG에너지솔루션",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.63,
-      "pct_text": "+2.6%",
-      "trade_value_eok": 1689.52,
-      "trade_value_text": "1,690억",
+      "pct": 3.39,
+      "pct_text": "+3.4%",
+      "trade_value_eok": 1807.06,
+      "trade_value_text": "1,807억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -136,10 +136,10 @@
       "name": "한화에어로스페이스",
       "market": "KOSPI",
       "close": null,
-      "pct": -1.1,
-      "pct_text": "-1.1%",
-      "trade_value_eok": 1477.04,
-      "trade_value_text": "1,477억",
+      "pct": -0.48,
+      "pct_text": "-0.5%",
+      "trade_value_eok": 1640.18,
+      "trade_value_text": "1,640억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -151,10 +151,10 @@
       "name": "NAVER",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.51,
-      "pct_text": "-0.5%",
-      "trade_value_eok": 1473.58,
-      "trade_value_text": "1,474억",
+      "pct": -0.35,
+      "pct_text": "-0.3%",
+      "trade_value_eok": 1587.82,
+      "trade_value_text": "1,588억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -166,10 +166,10 @@
       "name": "한화오션",
       "market": "KOSPI",
       "close": null,
-      "pct": -4.45,
-      "pct_text": "-4.5%",
-      "trade_value_eok": 1460.3,
-      "trade_value_text": "1,460억",
+      "pct": -4.37,
+      "pct_text": "-4.4%",
+      "trade_value_eok": 1569.17,
+      "trade_value_text": "1,569억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -181,10 +181,10 @@
       "name": "미래에셋증권",
       "market": "KOSPI",
       "close": null,
-      "pct": -2.22,
-      "pct_text": "-2.2%",
-      "trade_value_eok": 1446.11,
-      "trade_value_text": "1,446억",
+      "pct": -0.48,
+      "pct_text": "-0.5%",
+      "trade_value_eok": 1550.72,
+      "trade_value_text": "1,551억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -196,10 +196,10 @@
       "name": "SK스퀘어",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.21,
-      "pct_text": "-0.2%",
-      "trade_value_eok": 1354.14,
-      "trade_value_text": "1,354억",
+      "pct": 0.1,
+      "pct_text": "+0.1%",
+      "trade_value_eok": 1471.77,
+      "trade_value_text": "1,472억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -211,10 +211,10 @@
       "name": "HD현대중공업",
       "market": "KOSPI",
       "close": null,
-      "pct": -1.56,
-      "pct_text": "-1.6%",
-      "trade_value_eok": 1208.7,
-      "trade_value_text": "1,209억",
+      "pct": -1.15,
+      "pct_text": "-1.1%",
+      "trade_value_eok": 1289.61,
+      "trade_value_text": "1,290억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -226,10 +226,10 @@
       "name": "삼성물산",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.33,
-      "pct_text": "+1.3%",
-      "trade_value_eok": 809.0,
-      "trade_value_text": "809억",
+      "pct": 2.09,
+      "pct_text": "+2.1%",
+      "trade_value_eok": 912.92,
+      "trade_value_text": "913억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -241,10 +241,10 @@
       "name": "기아",
       "market": "KOSPI",
       "close": null,
-      "pct": 0.67,
-      "pct_text": "+0.7%",
-      "trade_value_eok": 701.86,
-      "trade_value_text": "702억",
+      "pct": 1.07,
+      "pct_text": "+1.1%",
+      "trade_value_eok": 781.77,
+      "trade_value_text": "782억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -256,10 +256,10 @@
       "name": "셀트리온",
       "market": "KOSPI",
       "close": null,
-      "pct": 0.1,
-      "pct_text": "+0.1%",
-      "trade_value_eok": 680.87,
-      "trade_value_text": "681억",
+      "pct": 0.41,
+      "pct_text": "+0.4%",
+      "trade_value_eok": 735.16,
+      "trade_value_text": "735억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -271,10 +271,10 @@
       "name": "HD현대일렉트릭",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.02,
-      "pct_text": "+1.0%",
-      "trade_value_eok": 643.61,
-      "trade_value_text": "644억",
+      "pct": 1.81,
+      "pct_text": "+1.8%",
+      "trade_value_eok": 689.47,
+      "trade_value_text": "689억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -286,10 +286,10 @@
       "name": "KB금융",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.51,
-      "pct_text": "+1.5%",
-      "trade_value_eok": 594.33,
-      "trade_value_text": "594억",
+      "pct": 1.99,
+      "pct_text": "+2.0%",
+      "trade_value_eok": 667.29,
+      "trade_value_text": "667억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -301,10 +301,10 @@
       "name": "현대모비스",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.64,
-      "pct_text": "-0.6%",
-      "trade_value_eok": 520.38,
-      "trade_value_text": "520억",
+      "pct": -0.39,
+      "pct_text": "-0.4%",
+      "trade_value_eok": 570.31,
+      "trade_value_text": "570억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -316,10 +316,10 @@
       "name": "하나금융지주",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.28,
-      "pct_text": "+2.3%",
-      "trade_value_eok": 441.71,
-      "trade_value_text": "442억",
+      "pct": 3.01,
+      "pct_text": "+3.0%",
+      "trade_value_eok": 505.38,
+      "trade_value_text": "505억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -331,10 +331,10 @@
       "name": "신한지주",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.42,
-      "pct_text": "+1.4%",
-      "trade_value_eok": 400.11,
-      "trade_value_text": "400억",
+      "pct": 1.85,
+      "pct_text": "+1.9%",
+      "trade_value_eok": 450.13,
+      "trade_value_text": "450억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -346,10 +346,10 @@
       "name": "삼성바이오로직스",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.51,
-      "pct_text": "-0.5%",
-      "trade_value_eok": 262.53,
-      "trade_value_text": "263억",
+      "pct": 0.26,
+      "pct_text": "+0.3%",
+      "trade_value_eok": 318.31,
+      "trade_value_text": "318억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -361,10 +361,10 @@
       "name": "삼성생명",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.36,
-      "pct_text": "+1.4%",
-      "trade_value_eok": 262.32,
-      "trade_value_text": "262억",
+      "pct": 2.04,
+      "pct_text": "+2.0%",
+      "trade_value_eok": 294.25,
+      "trade_value_text": "294억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -376,10 +376,10 @@
       "name": "고려아연",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.74,
-      "pct_text": "-0.7%",
-      "trade_value_eok": 211.87,
-      "trade_value_text": "212억",
+      "pct": -0.13,
+      "pct_text": "-0.1%",
+      "trade_value_eok": 236.72,
+      "trade_value_text": "237억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -393,10 +393,10 @@
       "name": "삼성전자",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.74,
-      "pct_text": "+2.7%",
-      "trade_value_eok": 63011.55,
-      "trade_value_text": "6.30조",
+      "pct": 3.17,
+      "pct_text": "+3.2%",
+      "trade_value_eok": 66807.41,
+      "trade_value_text": "6.68조",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -408,10 +408,10 @@
       "name": "SK하이닉스",
       "market": "KOSPI",
       "close": null,
-      "pct": 0.11,
-      "pct_text": "+0.1%",
-      "trade_value_eok": 31654.03,
-      "trade_value_text": "3.17조",
+      "pct": 0.23,
+      "pct_text": "+0.2%",
+      "trade_value_eok": 35978.31,
+      "trade_value_text": "3.60조",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -423,27 +423,12 @@
       "name": "삼성전자우",
       "market": "KOSPI",
       "close": null,
-      "pct": 3.14,
-      "pct_text": "+3.1%",
-      "trade_value_eok": 2467.27,
-      "trade_value_text": "2,467억",
+      "pct": 3.54,
+      "pct_text": "+3.5%",
+      "trade_value_eok": 2630.52,
+      "trade_value_text": "2,631억",
       "source_parts": [
         "KRX_KOSPI"
-      ]
-    },
-    "005380.KS": {
-      "code": "005380",
-      "symbol": "005380.KS",
-      "name": "현대차",
-      "market": "KOSPI",
-      "close": null,
-      "pct": -0.53,
-      "pct_text": "-0.5%",
-      "trade_value_eok": 3357.55,
-      "trade_value_text": "3,358억",
-      "source_parts": [
-        "KRX_KOSPI",
-        "NXT_KOSPI"
       ]
     },
     "373220.KS": {
@@ -452,10 +437,25 @@
       "name": "LG에너지솔루션",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.63,
-      "pct_text": "+2.6%",
-      "trade_value_eok": 1689.52,
-      "trade_value_text": "1,690억",
+      "pct": 3.39,
+      "pct_text": "+3.4%",
+      "trade_value_eok": 1807.06,
+      "trade_value_text": "1,807억",
+      "source_parts": [
+        "KRX_KOSPI",
+        "NXT_KOSPI"
+      ]
+    },
+    "005380.KS": {
+      "code": "005380",
+      "symbol": "005380.KS",
+      "name": "현대차",
+      "market": "KOSPI",
+      "close": null,
+      "pct": -0.21,
+      "pct_text": "-0.2%",
+      "trade_value_eok": 3621.55,
+      "trade_value_text": "3,622억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -467,10 +467,10 @@
       "name": "한화에어로스페이스",
       "market": "KOSPI",
       "close": null,
-      "pct": -1.1,
-      "pct_text": "-1.1%",
-      "trade_value_eok": 1477.04,
-      "trade_value_text": "1,477억",
+      "pct": -0.48,
+      "pct_text": "-0.5%",
+      "trade_value_eok": 1640.18,
+      "trade_value_text": "1,640억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -482,10 +482,10 @@
       "name": "삼성바이오로직스",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.51,
-      "pct_text": "-0.5%",
-      "trade_value_eok": 262.53,
-      "trade_value_text": "263억",
+      "pct": 0.26,
+      "pct_text": "+0.3%",
+      "trade_value_eok": 318.31,
+      "trade_value_text": "318억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -497,10 +497,10 @@
       "name": "SK스퀘어",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.21,
-      "pct_text": "-0.2%",
-      "trade_value_eok": 1354.14,
-      "trade_value_text": "1,354억",
+      "pct": 0.1,
+      "pct_text": "+0.1%",
+      "trade_value_eok": 1471.77,
+      "trade_value_text": "1,472억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -512,10 +512,10 @@
       "name": "두산에너빌리티",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.83,
-      "pct_text": "-0.8%",
-      "trade_value_eok": 2952.4,
-      "trade_value_text": "2,952억",
+      "pct": -0.52,
+      "pct_text": "-0.5%",
+      "trade_value_eok": 3104.9,
+      "trade_value_text": "3,105억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -527,10 +527,10 @@
       "name": "기아",
       "market": "KOSPI",
       "close": null,
-      "pct": 0.67,
-      "pct_text": "+0.7%",
-      "trade_value_eok": 701.86,
-      "trade_value_text": "702억",
+      "pct": 1.07,
+      "pct_text": "+1.1%",
+      "trade_value_eok": 781.77,
+      "trade_value_text": "782억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -542,10 +542,10 @@
       "name": "KB금융",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.51,
-      "pct_text": "+1.5%",
-      "trade_value_eok": 594.33,
-      "trade_value_text": "594억",
+      "pct": 1.99,
+      "pct_text": "+2.0%",
+      "trade_value_eok": 667.29,
+      "trade_value_text": "667억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -557,10 +557,10 @@
       "name": "HD현대중공업",
       "market": "KOSPI",
       "close": null,
-      "pct": -1.56,
-      "pct_text": "-1.6%",
-      "trade_value_eok": 1208.7,
-      "trade_value_text": "1,209억",
+      "pct": -1.15,
+      "pct_text": "-1.1%",
+      "trade_value_eok": 1289.61,
+      "trade_value_text": "1,290억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -572,10 +572,10 @@
       "name": "셀트리온",
       "market": "KOSPI",
       "close": null,
-      "pct": 0.1,
-      "pct_text": "+0.1%",
-      "trade_value_eok": 680.87,
-      "trade_value_text": "681억",
+      "pct": 0.41,
+      "pct_text": "+0.4%",
+      "trade_value_eok": 735.16,
+      "trade_value_text": "735억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -587,10 +587,10 @@
       "name": "삼성생명",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.36,
-      "pct_text": "+1.4%",
-      "trade_value_eok": 262.32,
-      "trade_value_text": "262억",
+      "pct": 2.04,
+      "pct_text": "+2.0%",
+      "trade_value_eok": 294.25,
+      "trade_value_text": "294억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -602,10 +602,10 @@
       "name": "신한지주",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.42,
-      "pct_text": "+1.4%",
-      "trade_value_eok": 400.11,
-      "trade_value_text": "400억",
+      "pct": 1.85,
+      "pct_text": "+1.9%",
+      "trade_value_eok": 450.13,
+      "trade_value_text": "450억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -617,10 +617,10 @@
       "name": "삼성물산",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.33,
-      "pct_text": "+1.3%",
-      "trade_value_eok": 809.0,
-      "trade_value_text": "809억",
+      "pct": 2.09,
+      "pct_text": "+2.1%",
+      "trade_value_eok": 912.92,
+      "trade_value_text": "913억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -632,10 +632,10 @@
       "name": "한화오션",
       "market": "KOSPI",
       "close": null,
-      "pct": -4.45,
-      "pct_text": "-4.5%",
-      "trade_value_eok": 1460.3,
-      "trade_value_text": "1,460억",
+      "pct": -4.37,
+      "pct_text": "-4.4%",
+      "trade_value_eok": 1569.17,
+      "trade_value_text": "1,569억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -647,10 +647,10 @@
       "name": "삼성SDI",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.85,
-      "pct_text": "+2.9%",
-      "trade_value_eok": 8245.74,
-      "trade_value_text": "8,246억",
+      "pct": 3.42,
+      "pct_text": "+3.4%",
+      "trade_value_eok": 8662.1,
+      "trade_value_text": "8,662억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -662,10 +662,10 @@
       "name": "현대모비스",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.64,
-      "pct_text": "-0.6%",
-      "trade_value_eok": 520.38,
-      "trade_value_text": "520억",
+      "pct": -0.39,
+      "pct_text": "-0.4%",
+      "trade_value_eok": 570.31,
+      "trade_value_text": "570억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -677,10 +677,10 @@
       "name": "미래에셋증권",
       "market": "KOSPI",
       "close": null,
-      "pct": -2.22,
-      "pct_text": "-2.2%",
-      "trade_value_eok": 1446.11,
-      "trade_value_text": "1,446억",
+      "pct": -0.48,
+      "pct_text": "-0.5%",
+      "trade_value_eok": 1550.72,
+      "trade_value_text": "1,551억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -692,10 +692,10 @@
       "name": "삼성전기",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.99,
-      "pct_text": "-1.0%",
-      "trade_value_eok": 2014.87,
-      "trade_value_text": "2,015억",
+      "pct": 0.33,
+      "pct_text": "+0.3%",
+      "trade_value_eok": 2143.94,
+      "trade_value_text": "2,144억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -707,10 +707,10 @@
       "name": "HD현대일렉트릭",
       "market": "KOSPI",
       "close": null,
-      "pct": 1.02,
-      "pct_text": "+1.0%",
-      "trade_value_eok": 643.61,
-      "trade_value_text": "644억",
+      "pct": 1.81,
+      "pct_text": "+1.8%",
+      "trade_value_eok": 689.47,
+      "trade_value_text": "689억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -722,25 +722,10 @@
       "name": "하나금융지주",
       "market": "KOSPI",
       "close": null,
-      "pct": 2.28,
-      "pct_text": "+2.3%",
-      "trade_value_eok": 441.71,
-      "trade_value_text": "442억",
-      "source_parts": [
-        "KRX_KOSPI",
-        "NXT_KOSPI"
-      ]
-    },
-    "035420.KS": {
-      "code": "035420",
-      "symbol": "035420.KS",
-      "name": "NAVER",
-      "market": "KOSPI",
-      "close": null,
-      "pct": -0.51,
-      "pct_text": "-0.5%",
-      "trade_value_eok": 1473.58,
-      "trade_value_text": "1,474억",
+      "pct": 3.01,
+      "pct_text": "+3.0%",
+      "trade_value_eok": 505.38,
+      "trade_value_text": "505억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
@@ -752,10 +737,25 @@
       "name": "고려아연",
       "market": "KOSPI",
       "close": null,
-      "pct": -0.74,
-      "pct_text": "-0.7%",
-      "trade_value_eok": 211.87,
-      "trade_value_text": "212억",
+      "pct": -0.13,
+      "pct_text": "-0.1%",
+      "trade_value_eok": 236.72,
+      "trade_value_text": "237억",
+      "source_parts": [
+        "KRX_KOSPI",
+        "NXT_KOSPI"
+      ]
+    },
+    "035420.KS": {
+      "code": "035420",
+      "symbol": "035420.KS",
+      "name": "NAVER",
+      "market": "KOSPI",
+      "close": null,
+      "pct": -0.35,
+      "pct_text": "-0.3%",
+      "trade_value_eok": 1587.82,
+      "trade_value_text": "1,588억",
       "source_parts": [
         "KRX_KOSPI",
         "NXT_KOSPI"
