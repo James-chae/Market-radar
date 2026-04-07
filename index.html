@@ -4400,9 +4400,6 @@ Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { 
   const _ldBar = document.getElementById('leadstocks-loading');
   if (_ldBar) { _ldBar.style.removeProperty('display'); _ldBar.dataset.shownAt = _now; }
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
-  // allSettled 완료 = Naver API 완료 시점. 주도주 배너도 이때 숨김 (KR탭과 동일 타이밍)
-  const _ldBarHide = document.getElementById('leadstocks-loading');
-  if (_ldBarHide) _ldBarHide.style.setProperty('display', 'none', 'important');
   await computeLeadStocks();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
@@ -4427,15 +4424,31 @@ function extractSymbolFromOnclick(onclickText) {
 function renderMobileStockReference(tabKey, groups) {
   const root = document.getElementById(tabKey + '-mobile-reference');
   if (!root) return;
-  root.innerHTML = `
-    <div class="mobile-stock-reference-title">SECTOR & STOCK LIST</div>
-    ${groups.map(group => `
-      <div class="mobile-stock-reference-group">
-        <div class="mobile-stock-reference-group-name">${group.title}</div>
-        <div class="mobile-stock-reference-items">${group.items.map(item => item.label).join(' · ')}</div>
-      </div>
-    `).join('')}
-  `;
+
+  let titleEl = root.querySelector('.mobile-sector-reference-title, .mobile-stock-reference-title');
+  if (!titleEl) {
+    titleEl = document.createElement('div');
+    titleEl.className = 'mobile-sector-reference-title';
+    titleEl.textContent = 'SECTOR & STOCK LIST';
+    root.prepend(titleEl);
+  } else {
+    titleEl.textContent = 'SECTOR & STOCK LIST';
+  }
+
+  let listEl = document.getElementById(tabKey + '-mobile-reference-list');
+  if (!listEl) {
+    listEl = document.createElement('div');
+    listEl.id = tabKey + '-mobile-reference-list';
+    listEl.className = 'mobile-sector-reference-list';
+    root.appendChild(listEl);
+  }
+
+  listEl.innerHTML = groups.map(group => `
+    <div class="mobile-stock-reference-group">
+      <div class="mobile-stock-reference-group-name">${group.title}</div>
+      <div class="mobile-stock-reference-items">${group.items.map(item => item.label).join(' · ')}</div>
+    </div>
+  `).join('');
 }
 
 function buildMobileStockPicker(tabKey) {
@@ -5288,7 +5301,11 @@ function renderLeadStocks() {
   if (!summaryEl || !gridEl) return;
 
   const lb = document.getElementById('leadstocks-loading');
-  if (lb) lb.style.setProperty('display', 'none', 'important');
+  const leadComputed = !!LEADSTOCKS_STATE.computedAt;
+  if (lb) {
+    if (leadComputed) lb.style.setProperty('display', 'none', 'important');
+    else lb.style.removeProperty('display');
+  }
 
   const updatedText = LEADSTOCKS_STATE.computedAt
     ? LEADSTOCKS_STATE.computedAt.toLocaleTimeString('ko-KR') : '--:--:--';
