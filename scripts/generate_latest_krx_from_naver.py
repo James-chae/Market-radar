@@ -305,6 +305,7 @@ def infer_pct_from_tds(tds) -> Optional[float]:
 
 
 def infer_amount_from_tds(tds, *, numeric_is_million_krw: bool) -> Optional[float]:
+    # 단위 텍스트(조/억/만/백만)가 포함된 셀만 시도 — 안전한 경우만 추론
     for td in reversed(tds):
         txt = td.get_text(strip=True)
         if any(unit in txt for unit in ("조", "억", "만", "백만")):
@@ -312,20 +313,11 @@ def infer_amount_from_tds(tds, *, numeric_is_million_krw: bool) -> Optional[floa
             if parsed is not None:
                 return parsed
 
-    nums: List[float] = []
-    for td in tds:
-        val = to_number(td.get_text(strip=True))
-        if val is not None:
-            nums.append(val)
-
-    if not nums:
-        return None
-
-    candidate = max(nums)
-    if candidate <= 0:
-        return None
-
-    return candidate / 100 if numeric_is_million_krw else candidate
+    # ※ 순수 숫자 max() 폴백 제거:
+    #   네이버 KRX 테이블에서 header 매핑 실패 시 max(nums)를 거래대금으로
+    #   채택하면 시가총액·상장주식수 등 훨씬 큰 값이 잘못 선택됨.
+    #   header_idx["amount"] 매핑이 실패했을 때는 None을 반환해 해당 행을 드롭.
+    return None
 
 
 def parse_market_table(
