@@ -4551,15 +4551,16 @@ function formatEok(value) {
   return `${value.toFixed(2)}억`;
 }
 
-function normalizeNaverAmountToEok(amountRaw) {
-  if (amountRaw == null || !isFinite(amountRaw)) return null;
-  // Heuristic:
-  // - very large numbers are likely KRW -> convert to 억원
-  // - mid-size numbers may already be 백만원/천만원 scale, keep safer branch
-  // - small numbers are likely already 억원-like display values
-  if (amountRaw >= 100000000) return amountRaw / 100000000;   // KRW -> 억원
-  if (amountRaw >= 10000) return amountRaw / 100;             // 만원-like -> 억원
-  return amountRaw;                                           // already compact amount
+function calcNaverAmountEok(item) {
+  // Naver polling API 필드 실측:
+  //   aq = 누적거래량 (주, accumulated quantity) — 거래대금 아님
+  //   nv = 현재가 (원 × 100 단위)
+  // → 거래대금(억원) = aq(주) × (nv/100)(원) ÷ 100,000,000
+  //                  = aq × nv / 10,000,000,000
+  const vol   = Number(item && item.aq);
+  const price = Number(item && item.nv);
+  if (!isFinite(vol) || !isFinite(price) || vol <= 0 || price <= 0) return 0;
+  return (vol * price) / 10000000000;
 }
 
 function ensureKRStockGroupTitles() {
@@ -4940,11 +4941,11 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
     if (!code || !isFinite(pct)) return;
     const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
     const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-    const amountEok = normalizeNaverAmountToEok(Number(item.aq));
-    const amountText = amountEok != null ? formatEok(amountEok) : '--';
+    const amountEok = calcNaverAmountEok(item);
+    const amountText = amountEok > 0 ? formatEok(amountEok) : '--';
     // 정확한 suffix로만 등록 (.KS/.KQ 혼용 방지)
     const suffix = codeToSuffix[code];
-    if (suffix) out[code + suffix] = { state, pctText, amountEok: amountEok ?? 0, amountText, pct };
+    if (suffix) out[code + suffix] = { state, pctText, amountEok, amountText, pct };
   });
   Logger.log('NaverStockSignals', `결과: ${Object.keys(out).length}건 (rows=${rows.length})`, Object.keys(out).length > 0 ? 'ok' : 'warn');
   if (Object.keys(out).length > 0) Cache.set(cacheKey, out); // 빈 결과 캐시 안 함
@@ -5045,7 +5046,7 @@ async function computeLeadStocks() {
             if (!code || !isFinite(pct)) return;
             const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
             const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-            const amountEok = normalizeNaverAmountToEok(Number(item.aq)) ?? 0;
+            const amountEok = calcNaverAmountEok(item);
             merged[code + '.KS'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
             merged[code + '.KQ'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
           });
