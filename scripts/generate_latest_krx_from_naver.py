@@ -512,6 +512,8 @@ def merge_rows(
     agg: Dict[str, dict] = {}
 
     def apply(rows: List[dict], source_tag: str) -> None:
+        is_krx = source_tag.startswith("KRX_")
+
         for row in rows:
             code = str(row["code"]).zfill(6)
             if code not in universe_map:
@@ -528,14 +530,29 @@ def merge_rows(
                     "name": base.get("name") or row["name"],
                     "market": base.get("market") or row["market"],
                     "pct": row["pct"],
+                    "pct_source": source_tag,   # 어느 소스의 pct를 쓰고 있는지 추적
                     "trade_value_eok": 0.0,
                     "source_parts": [],
                 }
 
-            agg[code]["pct"] = row["pct"]
+            # ── 등락률(pct) 정책: KRX 우선 ─────────────────────────────
+            # KRX 데이터: 항상 채택 (KRX끼리 여러 페이지면 마지막 KRX로 갱신)
+            # NXT 데이터: KRX 데이터가 아직 없는 경우에만 폴백으로 사용
+            if is_krx:
+                agg[code]["pct"] = row["pct"]
+                agg[code]["pct_source"] = source_tag
+            else:
+                # NXT이고 아직 KRX 데이터를 받지 못한 경우에만 업데이트
+                current_src = agg[code].get("pct_source", "")
+                if not current_src.startswith("KRX_"):
+                    agg[code]["pct"] = row["pct"]
+                    agg[code]["pct_source"] = source_tag
+
+            # ── 거래대금: KRX + NXT 합산 (기존과 동일) ──────────────────
             agg[code]["trade_value_eok"] += row["trade_value_eok"]
             agg[code]["source_parts"].append(source_tag)
 
+    # 반드시 KRX를 먼저 처리해야 "KRX 우선" 정책이 의미있음
     apply(krx_kospi, "KRX_KOSPI")
     apply(krx_kosdaq, "KRX_KOSDAQ")
     apply(nxt_kospi, "NXT_KOSPI")
@@ -556,6 +573,7 @@ def merge_rows(
             "trade_value_eok": round(eok, 4),
             "trade_value_text": format_eok(eok),
             "source_parts": item["source_parts"],
+            # pct_source는 내부 추적용이므로 출력에서 제외
         })
 
     return merged
