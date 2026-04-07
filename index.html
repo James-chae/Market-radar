@@ -4976,7 +4976,10 @@ function isMarketSession() {
 function shouldResetEmbeddedData(tradeDate) {
   const now = getKstNow();
   if (isWeekend(now)) return false;
-  return getKstMinutes(now) >= 7*60+50 && tradeDate !== getKstDateStr(now);
+  const min = getKstMinutes(now);
+  // 장중(07:50~20:20)에만 리셋 - 장마감(20:20) 이후~익일 07:50은 이전 거래일 데이터 유지
+  const inSession = min >= 7*60+50 && min < 20*60+20;
+  return inSession && tradeDate !== getKstDateStr(now);
 }
 
 // embedded data 수치만 0으로 초기화 (종목명/코드는 유지)
