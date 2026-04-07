@@ -1032,6 +1032,33 @@
       color: var(--text3);
       line-height: 1.6;
     }
+    /* 모바일 SECTOR & STOCK LIST 시그널 점 */
+    .mobile-sector-reference-stocks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px 0;
+      margin-top: 2px;
+    }
+    .mob-ref-stock-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-right: 8px;
+      white-space: nowrap;
+      color: var(--text3);
+      font-size: 11px;
+    }
+    .mob-ref-sig-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.18);
+    }
+    .mob-ref-sig-dot.sig-up   { background: #f85149; }
+    .mob-ref-sig-dot.sig-down { background: #4A9EFF; }
+    .mob-ref-sig-dot.sig-flat { background: #9aa4af; }
   }
 
 
@@ -1771,8 +1798,8 @@
 
 <nav>
   <div class="tab mobile-row-1 active" onclick="showTab('overview', this)">📊 <span class="tab-label-pc">전체</span><span class="tab-label-mobile">전체</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('us', this)">🇺🇸 <span class="tab-label-pc">미국</span><span class="tab-label-mobile">미국</span></div>
-  <div class="tab mobile-row-1" onclick="showTab('kr', this)">🇰🇷 <span class="tab-label-pc">한국</span><span class="tab-label-mobile">한국</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('us', this)">🇺🇸 <span class="tab-label-pc">미국시장</span><span class="tab-label-mobile">미국시장</span></div>
+  <div class="tab mobile-row-1" onclick="showTab('kr', this)">🇰🇷 <span class="tab-label-pc">한국시장</span><span class="tab-label-mobile">한국시장</span></div>
   <div class="tab mobile-row-1" onclick="showTab('charts', this)">📈 <span class="tab-label-pc">종합차트</span><span class="tab-label-mobile">종합차트</span></div>
 
   <div class="tab mobile-row-2" onclick="showTab('usstocks', this)">🇺🇸 <span class="tab-label-pc">미국종목</span><span class="tab-label-mobile">미국종목</span></div>
@@ -4697,16 +4724,18 @@ function renderSectorReferenceList(tabKey) {
   root.innerHTML = groups.map(group => {
     const titleEl = group.querySelector('.stock-group-title');
     const sector = ((titleEl?.dataset.baseTitle) || titleEl?.textContent || '').trim();
-    const stocks = Array.from(group.querySelectorAll(btnClass + ' .stock-btn-label'))
-      .map(el => el.textContent.trim())
+    const stockItems = Array.from(group.querySelectorAll(btnClass))
+      .map(btn => {
+        const label = btn.querySelector('.stock-btn-label')?.textContent.trim();
+        if (!label) return null;
+        let dotClass = 'sig-flat';
+        if (btn.classList.contains('sig-up')) dotClass = 'sig-up';
+        else if (btn.classList.contains('sig-down')) dotClass = 'sig-down';
+        return '<span class="mob-ref-stock-item"><span class="mob-ref-sig-dot ' + dotClass + '"></span>' + label + '</span>';
+      })
       .filter(Boolean)
-      .join(', ');
-    return `
-      <div class="mobile-sector-reference-item">
-        <div class="mobile-sector-reference-sector">${sector}</div>
-        <div class="mobile-sector-reference-stocks">${stocks}</div>
-      </div>
-    `;
+      .join('');
+    return '<div class="mobile-sector-reference-item"><div class="mobile-sector-reference-sector">' + sector + '</div><div class="mobile-sector-reference-stocks">' + stockItems + '</div></div>';
   }).join('');
 }
 
