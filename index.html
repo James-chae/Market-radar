@@ -4552,6 +4552,15 @@ async function updateUSStockSignals() {
 }
 
 
+// 거래대금(억원) = 누적거래량(aq, 주) × 현재가(nv, 원) / 1억
+// nv 필드는 Naver polling API 에서 원(KRW) 그대로 반환됨
+function calcNaverAmountEok(item) {
+  const vol = Number(item.aq);
+  const price = Number(item.nv);
+  if (!isFinite(vol) || !isFinite(price) || vol <= 0 || price <= 0) return 0;
+  return (vol * price) / 100000000;
+}
+
 function formatEok(value) {
   if (value == null || !isFinite(value)) return '--';
   if (value >= 100) return `${Math.round(value).toLocaleString('ko-KR')}억`;
@@ -4956,8 +4965,8 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
     if (!code || !isFinite(pct)) return;
     const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
     const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-    const amountEok = normalizeNaverAmountToEok(Number(item.aq));
-    const amountText = amountEok != null ? formatEok(amountEok) : '--';
+    const amountEok = calcNaverAmountEok(item);
+    const amountText = amountEok > 0 ? formatEok(amountEok) : '--';
     // 정확한 suffix로만 등록 (.KS/.KQ 혼용 방지)
     const suffix = codeToSuffix[code];
     if (suffix) out[code + suffix] = { state, pctText, amountEok: amountEok ?? 0, amountText, pct };
@@ -5062,7 +5071,7 @@ async function computeLeadStocks() {
             if (!code || !isFinite(pct)) return;
             const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
             const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-            const amountEok = normalizeNaverAmountToEok(Number(item.aq)) ?? 0;
+            const amountEok = calcNaverAmountEok(item);
             merged[code + '.KS'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
             merged[code + '.KQ'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
           });
