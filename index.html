@@ -1626,6 +1626,26 @@
     50%       { transform: scale(0.5); opacity: 0.4; }
   }
 
+  /* ── 거래대금 주석 배너 ── */
+  .amount-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 13px;
+    margin-bottom: 10px;
+    background: rgba(100,130,180,0.07);
+    border: 1px solid rgba(100,130,180,0.22);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #8ca0bb;
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+  }
+  .amount-note .amt-icon { flex-shrink: 0; font-size: 12px; }
+  .amount-note .amt-session { color: var(--yellow); font-weight: 700; }
+  .amount-note .amt-after  { color: #5faaff; font-weight: 700; }
+
   /* ── 주도주 새 아이템 레이아웃: 한 줄 ── */
   .lead-row {
     display: flex;
@@ -2627,7 +2647,18 @@
 
     <div class="kr-loading-bar" id="kr-stocks-loading">
       <span class="kr-loading-dot"></span>
-      <span>등락률 데이터 불러오는 중...</span>
+      <span>거래대금·등락률 불러오는 중...</span>
+    </div>
+
+    <div class="amount-note" id="kr-amount-note">
+      <span class="amt-icon">📊</span>
+      <span>
+        거래대금 &nbsp;
+        <span class="amt-session">장중: Naver 참조치</span>
+        &nbsp;/&nbsp;
+        <span class="amt-after">장마감(20:20↑): KRX+NXT 정확값</span>
+        &nbsp;·&nbsp; 장중 수치는 NXT 미포함으로 실제보다 낮을 수 있음
+      </span>
     </div>
 
     <div class="mobile-stock-picker" id="krstocks-mobile-picker"></div>
@@ -2751,7 +2782,18 @@
 
     <div class="kr-loading-bar" id="leadstocks-loading">
       <span class="kr-loading-dot"></span>
-      <span>등락률 데이터 불러오는 중...</span>
+      <span>거래대금·등락률 불러오는 중...</span>
+    </div>
+
+    <div class="amount-note" id="lead-amount-note">
+      <span class="amt-icon">📊</span>
+      <span>
+        거래대금 &nbsp;
+        <span class="amt-session">장중: Naver 참조치</span>
+        &nbsp;/&nbsp;
+        <span class="amt-after">장마감(20:20↑): KRX+NXT 정확값</span>
+        &nbsp;·&nbsp; 장중 수치는 NXT 미포함으로 실제보다 낮을 수 있음
+      </span>
     </div>
 
     <div class="leadstocks-wrap">
@@ -4553,7 +4595,6 @@ async function updateUSStockSignals() {
 
 
 // 거래대금(억원) = 누적거래량(aq, 주) × 현재가(nv, 원) / 1억
-// nv 필드는 Naver polling API 에서 원(KRW) 그대로 반환됨
 function calcNaverAmountEok(item) {
   const vol = Number(item.aq);
   const price = Number(item.nv);
@@ -5268,7 +5309,6 @@ function renderLeadStocks() {
             <span class="lead-sector">${sector||item.market||''}</span>
           </div>`;
         }).join('')}
-        ${inSession ? '<div style="padding:6px 4px;font-size:10px;color:var(--text3);font-family:var(--mono)">* 거래대금은 Naver 실시간 참고값 (KRX+NXT 합산과 차이 있을 수 있음)</div>' : ''}
       </div>
     </div>
   `;
