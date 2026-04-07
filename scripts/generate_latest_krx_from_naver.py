@@ -14,7 +14,22 @@ import requests
 from bs4 import BeautifulSoup
 
 SEOUL = timezone(timedelta(hours=9))
-ROOT = Path(__file__).resolve().parents[1]
+
+
+def resolve_root() -> Path:
+    """
+    실행 위치 유연 대응
+    1) repo/scripts/generate_latest_krx_from_naver.py 형태면 parent/data 사용
+    2) 파일이 루트에 있으면 same_dir/data 사용
+    """
+    here = Path(__file__).resolve()
+    parent_repo = here.parents[1] if len(here.parents) >= 2 else here.parent
+    if (parent_repo / "data").exists():
+        return parent_repo
+    return here.parent
+
+
+ROOT = resolve_root()
 DATA_DIR = ROOT / "data"
 DEBUG_DIR = ROOT / "debug"
 
@@ -30,6 +45,9 @@ HEADERS = {
     "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
     "Referer": "https://finance.naver.com/",
 }
+
+# 유니버스 필터 기준: 시가총액 3000억원 이상
+MIN_MARKET_CAP_EOK = 3000  # 억원
 
 
 def now_seoul() -> datetime:
@@ -69,6 +87,8 @@ def to_number(text: str) -> Optional[float]:
         return None
     s = str(text).strip().replace(",", "").replace("%", "")
     s = s.replace("＋", "+").replace("－", "-")
+    s = s.replace("▼", "").replace("▲", "").replace("▽", "").replace("△", "").strip()
+    s = s.replace("원", "").replace("주", "").replace("배", "")
     if not s or s in {"-", "--", "N/A"}:
         return None
     try:
@@ -97,10 +117,6 @@ def format_eok(eok: float) -> str:
     return f"{eok:.1f}억"
 
 
-# 유니버스 필터 기준: 시가총액 3000억원 이상
-MIN_MARKET_CAP_EOK = 3000  # 억원
-
-
 def load_universe() -> List[dict]:
     with UNIVERSE_PATH.open("r", encoding="utf-8") as f:
         data = json.load(f)
@@ -115,11 +131,10 @@ def load_universe() -> List[dict]:
     if not isinstance(items, list):
         raise ValueError("universe items 형식이 리스트가 아닙니다.")
 
-    # 시총 필터: market_cap_eok 정보가 있으면 3000억 이상만 사용
     before = len(items)
     filtered = [
         item for item in items
-        if item.get("market_cap_eok") is None  # 시총 정보 없으면 포함 (안전 fallback)
+        if item.get("market_cap_eok") is None
         or float(item["market_cap_eok"]) >= MIN_MARKET_CAP_EOK
     ]
     if before != len(filtered):
@@ -175,7 +190,15 @@ def build_session() -> requests.Session:
     return s
 
 
-def fetch_html(session: requests.Session, method: str, url: str, *, data=None, params=None, debug_name: str = "") -> str:
+def fetch_html(
+    session: requests.Session,
+    method: str,
+    url: str,
+    *,
+    data=None,
+    params=None,
+    debug_name: str = "",
+) -> str:
     r = session.request(method, url, data=data, params=params, timeout=20)
     r.raise_for_status()
     text = read_text_with_fallback(r.content)
@@ -231,6 +254,12 @@ def extract_code_from_href(href: str) -> Optional[str]:
     return m.group(1) if m else None
 
 
+def normalize_header_text(text: str) -> str:
+    compact = str(text).replace("\n", " ").replace("\xa0", " ").strip()
+    compact = re.sub(r"\s+", "", compact)
+    return compact
+
+
 def find_header_indexes(table) -> Tuple[Dict[str, int], List[str]]:
     header_map: Dict[str, int] = {}
     thead = table.find("thead")
@@ -239,9 +268,10 @@ def find_header_indexes(table) -> Tuple[Dict[str, int], List[str]]:
     if not thead:
         return header_map, headers
 
-    for idx, th in enumerate(thead.find_all("th")):
-        txt = th.get_text(" ", strip=True).replace("\n", " ").strip()
-        compact = txt.replace(" ", "")
+    ths = thead.find_all("th")
+    for idx, th in enumerate(ths):
+        txt = th.get_text(" ", strip=True)
+        compact = normalize_header_text(txt)
         headers.append(txt)
 
         if "종목명" in compact:
@@ -294,30 +324,102 @@ def parse_amount_text_to_eok(text: str, *, numeric_is_million_krw: bool) -> Opti
     return None
 
 
+def get_td_sign(td) -> int:
+    classes = " ".join(td.get("class") or []).lower()
+
+    if any(k in classes for k in ("rate_down", "fall", " down", "minus")):
+        return -1
+    if any(k in classes for k in ("rate_up", "rise", " up", "plus")):
+        return 1
+
+    for span in td.find_all("span"):
+        sc = " ".join(span.get("class") or []).lower()
+        if "down" in sc or "fall" in sc or "minus" in sc:
+            return -1
+        if "up" in sc or "rise" in sc or "plus" in sc:
+            return 1
+    return 0
+
+
+def extract_signed_pct(td) -> Optional[float]:
+    txt = td.get_text(strip=True)
+    if "%" not in txt:
+        return None
+    num = to_number(txt)
+    if num is None:
+        return None
+    sign = get_td_sign(td)
+    if sign == -1:
+        return -abs(num)
+    if sign == 1:
+        return abs(num)
+    return num
+
+
 def infer_pct_from_tds(tds) -> Optional[float]:
     for td in tds:
-        txt = td.get_text(strip=True)
-        if "%" in txt:
-            num = to_number(txt)
-            if num is not None:
-                return num
+        val = extract_signed_pct(td)
+        if val is not None:
+            return val
     return None
 
 
-def infer_amount_from_tds(tds, *, numeric_is_million_krw: bool) -> Optional[float]:
-    # 단위 텍스트(조/억/만/백만)가 포함된 셀만 시도 — 안전한 경우만 추론
-    for td in reversed(tds):
-        txt = td.get_text(strip=True)
-        if any(unit in txt for unit in ("조", "억", "만", "백만")):
-            parsed = parse_amount_text_to_eok(txt, numeric_is_million_krw=numeric_is_million_krw)
-            if parsed is not None:
-                return parsed
+def extract_price_from_tds(tds, header_idx: Dict[str, int]) -> Optional[float]:
+    if "price" in header_idx and header_idx["price"] < len(tds):
+        v = to_number(tds[header_idx["price"]].get_text(strip=True))
+        if v is not None and v > 0:
+            return float(v)
 
-    # ※ 순수 숫자 max() 폴백 제거:
-    #   네이버 KRX 테이블에서 header 매핑 실패 시 max(nums)를 거래대금으로
-    #   채택하면 시가총액·상장주식수 등 훨씬 큰 값이 잘못 선택됨.
-    #   header_idx["amount"] 매핑이 실패했을 때는 None을 반환해 해당 행을 드롭.
-    return None
+    for td in tds:
+        txt = td.get_text(" ", strip=True)
+        if "원" in txt:
+            v = to_number(txt)
+            if v is not None and v > 0:
+                return float(v)
+
+    nums = []
+    for td in tds:
+        txt = td.get_text(" ", strip=True)
+        if any(x in txt for x in ("%", "배", "억", "조", "만", "주")):
+            continue
+        v = to_number(txt)
+        if v is not None and v > 0:
+            nums.append(float(v))
+    return min(nums) if nums else None
+
+
+def extract_volume_from_tds(tds, header_idx: Dict[str, int]) -> Optional[float]:
+    if "volume" in header_idx and header_idx["volume"] < len(tds):
+        v = to_number(tds[header_idx["volume"]].get_text(strip=True))
+        if v is not None and v >= 0:
+            return float(v)
+
+    for td in tds:
+        txt = td.get_text(" ", strip=True)
+        if "주" in txt:
+            v = to_number(txt)
+            if v is not None and v >= 0:
+                return float(v)
+
+    candidates = []
+    for td in tds:
+        txt = td.get_text(" ", strip=True)
+        if any(x in txt for x in ("%", "배", "억", "조", "만", "원")):
+            continue
+        v = to_number(txt)
+        if v is not None and v >= 1000:
+            candidates.append(float(v))
+    return max(candidates) if candidates else None
+
+
+def fallback_amount_from_price_volume(price: Optional[float], volume: Optional[float]) -> Optional[float]:
+    if price is None or volume is None:
+        return None
+    if not math.isfinite(price) or not math.isfinite(volume):
+        return None
+    if price <= 0 or volume <= 0:
+        return None
+    return (price * volume) / 100_000_000
 
 
 def parse_market_table(
@@ -342,6 +444,7 @@ def parse_market_table(
             "no_pct": 0,
             "no_amount": 0,
         },
+        "fallback_amount_count": 0,
     }
 
     if not tables:
@@ -357,7 +460,7 @@ def parse_market_table(
         return [], debug_info
 
     rows: List[dict] = []
-    sample_limit = 8
+    sample_limit = 12
 
     for tr in tbody.find_all("tr"):
         tds = tr.find_all("td")
@@ -377,9 +480,13 @@ def parse_market_table(
 
         pct = None
         amount_eok = None
+        used_fallback_amount = False
+
+        price = extract_price_from_tds(tds, header_idx)
+        volume = extract_volume_from_tds(tds, header_idx)
 
         if "pct" in header_idx and header_idx["pct"] < len(tds):
-            pct = to_number(tds[header_idx["pct"]].get_text(strip=True))
+            pct = extract_signed_pct(tds[header_idx["pct"]])
         if pct is None:
             pct = infer_pct_from_tds(tds)
 
@@ -388,8 +495,12 @@ def parse_market_table(
                 tds[header_idx["amount"]].get_text(strip=True),
                 numeric_is_million_krw=numeric_is_million_krw,
             )
+
         if amount_eok is None:
-            amount_eok = infer_amount_from_tds(tds, numeric_is_million_krw=numeric_is_million_krw)
+            amount_eok = fallback_amount_from_price_volume(price, volume)
+            if amount_eok is not None:
+                used_fallback_amount = True
+                debug_info["fallback_amount_count"] += 1
 
         if pct is None:
             debug_info["drop_counts"]["no_pct"] += 1
@@ -398,6 +509,8 @@ def parse_market_table(
                     "code": code,
                     "name": name,
                     "reason": "no_pct",
+                    "price": price,
+                    "volume": volume,
                     "td_texts": [td.get_text(" ", strip=True) for td in tds[:12]],
                 })
             continue
@@ -409,6 +522,8 @@ def parse_market_table(
                     "code": code,
                     "name": name,
                     "reason": "no_amount",
+                    "price": price,
+                    "volume": volume,
                     "td_texts": [td.get_text(" ", strip=True) for td in tds[:12]],
                 })
             continue
@@ -419,6 +534,7 @@ def parse_market_table(
             "pct": float(pct),
             "trade_value_eok": float(amount_eok),
             "market": market_label,
+            "fallback_amount": used_fallback_amount,
         }
         rows.append(row)
 
@@ -428,6 +544,9 @@ def parse_market_table(
                 "name": name,
                 "pct": pct,
                 "trade_value_eok": amount_eok,
+                "price": price,
+                "volume": volume,
+                "fallback_amount": used_fallback_amount,
                 "td_texts": [td.get_text(" ", strip=True) for td in tds[:12]],
             })
 
@@ -445,11 +564,14 @@ def fetch_krx_market_pages(session: requests.Session, sosok: int, market_name: s
             numeric_is_million_krw=True,
         )
         save_debug_json(f"debug_parse_krx_{market_name.lower()}_p{page}.json", debug_info)
-        print(f"[PARSE] KRX {market_name} page {page}: {len(rows)} rows")
+        print(
+            f"[PARSE] KRX {market_name} page {page}: "
+            f"{len(rows)} rows / fallback_amount={debug_info['fallback_amount_count']}"
+        )
         if not rows:
             break
         all_rows.extend(rows)
-        if len(all_rows) >= 700:
+        if len(all_rows) >= 2500:
             break
         time.sleep(0.15)
     return all_rows
@@ -466,11 +588,14 @@ def fetch_nxt_pages(session: requests.Session, sosok: int, market_name: str, max
             numeric_is_million_krw=True,
         )
         save_debug_json(f"debug_parse_nxt_{market_name.lower()}_p{page}.json", debug_info)
-        print(f"[PARSE] NXT {market_name} page {page}: {len(rows)} rows")
+        print(
+            f"[PARSE] NXT {market_name} page {page}: "
+            f"{len(rows)} rows / fallback_amount={debug_info['fallback_amount_count']}"
+        )
         if not rows:
             break
         all_rows.extend(rows)
-        if len(all_rows) >= 700:
+        if len(all_rows) >= 2500:
             break
         time.sleep(0.15)
     return all_rows
@@ -479,17 +604,20 @@ def fetch_nxt_pages(session: requests.Session, sosok: int, market_name: str, max
 def build_universe_maps(universe: List[dict]) -> Tuple[Dict[str, dict], Dict[str, str]]:
     by_code: Dict[str, dict] = {}
     suffix_map: Dict[str, str] = {}
+
     for item in universe:
         code = str(item.get("code", "")).zfill(6)
         if not code:
             continue
         by_code[code] = item
+
         suffix = item.get("suffix")
         if isinstance(suffix, str) and suffix in {".KS", ".KQ"}:
             suffix_map[code] = suffix
         else:
             market = str(item.get("market", "")).upper()
             suffix_map[code] = ".KQ" if "KOSDAQ" in market else ".KS"
+
     return by_code, suffix_map
 
 
@@ -522,29 +650,29 @@ def merge_rows(
                     "name": base.get("name") or row["name"],
                     "market": base.get("market") or row["market"],
                     "pct": row["pct"],
-                    "pct_source": source_tag,   # 어느 소스의 pct를 쓰고 있는지 추적
+                    "pct_source": source_tag,
                     "trade_value_eok": 0.0,
                     "source_parts": [],
+                    "fallback_amount_used": False,
                 }
 
-            # ── 등락률(pct) 정책: KRX 우선 ─────────────────────────────
-            # KRX 데이터: 항상 채택 (KRX끼리 여러 페이지면 마지막 KRX로 갱신)
-            # NXT 데이터: KRX 데이터가 아직 없는 경우에만 폴백으로 사용
+            # 등락률은 KRX 우선, NXT는 KRX가 없는 경우에만 보조
             if is_krx:
                 agg[code]["pct"] = row["pct"]
                 agg[code]["pct_source"] = source_tag
             else:
-                # NXT이고 아직 KRX 데이터를 받지 못한 경우에만 업데이트
                 current_src = agg[code].get("pct_source", "")
                 if not current_src.startswith("KRX_"):
                     agg[code]["pct"] = row["pct"]
                     agg[code]["pct_source"] = source_tag
 
-            # ── 거래대금: KRX + NXT 합산 (기존과 동일) ──────────────────
+            # 거래대금은 KRX + NXT 합산
             agg[code]["trade_value_eok"] += row["trade_value_eok"]
             agg[code]["source_parts"].append(source_tag)
+            agg[code]["fallback_amount_used"] = (
+                agg[code]["fallback_amount_used"] or bool(row.get("fallback_amount"))
+            )
 
-    # 반드시 KRX를 먼저 처리해야 "KRX 우선" 정책이 의미있음
     apply(krx_kospi, "KRX_KOSPI")
     apply(krx_kosdaq, "KRX_KOSDAQ")
     apply(nxt_kospi, "NXT_KOSPI")
@@ -554,6 +682,7 @@ def merge_rows(
     for code, item in agg.items():
         pct = float(item["pct"])
         eok = float(item["trade_value_eok"])
+
         merged.append({
             "code": code,
             "symbol": item["symbol"],
@@ -565,7 +694,7 @@ def merge_rows(
             "trade_value_eok": round(eok, 4),
             "trade_value_text": format_eok(eok),
             "source_parts": item["source_parts"],
-            # pct_source는 내부 추적용이므로 출력에서 제외
+            "fallback_amount_used": bool(item["fallback_amount_used"]),
         })
 
     return merged
@@ -582,11 +711,12 @@ def build_payload(merged_rows: List[dict]) -> dict:
     )
 
     top_c = {item["symbol"] for item in amount_ranked[:30]}
-    top_e = {item["symbol"] for item in rise_ranked[:30]}
+    top_e = {item["symbol"] for item in rise_ranked[:50]}
     leaders = [item for item in amount_ranked if item["symbol"] in top_c and item["symbol"] in top_e]
-    by_symbol = {item["symbol"]: item for item in merged_rows}
 
+    by_symbol = {item["symbol"]: item for item in merged_rows}
     trade_date = now_seoul().strftime("%Y%m%d")
+    fallback_count = sum(1 for x in merged_rows if x.get("fallback_amount_used"))
 
     return {
         "generated_at": now_seoul().isoformat(),
@@ -597,8 +727,9 @@ def build_payload(merged_rows: List[dict]) -> dict:
         "counts": {
             "universe": len(merged_rows),
             "top_current_30": min(30, len(amount_ranked)),
-            "top_rise_30": min(30, len(rise_ranked)),
+            "top_rise_50": min(50, len(rise_ranked)),
             "leaders": len(leaders),
+            "fallback_amount_used": fallback_count,
         },
         "leaders": leaders,
         "by_symbol": by_symbol,
@@ -641,7 +772,11 @@ def main() -> None:
 
         payload = build_payload(merged)
         save_payload(payload)
-        print(f"[DONE] leaders={payload['counts']['leaders']} universe={payload['counts']['universe']}")
+        print(
+            f"[DONE] leaders={payload['counts']['leaders']} "
+            f"universe={payload['counts']['universe']} "
+            f"fallback_amount_used={payload['counts']['fallback_amount_used']}"
+        )
 
     except Exception as e:
         existing = load_existing_payload()
