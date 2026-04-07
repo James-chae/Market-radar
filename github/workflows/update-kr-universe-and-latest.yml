@@ -1,0 +1,39 @@
+name: Update KR universe and latest
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * 1-5'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Build universe
+        run: python scripts/build_universe_from_naver.py
+      - name: Update latest KR data
+        run: python scripts/generate_latest_krx_from_naver.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/universe_kr_top1000.json data/latest_krx.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "update kr top400 latest"
+          git push
