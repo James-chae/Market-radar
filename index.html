@@ -5043,7 +5043,7 @@ function setStaticKrxBadgeText() {
   const data = STATIC_KRX_STATE.data;
   if (!data) return;
   const tradeDate = data.trade_date ? formatKrxTradeDate(data.trade_date) : '--';
-  const label = `${data.source || '저장 데이터'} · ${tradeDate}`;
+  const label = `${data.source || '저장 데이터'} · ${tradeDate}` + ((data.trade_date && data.trade_date !== getKstDateStr(getKstNow())) ? ' · 오늘 아님' : '');
   const sec = document.querySelector('#sec-krstocks .data-note');
   if (!sec) return;
   let badge = sec.querySelector('.badge.krx-static-badge');
@@ -5275,8 +5275,25 @@ async function computeLeadStocks() {
       }
     }
 
-    // ── 장마감 후: 거래대금50 ∩ 상승률50 (정확한 데이터) ────────
+    // ── 장마감 후: 오늘 날짜 static 데이터가 있을 때만 거래대금50 ∩ 상승률50 표시 ────────
     if (!inSession && staticData?.by_symbol && Object.keys(staticData.by_symbol).length >= 100) {
+      const todayKst = getKstDateStr(getKstNow());
+      const tradeDate = String(staticData.trade_date || '');
+
+      if (tradeDate !== todayKst) {
+        LEADSTOCKS_STATE.items = [];
+        LEADSTOCKS_STATE.eligibleCount = 0;
+        LEADSTOCKS_STATE.cPassCount = 0;
+        LEADSTOCKS_STATE.ePassCount = 0;
+        LEADSTOCKS_STATE.computedAt = new Date();
+        LEADSTOCKS_STATE.rendered = false;
+        LEADSTOCKS_STATE.sourceLabel = '오늘 데이터 없음';
+        LEADSTOCKS_STATE.universeLabel = '시총 1000억원 이상 유니버스';
+        LEADSTOCKS_STATE.tradeDate = tradeDate;
+        Logger.log('LeadStocks', `오늘 날짜 불일치로 비움: trade_date=${tradeDate}, today=${todayKst}`, 'warn');
+        return;
+      }
+
       const rows = Object.values(staticData.by_symbol).filter(row => {
         if (!row || !isFinite(Number(row.pct)) || !isFinite(Number(row.trade_value_eok))) return false;
         if (Number(row.trade_value_eok) === 0) return false; // 리셋 데이터 제외
@@ -5373,7 +5390,7 @@ function renderLeadStocks() {
   `;
 
   if (!LEADSTOCKS_STATE.items.length) {
-    gridEl.innerHTML = '<div class="leadstocks-empty">latest_krx.json 기준으로 조건을 만족한 종목이 없습니다.</div>';
+    gridEl.innerHTML = '<div class="leadstocks-empty">오늘 날짜 기준 주도주 데이터가 없습니다.</div>';
     LEADSTOCKS_STATE.rendered = true;
     return;
   }
