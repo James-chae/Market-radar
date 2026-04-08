@@ -5008,31 +5008,8 @@ function makeResetData(src) {
 // ── Static KRX 데이터 ──────────────────────────────────────────
 const STATIC_KRX_STATE = { data: null, loadedAt: 0 };
 
-async function getLatestAvailableKrxTradeDate() {
-  const cacheKey = 'latest_available_krx_trade_date';
-  const cached = Cache.get(cacheKey, 30 * 60 * 1000);
-  if (cached) return cached;
-  try {
-    const latest = await fetchLatestKrxDailyMarket(10);
-    const trdDd = latest?.trdDd || '';
-    if (trdDd) Cache.set(cacheKey, trdDd);
-    return trdDd;
-  } catch (e) {
-    Logger.log('KRX/Static', `최신 거래일 확인 실패: ${e.message}`, 'warn');
-    return '';
-  }
-}
-
-function isStaticKrxTradeDateUsable(data, latestTradeDate) {
-  if (!data?.by_symbol || !data?.trade_date) return false;
-  if (!latestTradeDate) return true;
-  return String(data.trade_date) === String(latestTradeDate);
-}
-
 async function fetchStaticKrxData(force = false) {
   if (!force && STATIC_KRX_STATE.data) return STATIC_KRX_STATE.data;
-
-  const latestTradeDate = await getLatestAvailableKrxTradeDate();
 
   // 1순위: 외부 fetch (GitHub Pages 서버)
   try {
@@ -5040,32 +5017,22 @@ async function fetchStaticKrxData(force = false) {
     if (r.ok) {
       const data = await r.json();
       if (data?.by_symbol) {
-        if (!isStaticKrxTradeDateUsable(data, latestTradeDate)) {
-          Logger.log('KRX/Static', `외부 fetch 무시: trade_date=${data.trade_date}, 최신거래일=${latestTradeDate}`, 'warn');
-        } else {
-          const d = shouldResetEmbeddedData(data.trade_date || '') ? makeResetData(data) : data;
-          STATIC_KRX_STATE.data = d;
-          Logger.log('KRX/Static', `외부 fetch ${d.status === 'reset' ? '리셋' : '성공'}: ${data.trade_date}`, 'ok');
-          return d;
-        }
+        const d = shouldResetEmbeddedData(data.trade_date || '') ? makeResetData(data) : data;
+        STATIC_KRX_STATE.data = d;
+        Logger.log('KRX/Static', `외부 fetch ${d.status === 'reset' ? '리셋' : '성공'}: ${data.trade_date}`, 'ok');
+        return d;
       }
     }
-  } catch (e) {
-    Logger.log('KRX/Static', `외부 fetch 실패: ${e.message}`, 'warn');
-  }
+  } catch (_) {}
 
   // 2순위: inline embedded
   if (typeof EMBEDDED_KRX_DATA !== 'undefined' && EMBEDDED_KRX_DATA?.by_symbol) {
-    if (!isStaticKrxTradeDateUsable(EMBEDDED_KRX_DATA, latestTradeDate)) {
-      Logger.log('KRX/Static', `임베드 무시: trade_date=${EMBEDDED_KRX_DATA.trade_date}, 최신거래일=${latestTradeDate}`, 'warn');
-    } else {
-      const d = shouldResetEmbeddedData(EMBEDDED_KRX_DATA.trade_date || '')
-        ? makeResetData(EMBEDDED_KRX_DATA)
-        : EMBEDDED_KRX_DATA;
-      STATIC_KRX_STATE.data = d;
-      Logger.log('KRX/Static', `임베드 ${d.status === 'reset' ? '리셋' : '사용'}: ${EMBEDDED_KRX_DATA.trade_date}`, 'ok');
-      return d;
-    }
+    const d = shouldResetEmbeddedData(EMBEDDED_KRX_DATA.trade_date || '')
+      ? makeResetData(EMBEDDED_KRX_DATA)
+      : EMBEDDED_KRX_DATA;
+    STATIC_KRX_STATE.data = d;
+    Logger.log('KRX/Static', `임베드 ${d.status === 'reset' ? '리셋' : '사용'}: ${EMBEDDED_KRX_DATA.trade_date}`, 'ok');
+    return d;
   }
 
   STATIC_KRX_STATE.data = null;
