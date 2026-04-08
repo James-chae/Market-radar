@@ -5868,5 +5868,94 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
+
+<script>
+(function() {
+  'use strict';
+  const KR_SECTOR_OVERRIDE = {
+    '000720': { name: '현대건설', sector1: '건설' },
+    '001450': { name: '현대해상', sector1: '보험' },
+    '005300': { name: '롯데칠성', sector1: '식품/음료' },
+    '005830': { name: 'DB손해보험', sector1: '보험' },
+    '006360': { name: 'GS건설', sector1: '건설' },
+    '015760': { name: '한국전력', sector1: '전력' },
+    '023530': { name: '롯데쇼핑', sector1: '유통' },
+    '028050': { name: '삼성E&A', sector1: '건설' },
+    '032830': { name: '삼성생명', sector1: '보험' },
+    '038500': { name: '삼표시멘트', sector1: '건자재' },
+    '047040': { name: '대우건설', sector1: '건설' },
+    '097950': { name: 'CJ제일제당', sector1: '식품/음료' },
+    '375500': { name: 'DL이앤씨', sector1: '건설' }
+  };
+
+  const normalize = (code) => String(code || '').replace(/\.(KS|KQ)$/i, '').trim();
+  const originalGetKrMeta = typeof getKrMeta === 'function' ? getKrMeta : null;
+  const originalGetKrSector = typeof getKrSector === 'function' ? getKrSector : null;
+
+  window.KR_SECTOR_OVERRIDE = KR_SECTOR_OVERRIDE;
+
+  if (typeof KR_SECTOR_META === 'object' && KR_SECTOR_META) {
+    Object.entries(KR_SECTOR_OVERRIDE).forEach(([code, info]) => {
+      KR_SECTOR_META[code] = {
+        ...(KR_SECTOR_META[code] || {}),
+        name: info.name || (KR_SECTOR_META[code] || {}).name || '',
+        market: (KR_SECTOR_META[code] || {}).market || '',
+        etf: Boolean((KR_SECTOR_META[code] || {}).etf),
+        sector1: info.sector1,
+        sector2: info.sector2 || ''
+      };
+    });
+  }
+
+  if (typeof KR_CODE_SECTOR === 'object' && KR_CODE_SECTOR) {
+    Object.entries(KR_SECTOR_OVERRIDE).forEach(([code, info]) => {
+      KR_CODE_SECTOR[code] = info.sector1;
+    });
+  }
+
+  window.getKrMeta = function(code) {
+    const c = normalize(code);
+    const override = KR_SECTOR_OVERRIDE[c];
+    if (override) {
+      const base = originalGetKrMeta ? (originalGetKrMeta(c) || {}) : {};
+      return {
+        ...base,
+        name: override.name || base.name || '',
+        sector1: override.sector1 || base.sector1 || '',
+        sector2: override.sector2 || base.sector2 || ''
+      };
+    }
+    return originalGetKrMeta ? originalGetKrMeta(code) : null;
+  };
+
+  window.getKrSector = function(code) {
+    const c = normalize(code);
+    const override = KR_SECTOR_OVERRIDE[c];
+    if (override?.sector1) return override.sector1;
+    return originalGetKrSector ? originalGetKrSector(code) : '';
+  };
+
+  function rerenderAfterOverride() {
+    try {
+      if (typeof renderLeadStocks === 'function') renderLeadStocks();
+      if (typeof renderSectorReferenceList === 'function') {
+        renderSectorReferenceList('krstocks');
+        renderSectorReferenceList('usstocks');
+      }
+      if (typeof updateKRStockSectorTotals === 'function') updateKRStockSectorTotals();
+    } catch (e) {
+      console.warn('sector override rerender failed', e);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', rerenderAfterOverride, { once: true });
+  } else {
+    rerenderAfterOverride();
+  }
+  setTimeout(rerenderAfterOverride, 1200);
+})();
+</script>
+
 </body>
 </html>
