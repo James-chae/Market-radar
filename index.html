@@ -4454,6 +4454,8 @@ Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { 
   if (_ldBar) { _ldBar.style.removeProperty('display'); _ldBar.dataset.shownAt = _now; }
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
   await computeLeadStocks();
+  // computeLeadStocks 완료 후 섹터달력 자동저장 (데이터 보장된 시점)
+  if (typeof window._autoSaveTodaySectors === 'function') window._autoSaveTodaySectors();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
   updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } if (activeName === 'leadstocks') { renderLeadStocks(); } }
@@ -5893,6 +5895,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.renderSectorCalendar = renderSectorCalendar;
+  window._autoSaveTodaySectors = autoSaveTodaySectors; // refreshAll에서 호출용
 
   // ── 자동저장 전용 타이머 (렌더와 분리) ──
   // 5분마다 체크 → 16시·20시 조건에 맞으면 저장 (렌더 시마다 덮어쓰기 방지)
@@ -5900,7 +5903,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // DOMContentLoaded 후 초기화
   function initSectorCal() {
-    if (document.getElementById('sc-cal-grid')) renderSectorCalendar();
+    if (document.getElementById('sc-cal-grid')) {
+      renderSectorCalendar();
+      // 초기 로드 시 autoSave 한 번 실행 (타이머 이전에 즉시)
+      autoSaveTodaySectors();
+    }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSectorCal, {once:true});
