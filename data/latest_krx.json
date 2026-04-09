@@ -6070,5 +6070,6 @@
   },
   "status": "ok",
   "fallback_used": false,
-  "message": ""
+  "message": "latest_krx.json 생성 중단: universe_kr_top1000.json에는 pct / trade_value_eok 필드가 없어 장마감 주도주 데이터를 계산할 수 없습니다. 기존 latest_krx.json 보존.",
+  "guarded_at": "2026-04-09T22:20:51.274079+09:00"
 }
