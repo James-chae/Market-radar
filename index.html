@@ -5180,31 +5180,41 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
     const parts = s.split('.');
     codeToSuffix[parts[0]] = '.' + parts[1];
   });
-  const krSymbols = Object.keys(codeToSuffix);
-  if (!krSymbols.length) return {};
+  if (!Object.keys(codeToSuffix).length) return {};
 
-  const cacheKey = 'naver_kr_signals_' + getKstDateStr(getKstNow()) + '_' + krSymbols.length;
-  const cached = Cache.get(cacheKey, 270000); // 4.5분 (갱신주기 5분보다 짧게)
+  // ✅ 핵심 수정: 코드만 보내는 게 아니라 005930.KS 형식으로 전체 심볼 전송
+  const fullSymbols = Object.keys(codeToSuffix).map(c => c + codeToSuffix[c]);
+
+  const cacheKey = 'naver_kr_signals_' + getKstDateStr(getKstNow()) + '_' + fullSymbols.length;
+  const cached = Cache.get(cacheKey, 270000);
   if (cached) { Logger.log('NaverStockSignals', `캐시 히트: ${Object.keys(cached).length}건`, 'ok'); return cached; }
 
-  const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + krSymbols.join(',');
-  const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
-  const rows = data?.result?.areas?.[0]?.datas || [];
+  // 60개씩 배치 (심볼 수가 많을 경우 대비)
+  const chunks = [];
+  for (let i = 0; i < fullSymbols.length; i += 60) chunks.push(fullSymbols.slice(i, i + 60));
+
   const out = {};
-  rows.forEach(item => {
-    const code = String(item.cd || '').trim();
-    const pct = parseNaverRealtimeSignedPct(item);
-    if (!code || !isFinite(pct)) return;
-    const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-    const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-    const amountEok = calcNaverAmountEok(item);
-    const amountText = amountEok > 0 ? formatEok(amountEok) : '--';
-    // 정확한 suffix로만 등록 (.KS/.KQ 혼용 방지)
-    const suffix = codeToSuffix[code];
-    if (suffix) out[code + suffix] = { state, pctText, amountEok: amountEok ?? 0, amountText, pct };
-  });
-  Logger.log('NaverStockSignals', `결과: ${Object.keys(out).length}건 (rows=${rows.length})`, Object.keys(out).length > 0 ? 'ok' : 'warn');
-  if (Object.keys(out).length > 0) Cache.set(cacheKey, out); // 빈 결과 캐시 안 함
+  for (const chunk of chunks) {
+    const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
+    const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
+    const rows = data?.result?.areas?.[0]?.datas || [];
+    rows.forEach(item => {
+      const sym = String(item.cd || '').trim(); // 예: '005930.KS'
+      if (!sym) return;
+      const code = sym.split('.')[0];
+      const suffix = codeToSuffix[code];
+      if (!suffix) return;
+      const pct = parseNaverRealtimeSignedPct(item);
+      if (!isFinite(pct)) return;
+      const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+      const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
+      const amountEok = calcNaverAmountEok(item);
+      const amountText = amountEok > 0 ? formatEok(amountEok) : '--';
+      out[code + suffix] = { state, pctText, amountEok: amountEok ?? 0, amountText, pct };
+    });
+  }
+  Logger.log('NaverStockSignals', `결과: ${Object.keys(out).length}건 / 요청: ${fullSymbols.length}개`, Object.keys(out).length > 0 ? 'ok' : 'warn');
+  if (Object.keys(out).length > 0) Cache.set(cacheKey, out);
   return out;
 }
 
