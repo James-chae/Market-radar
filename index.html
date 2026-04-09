@@ -5314,10 +5314,16 @@ async function computeLeadStocks() {
         naverSignals = cachedU;
         Logger.log('LeadStocks', `유니버스 캐시: ${Object.keys(cachedU).length / 2}종목`, 'ok');
       } else {
-        // 2861개 코드를 60개씩 나눠 병렬 요청
+        // 2861개를 .KS/.KQ 심볼로 변환 후 60개씩 청크 분할
+        const allSymbols = universeCodes.map(c =>
+          c + (universeMap[c].market === 'KOSDAQ' ? '.KQ' : '.KS')
+        );
         const chunks = [];
-        for (let i = 0; i < universeCodes.length; i += 60) chunks.push(universeCodes.slice(i, i + 60));
+        for (let i = 0; i < allSymbols.length; i += 60) chunks.push(allSymbols.slice(i, i + 60));
+        Logger.log('LeadStocks', `Naver 요청: ${allSymbols.length}종목 × ${chunks.length}배치`, 'ok');
+
         const results = await Promise.allSettled(chunks.map(chunk => {
+          // 올바른 Naver API 형식: SERVICE_ITEM:005930.KS,000660.KS,...
           const url = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
           return fetchJSONViaProxies(getNaverProxyUrls(url), 'NaverSignalsU', 8000);
         }));
@@ -5325,18 +5331,20 @@ async function computeLeadStocks() {
         results.forEach(r => {
           if (r.status !== 'fulfilled' || !r.value) return;
           (r.value?.result?.areas?.[0]?.datas || []).forEach(item => {
-            const code = String(item.cd || '').trim();
+            const sym = String(item.cd || '').trim(); // 예: '005930.KS'
+            if (!sym) return;
+            const code = sym.split('.')[0];
             const pct = parseNaverRealtimeSignedPct(item);
-            if (!code || !isFinite(pct)) return;
+            if (!isFinite(pct)) return;
             const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
             const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
             const amountEok = calcNaverAmountEok(item);
-            merged[code + '.KS'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
-            merged[code + '.KQ'] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
+            const suffix = sym.endsWith('.KQ') ? '.KQ' : '.KS';
+            merged[code + suffix] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
           });
         });
-        const cnt = Object.keys(merged).length / 2;
-        Logger.log('LeadStocks', `유니버스 Naver 수신: ${cnt}종목 / ${universeCodes.length}요청`, cnt > 50 ? 'ok' : 'warn');
+        const cnt = Object.keys(merged).length;
+        Logger.log('LeadStocks', `유니버스 Naver 수신: ${cnt}종목 / 요청${allSymbols.length}개`, cnt > 50 ? 'ok' : 'warn');
         if (cnt > 50) { Cache.set(cacheKeyU, merged); naverSignals = merged; }
       }
     }
@@ -5348,8 +5356,7 @@ async function computeLeadStocks() {
       const rows = [];
       const seen = new Set();
       for (const [sym, nv] of Object.entries(naverSignals)) {
-        if (!sym.endsWith('.KS') && !sym.endsWith('.KQ')) continue;
-        const code = sym.split('.')[0];
+        const code = sym.includes('.') ? sym.split('.')[0] : sym;
         if (seen.has(code)) continue;
         seen.add(code);
         // universeMap에 없는 종목(ETF 등) 제외
@@ -5357,8 +5364,9 @@ async function computeLeadStocks() {
         const pct = Number(nv.pct);
         if (!isFinite(pct)) continue;
         const uRow = universeMap[code];
+        const correctSuffix = uRow.market === 'KOSDAQ' ? '.KQ' : '.KS';
         rows.push({
-          code, symbol: sym,
+          code, symbol: code + correctSuffix,
           name: uRow.name || (KR_SECTOR_META && KR_SECTOR_META[code] && KR_SECTOR_META[code].name) || code,
           market: uRow.market,
           pct, pct_text: nv.pctText,
