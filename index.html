@@ -2845,9 +2845,9 @@
 
   <div class="section" id="sec-sectorcal">
     <p class="section-title">SECTOR CALENDAR</p>
-    <p class="section-desc">KRX 장마감 후 5%↑ 주도주의 섹터를 날짜별로 기록 · 6개월 누적</p>
+    <p class="section-desc">오늘의 주도주 상위 10위 중 2개↑ 중복 섹터를 날짜별로 기록 · 6개월 누적</p>
     <div class="data-note">
-      <span class="badge"><strong>1차</strong> 16:00 장마감 자동 집계</span>
+      <span class="badge"><strong>기준</strong> 주도주 10위 내 2개↑ 중복 섹터</span>
       <span class="badge"><strong>2차</strong> 20:00 최종 업데이트</span>
       <span class="badge"><strong>최대</strong> 상위 3섹터</span>
       <span class="badge" style="cursor:pointer;user-select:none" onclick="window.scSaveToday()">🔄 지금 저장</span>
@@ -5724,39 +5724,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── 오늘의 주도주 데이터에서 섹터 계산 ── */
   function computeTodaySectors() {
-    // LEADSTOCKS_STATE.items 또는 EMBEDDED_KRX_DATA.leaders 에서 5%↑ 종목 추출
+    // LEADSTOCKS_STATE.items 에서 상위 10위 종목 추출
     let leaders = [];
     if (typeof LEADSTOCKS_STATE !== 'undefined' && LEADSTOCKS_STATE.items && LEADSTOCKS_STATE.items.length) {
       leaders = LEADSTOCKS_STATE.items;
     } else if (typeof EMBEDDED_KRX_DATA !== 'undefined' && EMBEDDED_KRX_DATA.leaders) {
       leaders = EMBEDDED_KRX_DATA.leaders.map(l => ({
-        code: l.code,
-        symbol: l.symbol,
-        name: l.name,
-        pct: l.pct,
-        trade_value_eok: l.trade_value_eok
+        code: l.code, symbol: l.symbol, name: l.name,
+        pct: l.pct, trade_value_eok: l.trade_value_eok
       }));
     }
-    // 5% 이상 필터
-    const rising = leaders.filter(item => Number(item.pct || 0) >= 5.0);
-    // 섹터별 집계
+
+    // 상위 10위 종목에서 섹터 추출 (순위 기준 — currentRank 또는 배열 순서)
+    const top10 = leaders.slice(0, 10);
+    const _gsFunc = window.getKrSector || (typeof getKrSector === 'function' ? getKrSector : null);
+
+    // 섹터별 { 등장횟수, 최고순위(낮을수록 좋음) } 집계
     const sectorMap = {};
-    for (const item of rising) {
-      const code = item.code || (item.symbol || '').replace(/\.(KS|KQ)$/i, '');
-      // window.getKrSector 우선 (KR_SECTOR_OVERRIDE 패치 반영)
-      const _gsFunc = window.getKrSector || (typeof getKrSector === 'function' ? getKrSector : null);
+    top10.forEach((item, idx) => {
+      const code = item.code || (item.symbol || '').replace(/\.(?:KS|KQ)$/i, '');
       const sector = _gsFunc ? _gsFunc(code) : null;
-      if (!sector || sector === 'ETF' || sector === 'ETF/스팩') continue;
-      if (!sectorMap[sector]) sectorMap[sector] = { count: 0, pctSum: 0 };
+      if (!sector || sector === 'ETF' || sector === 'ETF/스팩') return;
+      if (!sectorMap[sector]) sectorMap[sector] = { count: 0, bestRank: idx + 1 };
       sectorMap[sector].count++;
-      sectorMap[sector].pctSum += Number(item.pct || 0);
-    }
-    // 카운트 내림차순 → tie-break: 평균 등락률
-    const sorted = Object.entries(sectorMap)
-      .sort((a, b) => b[1].count - a[1].count || (b[1].pctSum/b[1].count) - (a[1].pctSum/a[1].count))
-      .map(([s]) => s)
-      .slice(0, 3); // 최대 3개
-    return sorted;
+      if (idx + 1 < sectorMap[sector].bestRank) sectorMap[sector].bestRank = idx + 1;
+    });
+
+    // 2개 이상 중복 섹터만 선정 → 최고순위 오름차순 → tie-break: count 내림차순
+    const result = Object.entries(sectorMap)
+      .filter(([, v]) => v.count >= 2)
+      .sort((a, b) => a[1].bestRank - b[1].bestRank || b[1].count - a[1].count)
+      .slice(0, 3)
+      .map(([s], i) => `${i + 1}.${s}`); // "1.바이오", "2.통신", "3.방산"
+
+    return result;
+  }
+
+  // 섹터 저장값에서 순수 섹터명 추출 ("1.바이오" → "바이오", "바이오" → "바이오")
+  function parseSectorLabel(s) {
+    return String(s || '').replace(/^\d+\./, '').trim();
   }
 
   /* ── 자동 저장 트리거 ── */
@@ -5839,9 +5845,13 @@ document.addEventListener('DOMContentLoaded', () => {
                    data-date="${ds}" onclick="window.scOpenEdit('${ds}')" title="클릭하여 섹터 입력/수정">
         <div class="day-num" style="${isToday?'color:var(--yellow);font-weight:700':''}">${d.getDate()}</div>
         <div class="day-events">
-          ${sectors.map(s => `<div class="event-item sc-sector-pill"
-              style="background:${getSectorColor(s)}28;color:${getSectorColor(s)};border:1px solid ${getSectorColor(s)}55;padding:3px 5px;font-size:9.5px;border-radius:5px;font-family:var(--sans);font-weight:500;${isLivePreview?'border-style:dashed;opacity:.75':''}"
-              >${s}${isLivePreview?' ~':isFinal?'':' ·'}</div>`).join('')}
+          ${sectors.map(s => {
+            const nm = parseSectorLabel(s);
+            const num = s.match(/^(\d+)\./) ? s.match(/^(\d+)\./)[1] : '';
+            return `<div class="event-item sc-sector-pill"
+              style="background:${getSectorColor(nm)}28;color:${getSectorColor(nm)};border:1px solid ${getSectorColor(nm)}55;padding:3px 5px;font-size:9.5px;border-radius:5px;font-family:var(--sans);font-weight:500;${isLivePreview?'border-style:dashed;opacity:.75':''}"
+              >${num?`<span style="opacity:.6;font-size:8px">${num}</span> `:''}${nm}${isLivePreview?' ~':isFinal?'':' ·'}</div>`;
+          }).join('')}
         </div>
       </div>`;
     }
@@ -5854,7 +5864,10 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const [dateStr, dayData] of Object.entries(data)) {
         if (dateStr < fmtDate(past30)) continue;
         const sectors = dayData.v2 || dayData.v1 || [];
-        for (const s of sectors) freq[s] = (freq[s] || 0) + 1;
+        for (const s of sectors) {
+          const nm = parseSectorLabel(s); // "1.바이오" → "바이오"
+          freq[nm] = (freq[nm] || 0) + 1;
+        }
       }
       const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8);
       sideList.innerHTML = sorted.length
@@ -5872,7 +5885,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.scOpenEdit = function(dateStr) {
     const data = scLoad();
     const dayData = data[dateStr] || {};
-    const cur = (dayData.v2 || dayData.v1 || []).join(', ');
+    // 저장값에서 번호 제거해서 표시 ("1.바이오" → "바이오")
+    const curRaw = dayData.v2 || dayData.v1 || [];
+    const cur = curRaw.map(s => parseSectorLabel(s)).join(', ');
     const input = prompt(`${dateStr} 주도섹터 입력 (쉼표 구분, 최대 3개)\n예: 반도체, 방산, 2차전지\n현재: ${cur || '없음'}`, cur);
     if (input === null) return;
     const sectors = input.split(',').map(s=>s.trim()).filter(Boolean).slice(0,3);
@@ -5896,7 +5911,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.scSaveToday = function() {
     const sectors = computeTodaySectors();
-    if (!sectors.length) { alert('5%↑ 종목이 없거나 섹터를 인식할 수 없습니다.'); return; }
+    if (!sectors.length) { alert('주도주 10위 내 2개↑ 중복 섹터가 없습니다.\n(장중이면 Naver 데이터 수신 후 재시도)'); return; }
     const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
     const todayStr = fmtDate(now);
     const hour = now.getHours();
@@ -5909,7 +5924,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     scSave(data);
     renderSectorCalendar();
-    alert(`저장 완료: ${sectors.join(', ')}`);
+    alert(`저장 완료: ${sectors.map(s=>parseSectorLabel(s)).join(', ')}`);
   };
 
   window.renderSectorCalendar = renderSectorCalendar;
