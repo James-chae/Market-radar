@@ -5087,10 +5087,20 @@ function makeResetData(src) {
 }
 
 // ── Static KRX 데이터 ──────────────────────────────────────────
-const STATIC_KRX_STATE = { data: null, loadedAt: 0 };
+const STATIC_KRX_STATE = { data: null, loadedAt: 0, loadedDate: '' };
 
 async function fetchStaticKrxData(force = false) {
-  if (!force && STATIC_KRX_STATE.data) return STATIC_KRX_STATE.data;
+  const todayStr = getKstDateStr(getKstNow());
+  // 날짜 바뀌면 캐시 무효화 (어제 데이터 재사용 방지)
+  if (STATIC_KRX_STATE.loadedDate && STATIC_KRX_STATE.loadedDate !== todayStr) {
+    STATIC_KRX_STATE.data = null;
+    STATIC_KRX_STATE.loadedAt = 0;
+    STATIC_KRX_STATE.loadedDate = '';
+    Logger.log('KRX/Static', `날짜 변경 감지(${STATIC_KRX_STATE.loadedDate}→${todayStr}), 캐시 초기화`, 'ok');
+  }
+  // 5분 TTL 캐시 (매번 fetch하면 너무 빈번)
+  const cacheAge = Date.now() - STATIC_KRX_STATE.loadedAt;
+  if (!force && STATIC_KRX_STATE.data && cacheAge < 300000) return STATIC_KRX_STATE.data;
 
   // 1순위: 외부 fetch (GitHub Pages 서버)
   try {
@@ -5100,6 +5110,8 @@ async function fetchStaticKrxData(force = false) {
       if (data?.by_symbol) {
         const d = shouldResetEmbeddedData(data.trade_date || '') ? makeResetData(data) : data;
         STATIC_KRX_STATE.data = d;
+        STATIC_KRX_STATE.loadedAt = Date.now();
+        STATIC_KRX_STATE.loadedDate = todayStr;
         Logger.log('KRX/Static', `외부 fetch ${d.status === 'reset' ? '리셋' : '성공'}: ${data.trade_date}`, 'ok');
         return d;
       }
@@ -5112,6 +5124,8 @@ async function fetchStaticKrxData(force = false) {
       ? makeResetData(EMBEDDED_KRX_DATA)
       : EMBEDDED_KRX_DATA;
     STATIC_KRX_STATE.data = d;
+    STATIC_KRX_STATE.loadedAt = Date.now();
+    STATIC_KRX_STATE.loadedDate = todayStr;
     Logger.log('KRX/Static', `임베드 ${d.status === 'reset' ? '리셋' : '사용'}: ${EMBEDDED_KRX_DATA.trade_date}`, 'ok');
     return d;
   }
@@ -5258,6 +5272,10 @@ function isEtfCode(code, embeddedBySymbol) {
 // ── 오늘의 주도주 계산 ─────────────────────────────────────────
 async function computeLeadStocks() {
   try {
+    // ── 진입 즉시 초기화: 이전 결과 오염 방지 ──
+    LEADSTOCKS_STATE.items = [];
+    LEADSTOCKS_STATE.rendered = false;
+
     // KR_SECTOR_META가 아직 로드 안 됐으면 먼저 로드 (이름 조회 보장)
     if (!KR_SECTOR_META_LOADED) {
       await loadKrSectorMeta().catch(() => {});
@@ -5266,7 +5284,12 @@ async function computeLeadStocks() {
     const embSrc = (typeof EMBEDDED_KRX_DATA !== 'undefined' && EMBEDDED_KRX_DATA?.by_symbol) || {};
     const inSession = isMarketSession();
     // 장중: EMBEDDED 400개 전체를 Naver에 요청 (탭 버튼 60개 한계 극복)
-    let naverSignals = (window._naverKRSignals && Date.now() - window._naverKRSignalsAt < 600000)
+    // 장마감 후에는 Naver 실시간 캐시 무효화 (장중 데이터 오염 방지)
+    if (!inSession && window._naverKRSignals) {
+      window._naverKRSignals = null;
+      window._naverKRSignalsAt = 0;
+    }
+    let naverSignals = (inSession && window._naverKRSignals && Date.now() - window._naverKRSignalsAt < 600000)
       ? { ...window._naverKRSignals } : {};
 
     if (inSession && Object.keys(embSrc).length >= 100) {
