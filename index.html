@@ -4829,7 +4829,6 @@ async function loadKrSectorMeta() {
       KR_SECTOR_META_LOADED = true;
       window._KSM_EXTERNAL_LOADED = true;
       if (typeof _rebuildNameMapFromMeta === 'function') _rebuildNameMapFromMeta();
-      console.log('[KrSectorMeta] 외부 파일 로드 완료:', Object.keys(data).length, '개 (인라인 대체됨)');
       return true;
     }
   } catch(e) {
@@ -4858,7 +4857,6 @@ function _initKsmFromInline() {
   if (typeof KR_SECTOR_META !== 'undefined') {
     Object.assign(KR_SECTOR_META, out);
     KR_SECTOR_META_LOADED = true;
-    console.log('[KrSectorMeta] 인라인 폴백 초기화:', Object.keys(out).length, '개');
   }
 }
 // 즉시 인라인으로 초기화 (외부 파일 로드 전 폴백 보장)
@@ -5522,12 +5520,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
 (() => {
-  const META_URL = 'kr_sector_meta.json';
-  const MAP_URL = 'kr_sector_map.json';
   const SCHEDULE_ADMIN_PASSWORD = 'radar2026';
   const MANUAL_KEY = 'market_radar_manual_events_v2';
-  let sectorMetaFile = null;
-  let sectorMapFile = null;
   let sectorReady = false;
   let scheduleMonthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   let scheduleAdminUnlocked = false;
