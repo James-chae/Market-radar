@@ -5039,13 +5039,28 @@ function isMarketSession() {
 }
 
 // embedded data를 리셋해야 하는지 (오늘 것이 아닐 때 07:50 이후)
+// 오늘이 주말이면 직전 거래일 날짜 반환, 평일이면 오늘 날짜
+function getExpectedTradeDate() {
+  const now = getKstNow();
+  const day = now.getDay(); // 0=일,6=토
+  if (day === 0) { // 일요일 → 금요일
+    const fri = new Date(now); fri.setDate(fri.getDate() - 2);
+    return getKstDateStr(fri);
+  }
+  if (day === 6) { // 토요일 → 금요일
+    const fri = new Date(now); fri.setDate(fri.getDate() - 1);
+    return getKstDateStr(fri);
+  }
+  return getKstDateStr(now); // 평일 → 오늘
+}
+
 function shouldResetEmbeddedData(tradeDate) {
   const now = getKstNow();
-  if (isWeekend(now)) return false;
-  const min = getKstMinutes(now);
-  // 장중(07:50~20:20)에만 리셋 - 장마감(20:20) 이후~익일 07:50은 이전 거래일 데이터 유지
-  const inSession = min >= 7*60+50 && min < 20*60+20;
-  return inSession && tradeDate !== getKstDateStr(now);
+  if (isWeekend(now)) return false; // 주말: 직전 거래일 데이터 유지
+  const expected = getKstDateStr(now); // 평일이면 오늘 날짜가 기대값
+  // 날짜가 다르면 무조건 리셋 (장중이든 장마감이든)
+  // → 장마감 후에도 어제 데이터가 표시되는 버그 방지
+  return tradeDate !== expected;
 }
 
 // embedded data 수치만 0으로 초기화 (종목명/코드는 유지)
@@ -5357,6 +5372,19 @@ async function computeLeadStocks() {
 
     // ── 장마감 후: 거래대금30 ∩ 상승률50 (정확한 데이터) ────────
     if (!inSession && staticData?.by_symbol && Object.keys(staticData.by_symbol).length >= 100) {
+      // 날짜 유효성 검사: 오늘(평일) 또는 직전 거래일(주말) 데이터인지 확인
+      const expectedDate = getExpectedTradeDate();
+      const dataDate = staticData.trade_date || '';
+      if (dataDate !== expectedDate) {
+        // 날짜 불일치: 오래된 데이터 → 표시 금지
+        Logger.log('LeadStocks', `장마감 데이터 날짜 불일치: ${dataDate} ≠ ${expectedDate} → 표시 생략`, 'warn');
+        LEADSTOCKS_STATE.items = [];
+        LEADSTOCKS_STATE.sourceLabel = `데이터 갱신 대기 (${dataDate} 기준)`;
+        LEADSTOCKS_STATE.tradeDate = dataDate;
+        LEADSTOCKS_STATE.computedAt = new Date();
+        LEADSTOCKS_STATE.rendered = false;
+        return;
+      }
       const rows = Object.values(staticData.by_symbol).filter(row => {
         if (!row || !isFinite(Number(row.pct)) || !isFinite(Number(row.trade_value_eok))) return false;
         if (Number(row.trade_value_eok) === 0) return false; // 리셋 데이터 제외
@@ -5453,7 +5481,16 @@ function renderLeadStocks() {
   `;
 
   if (!LEADSTOCKS_STATE.items.length) {
-    gridEl.innerHTML = '<div class="leadstocks-empty">조건을 만족한 종목이 아직 없습니다.</div>';
+    const sl = LEADSTOCKS_STATE.sourceLabel || '';
+    let emptyMsg = '조건을 만족한 종목이 아직 없습니다.';
+    if (sl.includes('갱신 대기')) {
+      const td = LEADSTOCKS_STATE.tradeDate || '';
+      const dateStr = td ? `${td.slice(0,4)}.${td.slice(4,6)}.${td.slice(6,8)}` : '';
+      emptyMsg = `오늘의 주도주 데이터를 불러오는 중입니다.<br><span style="font-size:0.85em;opacity:0.7">최근 갱신: ${dateStr || '-'} | 장 마감 후 자동 갱신됩니다</span>`;
+    } else if (sl.includes('데이터 없음')) {
+      emptyMsg = '오늘의 주도주 데이터가 없습니다.<br><span style="font-size:0.85em;opacity:0.7">장 마감(20:20) 이후 표시됩니다</span>';
+    }
+    gridEl.innerHTML = `<div class="leadstocks-empty">${emptyMsg}</div>`;
     LEADSTOCKS_STATE.rendered = true;
     return;
   }
