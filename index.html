@@ -2887,6 +2887,7 @@
     </div>
   </div>
 
+  <div class="section" id="sec-schedule">
   <!-- ══════════════ 11. 일정 ══════════════ -->
     <!-- [일정 선정조건]
          - 기준시간: 미국 현지시간(ET)
@@ -2968,6 +2969,8 @@
       <div class="kr-earnings-list" id="kr-earnings-list"></div>
     </div>
   </div>
+
+  </div><!-- /sec-schedule -->
 
 </main>
 
@@ -5256,9 +5259,10 @@ async function computeLeadStocks() {
         const pct = parseFloat((nv.pctText||'0').replace('%',''));
         if (!isFinite(pct)) continue;
         const embRow = embSrc[sym] || embSrc[code+'.KS'] || embSrc[code+'.KQ'] || {};
+        const metaRow = (KR_SECTOR_META && KR_SECTOR_META[code]) || {};
         rows.push({
           code, symbol: sym,
-          name: embRow.name || code,
+          name: embRow.name || metaRow.name || code,
           market: embRow.market || (sym.endsWith('.KQ') ? 'KOSDAQ' : 'KOSPI'),
           pct, pct_text: nv.pctText,
           amountEok: Number(nv.amountEok || 0),
@@ -5325,7 +5329,7 @@ async function computeLeadStocks() {
           .filter(r => r.cPass && r.ePass && Number(r.pct) > 0)
           .sort((a,b) => Number(b.trade_value_eok)-Number(a.trade_value_eok) || Number(b.pct)-Number(a.pct))
           .map(r => ({
-            code: r.code, symbol: r.symbol, name: r.name,
+            code: r.code, symbol: r.symbol, name: r.name || (KR_SECTOR_META && KR_SECTOR_META[r.code] && KR_SECTOR_META[r.code].name) || r.code,
             pct: Number(r.pct),
             pctText: r.pct_text || `${Number(r.pct)>0?'+':''}${Number(r.pct).toFixed(1)}%`,
             currentAmountEok: Number(r.trade_value_eok),
@@ -5712,7 +5716,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const sectorMap = {};
     for (const item of rising) {
       const code = item.code || (item.symbol || '').replace(/\.(KS|KQ)$/i, '');
-      const sector = (typeof getKrSector === 'function') ? getKrSector(code) : null;
+      // window.getKrSector 우선 (KR_SECTOR_OVERRIDE 패치 반영)
+      const _gsFunc = window.getKrSector || (typeof getKrSector === 'function' ? getKrSector : null);
+      const sector = _gsFunc ? _gsFunc(code) : null;
       if (!sector || sector === 'ETF' || sector === 'ETF/스팩') continue;
       if (!sectorMap[sector]) sectorMap[sector] = { count: 0, pctSum: 0 };
       sectorMap[sector].count++;
@@ -5773,8 +5779,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const sideList = document.getElementById('sc-side-list');
     if (!grid || !title) return;
 
-    autoSaveTodaySectors();
-
     const data = scLoad();
     const year = scMonthCursor.getFullYear();
     const month = scMonthCursor.getMonth();
@@ -5794,8 +5798,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const other = d.getMonth() !== month;
       const isToday = ds === todayStr;
       const dayData = data[ds] || {};
-      const sectors = dayData.v2 || dayData.v1 || [];
+      let sectors = dayData.v2 || dayData.v1 || [];
       const isFinal = !!dayData.v2;
+      // 오늘 날짜이고 저장된 섹터가 없으면 실시간 계산값 미리보기 표시 (저장 안 함)
+      const isLivePreview = isToday && !sectors.length;
+      if (isLivePreview) {
+        try { sectors = computeTodaySectors(); } catch(e) { sectors = []; }
+      }
       const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
       html += `<div class="day-cell ${other?'other-month':''} ${isToday?'today':''}"
@@ -5804,8 +5813,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="day-num" style="${isToday?'color:var(--yellow);font-weight:700':''}">${d.getDate()}</div>
         <div class="day-events">
           ${sectors.map(s => `<div class="event-item sc-sector-pill"
-              style="background:${getSectorColor(s)}28;color:${getSectorColor(s)};border:1px solid ${getSectorColor(s)}55;padding:3px 5px;font-size:9.5px;border-radius:5px;font-family:var(--sans);font-weight:500;"
-              >${s}${isFinal?'':' ·'}</div>`).join('')}
+              style="background:${getSectorColor(s)}28;color:${getSectorColor(s)};border:1px solid ${getSectorColor(s)}55;padding:3px 5px;font-size:9.5px;border-radius:5px;font-family:var(--sans);font-weight:500;${isLivePreview?'border-style:dashed;opacity:.75':''}"
+              >${s}${isLivePreview?' ~':isFinal?'':' ·'}</div>`).join('')}
         </div>
       </div>`;
     }
@@ -5877,6 +5886,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.renderSectorCalendar = renderSectorCalendar;
+
+  // ── 자동저장 전용 타이머 (렌더와 분리) ──
+  // 5분마다 체크 → 16시·20시 조건에 맞으면 저장 (렌더 시마다 덮어쓰기 방지)
+  setInterval(() => { autoSaveTodaySectors(); }, 5 * 60 * 1000);
 
   // DOMContentLoaded 후 초기화
   function initSectorCal() {
