@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-04-05T23:39:24.348350+09:00",
-  "trade_date": "20260405",
-  "trade_date_display": "2026-04-05",
+  "trade_date": "20260409",
+  "trade_date_display": "2026-04-09",
   "source": "Naver KRX+NXT table 기준",
   "universe_name": "KOSPI200 + KOSDAQ200 by market cap",
   "counts": {
