@@ -3200,12 +3200,40 @@ function getNaverProxyUrls(url) {
 }
 
 async function fetchJSONViaProxies(urls, src, timeout=12000) {
+  // 0순위: Naver API 직접 호출 시도 (프록시 없이, CORS 허용 시)
+  if (src.startsWith('NaverSignal') || src.startsWith('NaverRealtime')) {
+    const directUrl = urls[0] ? decodeURIComponent(urls[0].replace(/^https:\/\/[^?]+\?url=/,'')) : null;
+    if (directUrl && directUrl.includes('polling.finance.naver.com')) {
+      try {
+        const r = await fetchWithTimeout(directUrl, Math.min(timeout, 5000));
+        if (r.ok) {
+          const data = await r.json();
+          if (data?.result?.areas) {
+            Logger.log(src, '직접 Naver 성공', 'ok');
+            return data;
+          }
+        }
+      } catch (_) { /* CORS 차단 시 프록시로 진행 */ }
+    }
+  }
   for (let i = 0; i < urls.length; i++) {
     try {
       const r = await fetchWithTimeout(urls[i], timeout);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const raw = await r.json();
-      const data = raw && raw.contents ? JSON.parse(raw.contents) : raw;
+      // 응답 형식 정규화: allorigins={contents:'...'}, 배열=[{...}], 직접={...}
+      let data;
+      if (raw && typeof raw.contents === 'string') {
+        data = JSON.parse(raw.contents);  // allorigins 형식
+      } else if (Array.isArray(raw)) {
+        data = raw[0];                    // 배열로 감싸진 경우
+      } else {
+        data = raw;                       // 직접 JSON
+      }
+      // Naver 응답 유효성 검사
+      if (src.startsWith('NaverSignal') || src.startsWith('NaverRealtime')) {
+        if (!data?.result?.areas) throw new Error('Naver 응답 구조 불일치');
+      }
       Logger.log(src, `프록시${i + 1} 성공`, 'ok');
       return data;
     } catch (e) {
@@ -5191,7 +5219,7 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
 
   // 60개씩 배치 (심볼 수가 많을 경우 대비)
   const chunks = [];
-  for (let i = 0; i < fullSymbols.length; i += 60) chunks.push(fullSymbols.slice(i, i + 60));
+  for (let i = 0; i < fullSymbols.length; i += 30) chunks.push(fullSymbols.slice(i, i + 30));
 
   const out = {};
   for (const chunk of chunks) {
@@ -5324,12 +5352,12 @@ async function computeLeadStocks() {
         naverSignals = cachedU;
         Logger.log('LeadStocks', `유니버스 캐시: ${Object.keys(cachedU).length / 2}종목`, 'ok');
       } else {
-        // 2861개를 .KS/.KQ 심볼로 변환 후 60개씩 청크 분할
+        // 2861개를 .KS/.KQ 심볼로 변환 후 30개씩 청크 분할 (URL 길이 제한)
         const allSymbols = universeCodes.map(c =>
           c + (universeMap[c].market === 'KOSDAQ' ? '.KQ' : '.KS')
         );
         const chunks = [];
-        for (let i = 0; i < allSymbols.length; i += 60) chunks.push(allSymbols.slice(i, i + 60));
+        for (let i = 0; i < allSymbols.length; i += 30) chunks.push(allSymbols.slice(i, i + 30));
         Logger.log('LeadStocks', `Naver 요청: ${allSymbols.length}종목 × ${chunks.length}배치`, 'ok');
 
         const results = await Promise.allSettled(chunks.map(chunk => {
