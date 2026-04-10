@@ -3199,48 +3199,67 @@ function getNaverProxyUrls(url) {
   ];
 }
 
-async function fetchJSONViaProxies(urls, src, timeout=12000) {
-  // 0순위: Naver API 직접 호출 시도 (프록시 없이, CORS 허용 시)
-  if (src.startsWith('NaverSignal') || src.startsWith('NaverRealtime')) {
-    const directUrl = urls[0] ? decodeURIComponent(urls[0].replace(/^https:\/\/[^?]+\?url=/,'')) : null;
-    if (directUrl && directUrl.includes('polling.finance.naver.com')) {
-      try {
-        const r = await fetchWithTimeout(directUrl, Math.min(timeout, 5000));
-        if (r.ok) {
-          const data = await r.json();
-          if (data?.result?.areas) {
-            Logger.log(src, '직접 Naver 성공', 'ok');
-            return data;
-          }
-        }
-      } catch (_) { /* CORS 차단 시 프록시로 진행 */ }
+async function fetchNaverRealtimeDirect(naverUrl, src, timeout=8000) {
+  // 방법1: 직접 호출 (GitHub Pages → Naver, CORS 허용 확인)
+  try {
+    const r = await fetchWithTimeout(naverUrl, timeout);
+    if (r.ok) {
+      const data = await r.json();
+      if (data?.result?.areas) {
+        Logger.log(src, '직접 호출 성공', 'ok');
+        return data;
+      }
     }
-  }
-  for (let i = 0; i < urls.length; i++) {
-    try {
-      const r = await fetchWithTimeout(urls[i], timeout);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  } catch(_) {}
+
+  // 방법2: allorigins (contents 래핑)
+  try {
+    const url = `https://api.allorigins.win/get?url=${encodeURIComponent(naverUrl)}`;
+    const r = await fetchWithTimeout(url, timeout);
+    if (r.ok) {
       const raw = await r.json();
-      // 응답 형식 정규화: allorigins={contents:'...'}, 배열=[{...}], 직접={...}
-      let data;
-      if (raw && typeof raw.contents === 'string') {
-        data = JSON.parse(raw.contents);  // allorigins 형식
-      } else if (Array.isArray(raw)) {
-        data = raw[0];                    // 배열로 감싸진 경우
-      } else {
-        data = raw;                       // 직접 JSON
+      const data = raw?.contents ? JSON.parse(raw.contents) : raw;
+      if (data?.result?.areas) {
+        Logger.log(src, 'allorigins 성공', 'ok');
+        return data;
       }
-      // Naver 응답 유효성 검사
-      if (src.startsWith('NaverSignal') || src.startsWith('NaverRealtime')) {
-        if (!data?.result?.areas) throw new Error('Naver 응답 구조 불일치');
-      }
-      Logger.log(src, `프록시${i + 1} 성공`, 'ok');
-      return data;
-    } catch (e) {
-      const isLast = i === urls.length - 1;
-      Logger.log(src, `프록시${i + 1} 실패: ${e.message}`, isLast ? 'error' : 'warn');
     }
-  }
+  } catch(_) {}
+
+  // 방법3: corsproxy.io
+  try {
+    const url = `https://corsproxy.io/?url=${encodeURIComponent(naverUrl)}`;
+    const r = await fetchWithTimeout(url, timeout);
+    if (r.ok) {
+      const data = await r.json();
+      if (data?.result?.areas) {
+        Logger.log(src, 'corsproxy 성공', 'ok');
+        return data;
+      }
+    }
+  } catch(_) {}
+
+  // 방법4: codetabs (응답 구조 모든 경우 처리)
+  try {
+    const url = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(naverUrl)}`;
+    const r = await fetchWithTimeout(url, timeout);
+    if (r.ok) {
+      const raw = await r.json();
+      // codetabs는 직접 JSON, 배열, 또는 contents 등 다양
+      let data = Array.isArray(raw) ? raw[0] : (raw?.contents ? JSON.parse(raw.contents) : raw);
+      if (data?.result?.areas) {
+        Logger.log(src, 'codetabs 성공', 'ok');
+        return data;
+      }
+      // codetabs가 datas 배열만 반환하는 경우
+      if (Array.isArray(data)) {
+        Logger.log(src, 'codetabs(배열) 성공', 'ok');
+        return { result: { areas: [{ datas: data }] } };
+      }
+    }
+  } catch(_) {}
+
+  Logger.log(src, '모든 방법 실패', 'error');
   return null;
 }
 
@@ -5224,7 +5243,7 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
   const out = {};
   for (const chunk of chunks) {
     const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
-    const data = await fetchJSONViaProxies(getNaverProxyUrls(baseUrl), 'NaverStockSignals', 8000);
+    const data = await fetchNaverRealtimeDirect(baseUrl, 'NaverStockSignals', 8000);
     const rows = data?.result?.areas?.[0]?.datas || [];
     rows.forEach(item => {
       const sym = String(item.cd || '').trim(); // 예: '005930.KS'
@@ -5361,9 +5380,9 @@ async function computeLeadStocks() {
         Logger.log('LeadStocks', `Naver 요청: ${allSymbols.length}종목 × ${chunks.length}배치`, 'ok');
 
         const results = await Promise.allSettled(chunks.map(chunk => {
-          // 올바른 Naver API 형식: SERVICE_ITEM:005930.KS,000660.KS,...
+          // 직접 호출 → 실패 시 프록시 순차 시도
           const url = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
-          return fetchJSONViaProxies(getNaverProxyUrls(url), 'NaverSignalsU', 8000);
+          return fetchNaverRealtimeDirect(url, 'NaverSignalsU', 8000);
         }));
         const merged = {};
         results.forEach(r => {
