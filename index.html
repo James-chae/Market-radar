@@ -3200,9 +3200,9 @@ function getNaverProxyUrls(url) {
 }
 
 async function fetchNaverRealtimeDirect(naverUrl, src, timeout=8000) {
-  // 방법1: 직접 호출 (GitHub Pages → Naver, CORS 허용 확인)
+  // 방법1: 직접 호출 (CORS 허용 시)
   try {
-    const r = await fetchWithTimeout(naverUrl, timeout);
+    const r = await fetchWithTimeout(naverUrl, Math.min(timeout, 4000));
     if (r.ok) {
       const data = await r.json();
       if (data?.result?.areas) {
@@ -3212,7 +3212,24 @@ async function fetchNaverRealtimeDirect(naverUrl, src, timeout=8000) {
     }
   } catch(_) {}
 
-  // 방법2: allorigins (contents 래핑)
+  // 방법2: codetabs (현재 가장 안정적)
+  try {
+    const url = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(naverUrl)}`;
+    const r = await fetchWithTimeout(url, timeout);
+    if (r.ok) {
+      const raw = await r.json();
+      let data = Array.isArray(raw) ? raw[0] : (raw?.contents ? JSON.parse(raw.contents) : raw);
+      if (data?.result?.areas) {
+        const cnt = data.result.areas[0]?.datas?.length || 0;
+        Logger.log(src, `codetabs 성공 datas:${cnt}`, 'ok');
+        return data;
+      }
+      if (Array.isArray(data)) return { result: { areas: [{ datas: data }] } };
+      Logger.log(src, `codetabs 구조불일치: ${JSON.stringify(raw).slice(0,80)}`, 'warn');
+    }
+  } catch(e) { Logger.log(src, `codetabs오류: ${e.message}`, 'warn'); }
+
+  // 방법3: allorigins
   try {
     const url = `https://api.allorigins.win/get?url=${encodeURIComponent(naverUrl)}`;
     const r = await fetchWithTimeout(url, timeout);
@@ -3226,7 +3243,7 @@ async function fetchNaverRealtimeDirect(naverUrl, src, timeout=8000) {
     }
   } catch(_) {}
 
-  // 방법3: corsproxy.io
+  // 방법4: corsproxy.io
   try {
     const url = `https://corsproxy.io/?url=${encodeURIComponent(naverUrl)}`;
     const r = await fetchWithTimeout(url, timeout);
@@ -3238,32 +3255,6 @@ async function fetchNaverRealtimeDirect(naverUrl, src, timeout=8000) {
       }
     }
   } catch(_) {}
-
-  // 방법4: codetabs (응답 구조 모든 경우 처리)
-  try {
-    const url = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(naverUrl)}`;
-    const r = await fetchWithTimeout(url, timeout);
-    if (r.ok) {
-      const raw = await r.json();
-      // ── 디버그: 실제 응답 구조 로그 ──
-      const rawKeys = Array.isArray(raw) ? `배열[${raw.length}]` : (raw ? Object.keys(raw).slice(0,5).join(',') : 'null');
-      Logger.log(src, `codetabs raw구조: ${rawKeys}`, 'ok');
-      // codetabs는 직접 JSON, 배열, 또는 contents 등 다양
-      let data = Array.isArray(raw) ? raw[0] : (raw?.contents ? JSON.parse(raw.contents) : raw);
-      if (data?.result?.areas) {
-        const cnt = data.result.areas[0]?.datas?.length || 0;
-        Logger.log(src, `codetabs 성공 datas:${cnt}`, 'ok');
-        return data;
-      }
-      // codetabs가 datas 배열만 반환하는 경우
-      if (Array.isArray(data)) {
-        Logger.log(src, `codetabs(배열) 성공 len:${data.length}`, 'ok');
-        return { result: { areas: [{ datas: data }] } };
-      }
-      // 응답은 있지만 구조가 다름 - 더 깊이 탐색
-      Logger.log(src, `codetabs 구조불일치: ${JSON.stringify(raw).slice(0,100)}`, 'warn');
-    }
-  } catch(e) { Logger.log(src, `codetabs오류: ${e.message}`, 'warn'); }
 
   Logger.log(src, '모든 방법 실패', 'error');
   return null;
@@ -4745,8 +4736,12 @@ async function updateUSStockSignals() {
 
 // 거래대금(억원) = 누적거래량(aq, 주) × 현재가(nv, 원) / 1억
 function calcNaverAmountEok(item) {
+  // tv = 누적거래대금(원) 직접 제공 시 사용 (가장 정확)
+  const tv = Number(item.tv);
+  if (isFinite(tv) && tv > 0) return tv / 100000000;
+  // tv 없으면 거래량(aq) × 현재가(cp) 계산
   const vol = Number(item.aq);
-  const price = Number(item.nv);
+  const price = Number(item.cp); // cp = 현재가 (nv 아님)
   if (!isFinite(vol) || !isFinite(price) || vol <= 0 || price <= 0) return 0;
   return (vol * price) / 100000000;
 }
@@ -5403,7 +5398,7 @@ async function computeLeadStocks() {
           });
         });
         const cnt = Object.keys(merged).length;
-        Logger.log('LeadStocks', `유니버스 Naver 수신: ${cnt}종목 / 요청${allSymbols.length}개`, cnt > 50 ? 'ok' : 'warn');
+        Logger.log('LeadStocks', `유니버스 Naver 수신: ${cnt}종목 / 요청${universeCodes.length}개`, cnt > 50 ? 'ok' : 'warn');
         if (cnt > 50) { Cache.set(cacheKeyU, merged); naverSignals = merged; }
       }
     }
