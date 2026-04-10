@@ -3245,19 +3245,25 @@ async function fetchNaverRealtimeDirect(naverUrl, src, timeout=8000) {
     const r = await fetchWithTimeout(url, timeout);
     if (r.ok) {
       const raw = await r.json();
+      // ── 디버그: 실제 응답 구조 로그 ──
+      const rawKeys = Array.isArray(raw) ? `배열[${raw.length}]` : (raw ? Object.keys(raw).slice(0,5).join(',') : 'null');
+      Logger.log(src, `codetabs raw구조: ${rawKeys}`, 'ok');
       // codetabs는 직접 JSON, 배열, 또는 contents 등 다양
       let data = Array.isArray(raw) ? raw[0] : (raw?.contents ? JSON.parse(raw.contents) : raw);
       if (data?.result?.areas) {
-        Logger.log(src, 'codetabs 성공', 'ok');
+        const cnt = data.result.areas[0]?.datas?.length || 0;
+        Logger.log(src, `codetabs 성공 datas:${cnt}`, 'ok');
         return data;
       }
       // codetabs가 datas 배열만 반환하는 경우
       if (Array.isArray(data)) {
-        Logger.log(src, 'codetabs(배열) 성공', 'ok');
+        Logger.log(src, `codetabs(배열) 성공 len:${data.length}`, 'ok');
         return { result: { areas: [{ datas: data }] } };
       }
+      // 응답은 있지만 구조가 다름 - 더 깊이 탐색
+      Logger.log(src, `codetabs 구조불일치: ${JSON.stringify(raw).slice(0,100)}`, 'warn');
     }
-  } catch(_) {}
+  } catch(e) { Logger.log(src, `codetabs오류: ${e.message}`, 'warn'); }
 
   Logger.log(src, '모든 방법 실패', 'error');
   return null;
@@ -5229,28 +5235,27 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
   });
   if (!Object.keys(codeToSuffix).length) return {};
 
-  // ✅ 핵심 수정: 코드만 보내는 게 아니라 005930.KS 형식으로 전체 심볼 전송
-  const fullSymbols = Object.keys(codeToSuffix).map(c => c + codeToSuffix[c]);
+  // Naver API는 코드만 받음 (005930, 000660, ...) - .KS/.KQ 없음
+  const codes = Object.keys(codeToSuffix);
 
-  const cacheKey = 'naver_kr_signals_' + getKstDateStr(getKstNow()) + '_' + fullSymbols.length;
+  const cacheKey = 'naver_kr_signals_' + getKstDateStr(getKstNow()) + '_' + codes.length;
   const cached = Cache.get(cacheKey, 270000);
   if (cached) { Logger.log('NaverStockSignals', `캐시 히트: ${Object.keys(cached).length}건`, 'ok'); return cached; }
 
-  // 60개씩 배치 (심볼 수가 많을 경우 대비)
+  // 30개씩 배치
   const chunks = [];
-  for (let i = 0; i < fullSymbols.length; i += 30) chunks.push(fullSymbols.slice(i, i + 30));
+  for (let i = 0; i < codes.length; i += 30) chunks.push(codes.slice(i, i + 30));
 
   const out = {};
   for (const chunk of chunks) {
+    // 코드만 전송 (suffix 없음)
     const baseUrl = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
     const data = await fetchNaverRealtimeDirect(baseUrl, 'NaverStockSignals', 8000);
     const rows = data?.result?.areas?.[0]?.datas || [];
     rows.forEach(item => {
-      const sym = String(item.cd || '').trim(); // 예: '005930.KS'
-      if (!sym) return;
-      const code = sym.split('.')[0];
+      const code = String(item.cd || '').trim(); // '005930' (suffix 없음)
       const suffix = codeToSuffix[code];
-      if (!suffix) return;
+      if (!suffix) return; // 요청하지 않은 코드 무시
       const pct = parseNaverRealtimeSignedPct(item);
       if (!isFinite(pct)) return;
       const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
@@ -5260,7 +5265,7 @@ async function fetchNaverKRStockSignalsDetailed(symbols) {
       out[code + suffix] = { state, pctText, amountEok: amountEok ?? 0, amountText, pct };
     });
   }
-  Logger.log('NaverStockSignals', `결과: ${Object.keys(out).length}건 / 요청: ${fullSymbols.length}개`, Object.keys(out).length > 0 ? 'ok' : 'warn');
+  Logger.log('NaverStockSignals', `결과: ${Object.keys(out).length}건 / 요청: ${codes.length}개`, Object.keys(out).length > 0 ? 'ok' : 'warn');
   if (Object.keys(out).length > 0) Cache.set(cacheKey, out);
   return out;
 }
@@ -5371,16 +5376,13 @@ async function computeLeadStocks() {
         naverSignals = cachedU;
         Logger.log('LeadStocks', `유니버스 캐시: ${Object.keys(cachedU).length / 2}종목`, 'ok');
       } else {
-        // 2861개를 .KS/.KQ 심볼로 변환 후 30개씩 청크 분할 (URL 길이 제한)
-        const allSymbols = universeCodes.map(c =>
-          c + (universeMap[c].market === 'KOSDAQ' ? '.KQ' : '.KS')
-        );
+        // 2861개 코드만 (Naver API는 .KS/.KQ 없이 코드만 받음)
         const chunks = [];
-        for (let i = 0; i < allSymbols.length; i += 30) chunks.push(allSymbols.slice(i, i + 30));
-        Logger.log('LeadStocks', `Naver 요청: ${allSymbols.length}종목 × ${chunks.length}배치`, 'ok');
+        for (let i = 0; i < universeCodes.length; i += 30) chunks.push(universeCodes.slice(i, i + 30));
+        Logger.log('LeadStocks', `Naver 요청: ${universeCodes.length}종목 × ${chunks.length}배치`, 'ok');
 
         const results = await Promise.allSettled(chunks.map(chunk => {
-          // 직접 호출 → 실패 시 프록시 순차 시도
+          // Naver API: 코드만 전송 (005930, 000660, ...) - suffix 없음
           const url = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
           return fetchNaverRealtimeDirect(url, 'NaverSignalsU', 8000);
         }));
@@ -5388,15 +5390,15 @@ async function computeLeadStocks() {
         results.forEach(r => {
           if (r.status !== 'fulfilled' || !r.value) return;
           (r.value?.result?.areas?.[0]?.datas || []).forEach(item => {
-            const sym = String(item.cd || '').trim(); // 예: '005930.KS'
-            if (!sym) return;
-            const code = sym.split('.')[0];
+            const code = String(item.cd || '').trim(); // '005930' (suffix 없음)
             const pct = parseNaverRealtimeSignedPct(item);
-            if (!isFinite(pct)) return;
+            if (!code || !isFinite(pct)) return;
+            if (!universeMap[code]) return; // 유니버스에 없는 종목 제외
             const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
             const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
             const amountEok = calcNaverAmountEok(item);
-            const suffix = sym.endsWith('.KQ') ? '.KQ' : '.KS';
+            // universeMap의 market으로 정확한 suffix 결정
+            const suffix = universeMap[code].market === 'KOSDAQ' ? '.KQ' : '.KS';
             merged[code + suffix] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
           });
         });
