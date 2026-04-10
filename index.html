@@ -1385,6 +1385,18 @@
   /* ── 주도섹터 달력: day-cell 클릭 가능 표시 ── */
   #sec-sectorcal .day-cell { cursor:pointer; }
   #sec-sectorcal .day-cell:hover { background:rgba(255,255,255,.055); border-color:var(--border2); }
+  #sec-sectorcal .day-num { font-size:13px; color:var(--text1); font-weight:600; }
+  #sec-sectorcal .sc-sector-pill {
+    font-size:11px !important;
+    font-weight:600 !important;
+    padding:3px 7px !important;
+    letter-spacing:0.2px;
+    line-height:1.4;
+  }
+  @media (max-width:600px) {
+    #sec-sectorcal .sc-sector-pill { font-size:10px !important; padding:2px 5px !important; }
+    #sec-sectorcal .day-num { font-size:12px; }
+  }
 
   .schedule-week-box {
     margin: 0 0 14px;
@@ -1425,9 +1437,17 @@
     font-size: 11px;
     color: var(--text3);
   }
+  /* 섹터 빈도 보드 전용 — flexbox 레이아웃 */
+  #sc-side-list .schedule-week-item {
+    display: flex;
+    align-items: center;
+    grid-template-columns: unset;
+    gap: 0;
+  }
   @media (max-width: 600px) {
     .schedule-week-title { font-size: 16px; }
     .schedule-week-item { grid-template-columns: 56px 1fr; font-size: 10px; }
+    #sc-side-list .schedule-week-item { grid-template-columns: unset; }
   }
 
 
@@ -1689,20 +1709,14 @@
   }
   .lead-row:last-child { border-bottom: none; padding-bottom: 2px; }
   .lead-rank {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text3);
-    width: 26px;
-    flex-shrink: 0;
-    text-align: right;
-    margin-right: 10px;
+    display: none;
   }
   .lead-name {
-    font-size: 13px;
-    color: var(--text1);
+    font-size: 15px;
+    color: #e8eaf0;
     font-weight: 600;
     min-width: 90px;
-    max-width: 120px;
+    max-width: 130px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1711,9 +1725,9 @@
   }
   .lead-pct {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--yellow);
+    color: #ff7b7b;
     width: 60px;
     flex-shrink: 0;
     text-align: right;
@@ -1722,17 +1736,17 @@
   .lead-pct.down { color: #4A9EFF; }
   .lead-amt {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
-    color: var(--yellow);
-    width: 72px;
+    color: #ffd166;
+    width: 80px;
     flex-shrink: 0;
     text-align: right;
     margin-right: 14px;
   }
   .lead-sector {
     font-size: 13px;
-    color: #4caf7d;
+    color: #5de8a0;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -1742,10 +1756,10 @@
   }
   /* 모바일: 종목명 너비 줄이고 나머지 컬럼 딱 맞게 */
   @media (max-width: 600px) {
-    .lead-rank   { font-size: 13px; width: 22px; margin-right: 8px; }
-    .lead-name   { font-size: 13px; min-width: 72px; max-width: 88px; margin-right: 8px; }
-    .lead-pct    { font-size: 13px; width: 52px; margin-right: 8px; }
-    .lead-amt    { font-size: 13px; width: 58px; margin-right: 8px; }
+    .lead-rank   { display: none; }
+    .lead-name   { font-size: 14px; min-width: 72px; max-width: 88px; margin-right: 8px; }
+    .lead-pct    { font-size: 14px; width: 52px; margin-right: 8px; }
+    .lead-amt    { font-size: 13px; width: 62px; margin-right: 8px; }
     .lead-sector { font-size: 13px; }
   }
 
@@ -2845,9 +2859,9 @@
 
   <div class="section" id="sec-sectorcal">
     <p class="section-title">SECTOR CALENDAR</p>
-    <p class="section-desc">오늘의 주도주 상위 10위 중 2개↑ 중복 섹터를 날짜별로 기록 · 6개월 누적</p>
+    <p class="section-desc">오늘의 주도주 상위 15위 종목 기반 주도섹터를 날짜별로 기록 · 6개월 누적</p>
     <div class="data-note">
-      <span class="badge"><strong>기준</strong> 주도주 10위 내 2개↑ 중복 섹터</span>
+      <span class="badge"><strong>기준</strong> 주도주 15위 내 상위 섹터</span>
       <span class="badge"><strong>2차</strong> 20:00 최종 업데이트</span>
       <span class="badge"><strong>최대</strong> 상위 3섹터</span>
       <span class="badge" style="cursor:pointer;user-select:none" onclick="window.scSaveToday()">🔄 지금 저장</span>
@@ -4736,12 +4750,12 @@ async function updateUSStockSignals() {
 
 // 거래대금(억원) = 누적거래량(aq, 주) × 현재가(nv, 원) / 1억
 function calcNaverAmountEok(item) {
-  // aa = 누적거래대금(원) 직접 제공 (가장 정확, tv/cp는 Naver API에서 미제공)
-  const aa = Number(item.aa);
-  if (isFinite(aa) && aa > 0) return aa / 100000000;
-  // aa 없으면 거래량(aq) × 현재가(nv) 계산 (fallback)
+  // tv = 누적거래대금(원) 직접 제공 시 사용 (가장 정확)
+  const tv = Number(item.tv);
+  if (isFinite(tv) && tv > 0) return tv / 100000000;
+  // tv 없으면 거래량(aq) × 현재가(cp) 계산
   const vol = Number(item.aq);
-  const price = Number(item.nv);
+  const price = Number(item.cp); // cp = 현재가 (nv 아님)
   if (!isFinite(vol) || !isFinite(price) || vol <= 0 || price <= 0) return 0;
   return (vol * price) / 100000000;
 }
@@ -5601,7 +5615,7 @@ function renderLeadStocks() {
     <div class="leadstocks-sector-card" style="grid-column:1/-1">
       <div class="leadstocks-list">
         <div class="lead-col-header">
-          <span class="lch-rank">#</span>
+          <span class="lch-rank" style="display:none">#</span>
           <span class="lch-name">종목</span>
           <span class="lch-pct">${inSession ? '상승률' : '등락률'}</span>
           <span class="lch-amt">거래대금${inSession ? '*' : ''}</span>
@@ -5612,7 +5626,6 @@ function renderLeadStocks() {
           const pctClass = Number(item.pct) >= 15 ? ' surge' : (Number(item.pct) < 0 ? ' down' : '');
           return `
           <div class="lead-row${Number(item.pct)>=15?' surge':''}">
-            <span class="lead-rank">${idx+1}.</span>
             <span class="lead-name" title="${item.name}">${item.name}</span>
             <span class="lead-pct${pctClass}">${item.pctText}</span>
             <span class="lead-amt">${item.amountText}</span>
@@ -5883,7 +5896,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── 오늘의 주도주 데이터에서 섹터 계산 ── */
   function computeTodaySectors() {
-    // LEADSTOCKS_STATE.items 에서 상위 10위 종목 추출
+    // LEADSTOCKS_STATE.items 에서 상위 15위 종목 추출
     let leaders = [];
     if (typeof LEADSTOCKS_STATE !== 'undefined' && LEADSTOCKS_STATE.items && LEADSTOCKS_STATE.items.length) {
       leaders = LEADSTOCKS_STATE.items;
@@ -5894,27 +5907,32 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
     }
 
-    // 상위 10위 종목에서 섹터 추출 (순위 기준 — currentRank 또는 배열 순서)
-    const top10 = leaders.slice(0, 10);
+    // 상위 15위 종목에서 섹터 추출
+    const top15 = leaders.slice(0, 15);
     const _gsFunc = window.getKrSector || (typeof getKrSector === 'function' ? getKrSector : null);
 
-    // 섹터별 { 등장횟수, 최고순위(낮을수록 좋음) } 집계
+    // 섹터별 { 등장횟수, 최고순위(낮을수록 좋음), 거래대금 합산 } 집계
     const sectorMap = {};
-    top10.forEach((item, idx) => {
+    top15.forEach((item, idx) => {
       const code = item.code || (item.symbol || '').replace(/\.(?:KS|KQ)$/i, '');
       const sector = _gsFunc ? _gsFunc(code) : null;
       if (!sector || sector === 'ETF' || sector === 'ETF/스팩') return;
-      if (!sectorMap[sector]) sectorMap[sector] = { count: 0, bestRank: idx + 1 };
+      if (!sectorMap[sector]) sectorMap[sector] = { count: 0, bestRank: idx + 1, amtSum: 0 };
       sectorMap[sector].count++;
+      sectorMap[sector].amtSum += Number(item.trade_value_eok) || 0;
       if (idx + 1 < sectorMap[sector].bestRank) sectorMap[sector].bestRank = idx + 1;
     });
 
-    // 2개 이상 중복 섹터만 선정 → 최고순위 오름차순 → tie-break: count 내림차순
-    const result = Object.entries(sectorMap)
-      .filter(([, v]) => v.count >= 2)
-      .sort((a, b) => a[1].bestRank - b[1].bestRank || b[1].count - a[1].count)
+    // 2개 이상 중복 섹터 우선, 없으면 상위 순위 단일 섹터도 포함
+    // 1차: count 내림차순, 2차: bestRank 오름차순, 3차: amtSum 내림차순
+    const sorted = Object.entries(sectorMap)
+      .sort((a, b) => b[1].count - a[1].count || a[1].bestRank - b[1].bestRank || b[1].amtSum - a[1].amtSum);
+
+    // 2개 이상 중복된 섹터가 있으면 그것만, 없으면 상위 3개 모두 사용
+    const multiSectors = sorted.filter(([, v]) => v.count >= 2);
+    const result = (multiSectors.length > 0 ? multiSectors : sorted)
       .slice(0, 3)
-      .map(([s], i) => `${i + 1}.${s}`); // "1.바이오", "2.통신", "3.방산"
+      .map(([s], i) => `${i + 1}.${s}`);
 
     return result;
   }
@@ -5953,12 +5971,15 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── 섹터 색상 ── */
   const SECTOR_COLORS = {
     '반도체':'#58a6ff','2차전지':'#3fb950','방산':'#f85149','원전':'#e3a825',
+    '반도체':'#58a6ff','2차전지':'#3fb950','방산':'#f85149','원전':'#e3a825',
     '조선':'#39d3f2','바이오':'#bc8cff','에너지':'#ff9500','전력':'#ffcc00',
     '자동차':'#60d394','화학':'#ff6b9d','로봇':'#a8edea','IT서비스':'#74b9ff',
     '인터넷':'#6c5ce7','게임':'#fd79a8','엔터':'#e17055','금융':'#00b894',
-    '건설':'#fdcb6e','조선':'#55efc4','우주':'#a29bfe','6G통신':'#00cec9',
-    '서비스':'#fab1a0','통신':'#74b9ff','보안':'#b2bec3','의료기기':'#dfe6e9',
-    '화장품':'#fd79a8','전자':'#0984e3','물류':'#00b894','유통':'#e67e22',
+    '건설':'#fdcb6e','우주':'#c9b1ff','6G통신':'#00e5cc','6G':'#00e5cc',
+    '서비스':'#fab1a0','통신':'#38bdf8','보안':'#94a3b8','의료기기':'#7dd3fc',
+    '화장품':'#f472b6','전자':'#3b82f6','물류':'#10b981','유통':'#f97316',
+    '해운':'#06b6d4','항공':'#8b5cf6','철강':'#a3a3a3','식품':'#84cc16',
+    '제약':'#ec4899','소재':'#f59e0b','지주':'#6b7280','미디어':'#d946ef',
   };
   function getSectorColor(sector) {
     return SECTOR_COLORS[sector] || '#8b949e';
@@ -6006,10 +6027,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="day-events">
           ${sectors.map(s => {
             const nm = parseSectorLabel(s);
-            const num = s.match(/^(\d+)\./) ? s.match(/^(\d+)\./)[1] : '';
             return `<div class="event-item sc-sector-pill"
-              style="background:${getSectorColor(nm)}28;color:${getSectorColor(nm)};border:1px solid ${getSectorColor(nm)}55;padding:3px 5px;font-size:9.5px;border-radius:5px;font-family:var(--sans);font-weight:500;${isLivePreview?'border-style:dashed;opacity:.75':''}"
-              >${num?`<span style="opacity:.6;font-size:8px">${num}</span> `:''}${nm}${isLivePreview?' ~':isFinal?'':' ·'}</div>`;
+              style="background:${getSectorColor(nm)}30;color:${getSectorColor(nm)};border:1px solid ${getSectorColor(nm)}66;padding:3px 6px;font-size:11px;border-radius:5px;font-family:var(--sans);font-weight:600;${isLivePreview?'border-style:dashed;opacity:.8':''}"
+              >${nm}${isLivePreview?' ~':isFinal?'':' ·'}</div>`;
           }).join('')}
         </div>
       </div>`;
@@ -6041,13 +6061,22 @@ document.addEventListener('DOMContentLoaded', () => {
       sideList.innerHTML = sorted.length
         ? sorted.map(([s, c]) => {
             const w = freq7[s] || 0;
-            const weekBadge = w > 0
-              ? `<span style="font-size:9px;opacity:.65;margin-left:4px">(7일:${w})</span>` : '';
-            return `<div class="schedule-week-item">
-              <div class="schedule-week-date" style="min-width:32px;font-size:11px">${c}일</div>
-              <div><span class="event-item"
-                style="background:${getSectorColor(s)}28;color:${getSectorColor(s)};border:1px solid ${getSectorColor(s)}55;font-family:var(--sans);font-weight:500;vertical-align:middle;"
-                >${s}</span>${weekBadge}</div>
+            const color = getSectorColor(s);
+            // 박스 개수로 빈도 시각화 (최대 10개)
+            const boxes = Math.min(c, 10);
+            const boxHtml = Array.from({length: boxes}, (_, i) =>
+              `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:3px;background:${color};opacity:${i < w ? '1' : '0.3'}"></span>`
+            ).join('');
+            return `<div class="schedule-week-item" style="align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+              <div style="flex:1;min-width:0">
+                <span class="event-item"
+                  style="background:${color}28;color:${color};border:1px solid ${color}55;font-family:var(--sans);font-weight:600;font-size:13px;vertical-align:middle;"
+                  >${s}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:0;margin-left:8px;flex-shrink:0">
+                ${boxHtml}
+                <span style="margin-left:5px;font-size:11px;color:${color};font-weight:700;opacity:.85">${c}</span>
+              </div>
             </div>`;
           }).join('')
         : '<div class="schedule-week-empty">아직 데이터가 없습니다</div>';
