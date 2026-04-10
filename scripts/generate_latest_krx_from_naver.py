@@ -101,13 +101,17 @@ def fetch_krx_official(trade_date: str) -> dict:
 
 # ── Naver 실시간 시세 ───────────────────────────────────────────
 def fetch_naver_realtime(codes_markets: dict) -> dict:
-    """Naver polling API 100개씩 배치"""
+    """Naver polling API 100개씩 배치
+    - 요청: SERVICE_ITEM:005930,000660 (코드만, suffix 없이)
+    - 응답: item.cd = '005930' (코드만)
+    - 거래대금: item.aa (누적거래대금 원) ÷ 1e8 → 억
+    """
     result = {}
     codes = list(codes_markets.keys())
     for i in range(0, len(codes), 100):
         batch = codes[i:i+100]
-        items = [f"{c}.KS" if codes_markets[c]=="KOSPI" else f"{c}.KQ" for c in batch]
-        query = "|".join(f"SERVICE_ITEM:{s}" for s in items)
+        # ★ 코드만 쉼표로 연결 (suffix .KS/.KQ 붙이면 datas:0 실패)
+        query = "SERVICE_ITEM:" + ",".join(batch)
         url = f"https://polling.finance.naver.com/api/realtime?query={query}"
         try:
             r = requests.get(url, headers=HEADERS, timeout=10)
@@ -115,16 +119,21 @@ def fetch_naver_realtime(codes_markets: dict) -> dict:
             areas = r.json().get("result",{}).get("areas",[])
             datas = areas[0].get("datas",[]) if areas else []
             for item in datas:
-                sym = item.get("cd","")
-                if not sym: continue
+                code = str(item.get("cd","")).strip()  # 코드만 반환 ('005930')
+                if not code or len(code) != 6: continue
+                # suffix는 유니버스에서 결정
+                mkt = codes_markets.get(code, "KOSPI")
+                suffix = ".KS" if mkt == "KOSPI" else ".KQ"
+                symbol = f"{code}{suffix}"
                 rf = str(item.get("rf","3"))
                 cr = float(item.get("cr",0) or 0)
                 pct = cr if rf in ("1","2") else (-cr if rf in ("4","5") else 0.0)
-                cp  = float(item.get("cp",0) or 0)
-                aq  = float(item.get("aq",0) or 0)
-                tv_eok = round(cp*aq/1e8,2) if cp > 0 else 0.0
-                result[sym] = {
-                    "naver_pct": round(pct,2), "naver_close": cp or None,
+                nv  = float(item.get("nv",0) or 0)   # 현재가
+                # ★ aa = 누적거래대금(원) → 억 변환 (tv, cp 필드는 Naver API 미제공)
+                aa  = float(item.get("aa",0) or 0)
+                tv_eok = round(aa / 1e8, 2) if aa > 0 else 0.0
+                result[symbol] = {
+                    "naver_pct": round(pct,2), "naver_close": nv or None,
                     "naver_tv_eok": tv_eok, "naver_name": item.get("nm",""),
                 }
         except Exception as e:
