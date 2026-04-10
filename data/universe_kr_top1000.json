@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-09T23:02:31.131110+09:00",
+  "generated_at": "2026-04-10T19:35:57.606191+09:00",
   "source": "Naver Finance market cap ranking",
   "min_market_cap_eok": 3000,
   "counts": {
@@ -13,21 +13,21 @@
       "name": "삼성전자",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 120760.61
+      "market_cap_eok": 121944.54
     },
     {
       "code": "000660",
       "name": "SK하이닉스",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 71127.7
+      "market_cap_eok": 73194.53
     },
     {
       "code": "005935",
       "name": "삼성전자우",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 11235.97
+      "market_cap_eok": 11456.28
     },
     {
       "code": "005380",
@@ -41,147 +41,147 @@
       "name": "LG에너지솔루션",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 9851.4
+      "market_cap_eok": 9640.8
     },
     {
       "code": "012450",
       "name": "한화에어로스페이스",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 7481.85
+      "market_cap_eok": 7770.6
     },
     {
       "code": "402340",
       "name": "SK스퀘어",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 7396.88
+      "market_cap_eok": 7502.55
     },
     {
       "code": "207940",
       "name": "삼성바이오로직스",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 7313.97
+      "market_cap_eok": 7272.31
     },
     {
       "code": "034020",
       "name": "두산에너빌리티",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 6405.61
-    },
-    {
-      "code": "000270",
-      "name": "기아",
-      "market": "KOSPI",
-      "suffix": ".KS",
-      "market_cap_eok": 5875.72
+      "market_cap_eok": 6418.42
     },
     {
       "code": "105560",
       "name": "KB금융",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 5749.35
+      "market_cap_eok": 5902.22
+    },
+    {
+      "code": "000270",
+      "name": "기아",
+      "market": "KOSPI",
+      "suffix": ".KS",
+      "market_cap_eok": 5817.15
     },
     {
       "code": "329180",
       "name": "HD현대중공업",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 4938.43
+      "market_cap_eok": 4985.66
     },
     {
       "code": "028260",
       "name": "삼성물산",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 4865.07
-    },
-    {
-      "code": "068270",
-      "name": "셀트리온",
-      "market": "KOSPI",
-      "suffix": ".KS",
-      "market_cap_eok": 4655.62
+      "market_cap_eok": 4905.61
     },
     {
       "code": "032830",
       "name": "삼성생명",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 4600.0
+      "market_cap_eok": 4690.0
     },
     {
       "code": "055550",
       "name": "신한지주",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 4585.16
+      "market_cap_eok": 4684.84
     },
     {
-      "code": "006400",
-      "name": "삼성SDI",
+      "code": "068270",
+      "name": "셀트리온",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3868.11
+      "market_cap_eok": 4614.03
     },
     {
       "code": "009150",
       "name": "삼성전기",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3854.19
+      "market_cap_eok": 4220.19
+    },
+    {
+      "code": "006400",
+      "name": "삼성SDI",
+      "market": "KOSPI",
+      "suffix": ".KS",
+      "market_cap_eok": 3876.16
     },
     {
       "code": "042660",
       "name": "한화오션",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3784.21
+      "market_cap_eok": 3781.14
     },
     {
       "code": "006800",
       "name": "미래에셋증권",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3759.49
+      "market_cap_eok": 3692.85
     },
     {
       "code": "012330",
       "name": "현대모비스",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3642.91
+      "market_cap_eok": 3651.99
     },
     {
       "code": "267260",
       "name": "HD현대일렉트릭",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3532.62
+      "market_cap_eok": 3601.11
     },
     {
       "code": "086790",
       "name": "하나금융지주",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3259.2
+      "market_cap_eok": 3325.99
     },
     {
       "code": "010130",
       "name": "고려아연",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3185.22
+      "market_cap_eok": 3300.02
     },
     {
       "code": "035420",
       "name": "NAVER",
       "market": "KOSPI",
       "suffix": ".KS",
-      "market_cap_eok": 3160.58
+      "market_cap_eok": 3168.42
     }
   ],
   "status": "ok",
