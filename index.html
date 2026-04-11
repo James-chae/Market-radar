@@ -1383,8 +1383,6 @@
 
 
   /* ── 주도섹터 달력: day-cell 클릭 가능 표시 ── */
-  #sec-sectorcal .day-cell { cursor:pointer; }
-  #sec-sectorcal .day-cell:hover { background:rgba(255,255,255,.055); border-color:var(--border2); }
 
   .schedule-week-box {
     margin: 0 0 14px;
@@ -1528,85 +1526,6 @@
 
 
 
-  .leadstocks-wrap {
-    display: grid;
-    gap: 10px;
-  }
-  .leadstocks-summary {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-  .leadstocks-stat {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 10px;
-  }
-  .leadstocks-stat-label {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--text3);
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .leadstocks-stat-value {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--yellow);
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  /* 주도주 loading bar (kr-loading-bar 스타일 재사용) */
-  #leadstocks-loading {
-    margin-bottom: 6px;
-    display: flex;
-  }
-  /* 급등 종목 하이라이트 (상승률 15% 이상) */
-  .lead-row.surge {
-    border: 2px solid var(--yellow);
-    border-radius: 6px;
-    padding-left: 2px;
-    padding-right: 2px;
-    margin: 2px 0;
-    background: rgba(227,168,37,0.07);
-  }
-  .lead-row.surge .lead-pct {
-    color: #ffdd44;
-    text-shadow: 0 0 8px rgba(255,221,68,0.5);
-  }
-  .leadstocks-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-  .leadstocks-sector-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .leadstocks-sector-head {
-    display: none; /* 모바일 중복 헤더 제거 */
-  }
-  .leadstocks-sector-name { display: none; }
-  .leadstocks-sector-meta { display: none; }
-  .leadstocks-list {
-    padding: 4px 10px 10px;
-    display: flex;
-    flex-direction: column;
-  }
-  /* 컬럼 헤더 행 */
-  .lead-col-header {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 6px 4px 5px;
     border-bottom: 1px solid rgba(255,255,255,0.12);
     margin-bottom: 2px;
     font-family: var(--mono);
@@ -1679,16 +1598,6 @@
   .amount-note .amt-after  { color: #5faaff; font-weight: 700; }
 
   /* ── 주도주 새 아이템 레이아웃: 한 줄 ── */
-  .lead-row {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 8px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    line-height: 1.3;
-  }
-  .lead-row:last-child { border-bottom: none; padding-bottom: 2px; }
-  .lead-rank { display: none; }
   .lead-name {
     font-size: 15px;
     color: #e8eaf0;
@@ -1734,45 +1643,8 @@
   }
   /* 모바일: 종목명 너비 줄이고 나머지 컬럼 딱 맞게 */
   @media (max-width: 600px) {
-    .lead-rank   { display: none; }
     .lead-name   { font-size: 14px; min-width: 72px; max-width: 88px; margin-right: 8px; }
     .lead-pct    { font-size: 14px; width: 52px; margin-right: 8px; }
-    .lead-amt    { font-size: 13px; width: 62px; margin-right: 8px; }
-    .lead-sector { font-size: 13px; }
-  }
-
-  .leadstocks-empty {
-    padding: 18px;
-    border: 1px dashed var(--border2);
-    border-radius: 12px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    text-align: center;
-  }
-  @media (max-width: 768px) {
-    .leadstocks-grid {
-      grid-template-columns: 1fr;
-    }
-    .leadstocks-sector-name { font-size: 16px; }
-  }
-  @media (max-width: 600px) {
-    /* summary: 3칸 그리드 유지하되 폰트·패딩 축소 */
-    .leadstocks-summary {
-      gap: 4px;
-    }
-    .leadstocks-stat {
-      padding: 5px 7px;
-      border-radius: 6px;
-    }
-    .leadstocks-stat-label {
-      font-size: 8px;
-      margin-bottom: 2px;
-    }
-    .leadstocks-stat-value {
-      font-size: 11px;
-    }
-  }
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.1.0/dist/lightweight-charts.standalone.production.js"></script>
@@ -1804,9 +1676,7 @@
   <div class="tab mobile-row-2" onclick="showTab('liquidity', this)">💧 <span class="tab-label-pc">유동성</span><span class="tab-label-mobile">유동성</span></div>
   <div class="tab mobile-row-2" onclick="showTab('schedule', this)">🗓️ <span class="tab-label-pc">일정</span><span class="tab-label-mobile">일정</span></div>
 
-  <div class="tab mobile-row-3" onclick="showTab('leadstocks', this)">🔥 <span class="tab-label-pc">오늘의 주도주</span><span class="tab-label-mobile">주도주</span></div>
   <div class="tab mobile-row-3" onclick="showTab('options', this)">🎯 <span class="tab-label-pc">옵션변동성</span><span class="tab-label-mobile">옵션변동성</span></div>
-  <div class="tab mobile-row-3" onclick="showTab('sectorcal', this)">📅 <span class="tab-label-pc">주도섹터 달력</span><span class="tab-label-mobile">섹터달력</span></div>
 </nav>
 
 <main>
@@ -2795,89 +2665,6 @@
   
   
 
-
-  <!-- ══════════════ 10. 오늘의 주도주 ══════════════ -->
-  <div class="section" id="sec-leadstocks">
-    <p class="section-title">TODAY'S LEADERS</p>
-    <p class="section-desc">KOSPI+KOSDAQ 전종목 유니버스 · 1차필터: 거래대금30위 ∩ 상승률50위 / 거래대금 순 표시</p>
-    <div class="data-note">
-      <span class="badge live"><strong>상승률 상위</strong> 장중·Naver 실시간 / 장마감·KRX 정확값</span>
-      <span class="badge"><strong>표시</strong> 종목 · 등락률 · 거래대금</span>
-    </div>
-
-    <div class="kr-loading-bar" id="leadstocks-loading">
-      <span class="kr-loading-dot"></span>
-      <span>거래대금·등락률 불러오는 중...</span>
-    </div>
-
-    <div class="amount-note" id="lead-amount-note">
-      <span class="amt-icon">📊</span>
-      <span>
-        거래대금 &nbsp;
-        <span class="amt-session">장중: Naver 참조치</span>
-        &nbsp;/&nbsp;
-        <span class="amt-after">장마감(20:20↑): KRX+NXT 정확값</span>
-        &nbsp;·&nbsp; 장중 수치는 NXT 미포함으로 실제보다 낮을 수 있음
-      </span>
-    </div>
-
-    <div class="leadstocks-wrap">
-      <div class="leadstocks-summary" id="leadstocks-summary"></div>
-      <div class="leadstocks-grid" id="leadstocks-grid"></div>
-      <div class="info-panel">
-        📌 <strong>유니버스</strong>: 시총 1000억원 이상 KOSPI·KOSDAQ 전 종목<br>
-        📌 <strong>상승률 필터</strong>: 당일 상승률 > 0% 종목만 포함<br>
-        📌 <strong>상승률 상위 50</strong>: 당일 상승률 기준 상위 50위 이내<br>
-        📌 <strong>편입 조건</strong>: 두 조건 모두 충족(교집합) · 거래대금 내림차순 정렬
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════ 12. 주도섹터 달력 ══════════════ -->
-
-  <div class="section" id="sec-sectorcal">
-    <p class="section-title">SECTOR CALENDAR</p>
-    <p class="section-desc">오늘의 주도주 상위 10위 중 2개↑ 중복 섹터를 날짜별로 기록 · 6개월 누적</p>
-    <div class="data-note">
-      <span class="badge"><strong>기준</strong> 주도주 10위 내 2개↑ 중복 섹터</span>
-      <span class="badge"><strong>2차</strong> 20:00 최종 업데이트</span>
-      <span class="badge"><strong>최대</strong> 상위 3섹터</span>
-      <span class="badge" style="cursor:pointer;user-select:none" onclick="window.scSaveToday()">🔄 지금 저장</span>
-    </div>
-
-    <div class="chart-card" style="padding:14px 16px">
-      <!-- 최근 빈도 박스 (일정탭의 UPCOMING EVENTS와 동일 구조) -->
-      <div class="schedule-week-box">
-        <div class="schedule-week-title">📊 최근 30일 주도섹터 빈도</div>
-        <div class="schedule-week-list" id="sc-side-list"></div>
-      </div>
-
-      <!-- 툴바 (일정탭과 동일 구조) -->
-      <div class="schedule-toolbar">
-        <button class="mini-tool-btn" onclick="changeSectorCalMonth(-1)">◀ 이전</button>
-        <div class="schedule-title" id="sc-cal-title">2026년 4월</div>
-        <button class="mini-tool-btn" onclick="changeSectorCalMonth(1)">다음 ▶</button>
-      </div>
-
-      <!-- 범례 -->
-      <div class="schedule-legend">
-        <span class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>1차(16시)</span>
-        <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>최종확정</span>
-        <span class="legend-item" style="color:var(--text3);font-size:10px">📝 날짜 클릭 → 수동 입력/수정</span>
-      </div>
-
-      <!-- 달력 (일정탭과 동일 구조 사용) -->
-      <div class="schedule-calendar">
-        <div class="schedule-weekdays">
-          <div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div>
-          <div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div>
-        </div>
-        <div class="schedule-grid" id="sc-cal-grid"></div>
-      </div>
-
-      <div class="schedule-note">※ 데이터는 이 브라우저에만 저장 · 6개월 자동 보관 · 1차=당일 16시 이후 / 최종=20시 이후</div>
-    </div>
-  </div>
 
   <div class="section" id="sec-schedule">
   <!-- ══════════════ 11. 일정 ══════════════ -->
@@ -4443,10 +4230,6 @@ function showTab(name, btn) {
     const hasData = document.querySelector('.kr-stock-btn.sig-up, .kr-stock-btn.sig-down, .kr-stock-btn.sig-flat');
     if (bar && !hasData) { bar.style.display = ''; bar.dataset.shownAt = Date.now(); }
   }
-  if (name === 'leadstocks') {
-    const bar = document.getElementById('leadstocks-loading');
-    const hasData = LEADSTOCKS_STATE && LEADSTOCKS_STATE.items && LEADSTOCKS_STATE.items.length > 0;
-    if (bar && !hasData) { bar.style.display = ''; bar.dataset.shownAt = Date.now(); }
   }
   requestAnimationFrame(() => { initChartsForTab(name); if (name === 'usstocks') resizeChartToContainer('tv-usstocks-chart'); if (name === 'krstocks') resizeChartToContainer('tv-krstocks-chart'); });
   if (name === 'charts') {
@@ -4462,8 +4245,6 @@ function initChartsForTab(name) {
   if (name === 'options') loadMiniChart('tv_vix_chart');
   if (name === 'liquidity') { loadMiniChart('liq_tv_gold'); loadMiniChart('liq_tv_dxy'); loadMiniChart('liq_tv_btc'); loadMiniChart('liq_tv_sp'); }
   if (name === 'schedule') renderSchedule();
-  if (name === 'leadstocks') renderLeadStocks();
-  if (name === 'sectorcal' && typeof window.renderSectorCalendar === 'function') window.renderSectorCalendar();
   if (name === 'usstocks') {
     buildMobileStockPicker('usstocks');
     syncMobileStockPicker('usstocks');
@@ -4486,15 +4267,9 @@ Cache.data = {}; const btn = document.querySelector('.refresh-btn'); if (btn) { 
   const _now = Date.now();
   const _krBar = document.getElementById('kr-stocks-loading');
   if (_krBar) { _krBar.style.removeProperty('display'); _krBar.dataset.shownAt = _now; }
-  const _ldBar = document.getElementById('leadstocks-loading');
-  if (_ldBar) { _ldBar.style.removeProperty('display'); _ldBar.dataset.shownAt = _now; }
   await Promise.allSettled([loadStockData(), loadFearGreed(), loadFREDData(), updateKRStockSignals(), updateUSStockSignals()]);
-  await computeLeadStocks();
-  // computeLeadStocks 완료 후 섹터달력 자동저장 (데이터 보장된 시점)
-  if (typeof window._autoSaveTodaySectors === 'function') window._autoSaveTodaySectors();
   renderSectorReferenceList('usstocks');
   renderSectorReferenceList('krstocks');
-  updateBanner(); const activeSection = document.querySelector('.section.active'); if (activeSection) { const activeName = activeSection.id.replace('sec-',''); initChartsForTab(activeName); if (activeName === 'charts') { syncMainToolbar(); updateMainChartMeta(); switchChart(_activeChartSym, document.querySelector('.chart-btn.active')); } if (activeName === 'usstocks' || activeName === 'krstocks') { loadTabChart(activeName, true); } if (activeName === 'leadstocks') { renderLeadStocks(); } }
   const now = new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}); setVal('last-update', now); if (btn) { btn.textContent = '↻ 새로고침'; btn.disabled = false; } Logger.log('System', '데이터 갱신 완료 ' + now, 'ok');
 }
 
@@ -4943,31 +4718,12 @@ function isExcludedKRAsset(code, embeddedBySymbol) {
   if (isPreferredStockName(row.name || meta?.name || '')) return true;
   return isEtfCode(c, embeddedBySymbol);
 }
-// Naver 실시간 종목 signals 공유 (updateKRStockSignals → computeLeadStocks)
 const NAVER_SIGNALS_STATE = {
   data: {},        // { '005930.KS': { state, pctText, amountEok, amountText }, ... }
   updatedAt: 0,
 };
 
-const LEADSTOCKS_STATE = {
-  computedAt: null,
-  items: [],
-  sectors: [],
-  eligibleCount: 0,
-  cPassCount: 0,
-  ePassCount: 0,
-  rendered: false,
-  sourceLabel: '저장 데이터 기준',
-  universeLabel: 'KOSPI+KOSDAQ 전종목 유니버스',
-  tradeDate: '',
-};
 
-function formatLeadAmount(amountEok) {
-  if (!Number.isFinite(amountEok)) return '--';
-  if (amountEok >= 10000) return `${(amountEok / 10000).toFixed(2)}조`;
-  if (amountEok >= 100) return `${Math.round(amountEok).toLocaleString('ko-KR')}억`;
-  return `${amountEok.toFixed(1)}억`;
-}
 
 function parseNumericLoose(value) {
   if (value == null) return null;
@@ -5127,61 +4883,6 @@ function makeResetData(src) {
 }
 
 // ── Static KRX 데이터 ──────────────────────────────────────────
-const STATIC_KRX_STATE = { data: null, loadedAt: 0, loadedDate: '' };
-
-async function fetchStaticKrxData(force = false) {
-  const todayStr = getKstDateStr(getKstNow());
-  // 날짜 바뀌면 캐시 무효화 (어제 데이터 재사용 방지)
-  if (STATIC_KRX_STATE.loadedDate && STATIC_KRX_STATE.loadedDate !== todayStr) {
-    STATIC_KRX_STATE.data = null;
-    STATIC_KRX_STATE.loadedAt = 0;
-    STATIC_KRX_STATE.loadedDate = '';
-    Logger.log('KRX/Static', `날짜 변경 감지(${STATIC_KRX_STATE.loadedDate}→${todayStr}), 캐시 초기화`, 'ok');
-  }
-  // 5분 TTL 캐시 (매번 fetch하면 너무 빈번)
-  const cacheAge = Date.now() - STATIC_KRX_STATE.loadedAt;
-  if (!force && STATIC_KRX_STATE.data && cacheAge < 300000) return STATIC_KRX_STATE.data;
-
-  // 1순위: 외부 fetch (GitHub Pages 서버)
-  try {
-    const r = await fetchWithTimeout(`${CONFIG.KRX_STATIC_JSON}?v=${Date.now()}`, 6000);
-    if (r.ok) {
-      const data = await r.json();
-      if (data?.by_symbol) {
-        const d = shouldResetEmbeddedData(data.trade_date || '') ? makeResetData(data) : data;
-        STATIC_KRX_STATE.data = d;
-        STATIC_KRX_STATE.loadedAt = Date.now();
-        STATIC_KRX_STATE.loadedDate = todayStr;
-        Logger.log('KRX/Static', `외부 fetch ${d.status === 'reset' ? '리셋' : '성공'}: ${data.trade_date}`, 'ok');
-        return d;
-      }
-    }
-  } catch (_) {}
-
-  // 2순위: inline embedded
-  if (typeof EMBEDDED_KRX_DATA !== 'undefined' && EMBEDDED_KRX_DATA?.by_symbol) {
-    const d = shouldResetEmbeddedData(EMBEDDED_KRX_DATA.trade_date || '')
-      ? makeResetData(EMBEDDED_KRX_DATA)
-      : EMBEDDED_KRX_DATA;
-    STATIC_KRX_STATE.data = d;
-    STATIC_KRX_STATE.loadedAt = Date.now();
-    STATIC_KRX_STATE.loadedDate = todayStr;
-    Logger.log('KRX/Static', `임베드 ${d.status === 'reset' ? '리셋' : '사용'}: ${EMBEDDED_KRX_DATA.trade_date}`, 'ok');
-    return d;
-  }
-
-  STATIC_KRX_STATE.data = null;
-  return null;
-}
-
-function shouldUseStaticKrxOverlay(staticData) {
-  if (!staticData?.by_symbol) return false;
-  return Object.keys(staticData.by_symbol).length >= 100;
-}
-
-function getStaticKrxRow(sym) {
-  return STATIC_KRX_STATE.data?.by_symbol?.[sym] || null;
-}
 
 function setStaticKrxBadgeText() {
   const data = STATIC_KRX_STATE.data;
@@ -5319,313 +5020,14 @@ function isEtfCode(code, embeddedBySymbol) {
 }
 
 // ── 오늘의 주도주 계산 ─────────────────────────────────────────
-async function computeLeadStocks() {
-  try {
-    // ── 진입 즉시 초기화: 이전 결과 오염 방지 ──
-    LEADSTOCKS_STATE.items = [];
-    LEADSTOCKS_STATE.rendered = false;
-
-    // KR_SECTOR_META가 아직 로드 안 됐으면 먼저 로드 (이름 조회 보장)
-    if (!KR_SECTOR_META_LOADED) {
-      await loadKrSectorMeta().catch(() => {});
-    }
-    const staticData = await fetchStaticKrxData(false);
-    const inSession = isMarketSession();
-
-    // ── 유니버스: _KSM_INLINE 전체 실제종목 (ETF 제외) ──────────
-    // Excel 섹터_마스터.xlsx 기반 KOSPI+KOSDAQ 전종목 (~2861개)
-    const universeMap = {}; // code → {name, market, sector}
-    if (typeof _KSM_INLINE !== 'undefined') {
-      for (const [code, d] of Object.entries(_KSM_INLINE)) {
-        if (d.e) continue;                          // ETF/ETN 제외
-        if (!/^\d{6}$/.test(code)) continue;       // 숫자 6자리만
-        universeMap[code] = {
-          name: d.n || code,
-          market: d.q ? 'KOSDAQ' : 'KOSPI',
-          sector: d.s || '',
-        };
-      }
-    }
-    const universeCodes = Object.keys(universeMap); // ~2861개
-
-    // 장마감 후에는 Naver 실시간 캐시 무효화 (장중 데이터 오염 방지)
-    if (!inSession && window._naverKRSignals) {
-      window._naverKRSignals = null;
-      window._naverKRSignalsAt = 0;
-    }
-    let naverSignals = (inSession && window._naverKRSignals && Date.now() - window._naverKRSignalsAt < 600000)
-      ? { ...window._naverKRSignals } : {};
-
-    if (inSession && universeCodes.length >= 100) {
-      const cacheKeyU = 'naver_kr_univ_' + getKstDateStr(getKstNow());
-      const cachedU = Cache.get(cacheKeyU, 270000);
-      if (cachedU) {
-        naverSignals = cachedU;
-        Logger.log('LeadStocks', `유니버스 캐시: ${Object.keys(cachedU).length / 2}종목`, 'ok');
-      } else {
-        // 2861개 코드만 (Naver API는 .KS/.KQ 없이 코드만 받음)
-        const chunks = [];
-        for (let i = 0; i < universeCodes.length; i += 30) chunks.push(universeCodes.slice(i, i + 30));
-        Logger.log('LeadStocks', `Naver 요청: ${universeCodes.length}종목 × ${chunks.length}배치`, 'ok');
-
-        const results = await Promise.allSettled(chunks.map(chunk => {
-          // Naver API: 코드만 전송 (005930, 000660, ...) - suffix 없음
-          const url = 'https://polling.finance.naver.com/api/realtime?query=SERVICE_ITEM:' + chunk.join(',');
-          return fetchNaverRealtimeDirect(url, 'NaverSignalsU', 8000);
-        }));
-        const merged = {};
-        results.forEach(r => {
-          if (r.status !== 'fulfilled' || !r.value) return;
-          (r.value?.result?.areas?.[0]?.datas || []).forEach(item => {
-            const code = String(item.cd || '').trim(); // '005930' (suffix 없음)
-            const pct = parseNaverRealtimeSignedPct(item);
-            if (!code || !isFinite(pct)) return;
-            if (!universeMap[code]) return; // 유니버스에 없는 종목 제외
-            const state = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
-            const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`;
-            const amountEok = calcNaverAmountEok(item);
-            // universeMap의 market으로 정확한 suffix 결정
-            const suffix = universeMap[code].market === 'KOSDAQ' ? '.KQ' : '.KS';
-            merged[code + suffix] = { state, pctText, amountEok, amountText: formatEok(amountEok), pct };
-          });
-        });
-        const cnt = Object.keys(merged).length;
-        Logger.log('LeadStocks', `유니버스 Naver 수신: ${cnt}종목 / 요청${universeCodes.length}개`, cnt > 50 ? 'ok' : 'warn');
-        if (cnt > 50) { Cache.set(cacheKeyU, merged); naverSignals = merged; }
-      }
-    }
-
-    const naverCount = Object.keys(naverSignals).length;
-
-    // ── 장중 + Naver 데이터 있음: 상승률 상위 기준 ──────────────
-    if (inSession && naverCount >= 20) {
-      const rows = [];
-      const seen = new Set();
-      for (const [sym, nv] of Object.entries(naverSignals)) {
-        const code = sym.includes('.') ? sym.split('.')[0] : sym;
-        if (seen.has(code)) continue;
-        seen.add(code);
-        // universeMap에 없는 종목(ETF 등) 제외
-        if (!universeMap[code]) continue;
-        const pct = Number(nv.pct);
-        if (!isFinite(pct)) continue;
-        const uRow = universeMap[code];
-        const correctSuffix = uRow.market === 'KOSDAQ' ? '.KQ' : '.KS';
-        rows.push({
-          code, symbol: code + correctSuffix,
-          name: uRow.name || (KR_SECTOR_META && KR_SECTOR_META[code] && KR_SECTOR_META[code].name) || code,
-          market: uRow.market,
-          pct, pct_text: nv.pctText,
-          amountEok: Number(nv.amountEok || 0),
-          amountText: nv.amountText || '--',
-        });
-      }
-
-      if (rows.length >= 5) {
-        // 장중: 거래대금 상위 30 ∩ 상승률 상위 50 (거래대금=0이면 상승률만으로 판단)
-        const hasAmount = rows.some(r => r.amountEok > 0);
-
-        const amountRanked = [...rows].sort((a,b) => b.amountEok - a.amountEok || b.pct - a.pct);
-        amountRanked.forEach((r,i) => {
-          r.cPass = hasAmount ? i < 30 : true; // 거래대금 없으면 전체 통과
-        });
-        const riseRanked = [...rows].filter(r => r.pct > 0).sort((a,b) => b.pct - a.pct || b.amountEok - a.amountEok);
-        riseRanked.forEach((r,i) => { r.ePass = i < 50; });
-        // ePass 미설정 종목은 false 처리
-        rows.forEach(r => { if (r.ePass === undefined) r.ePass = false; });
-
-        const merged = rows
-          .filter(r => r.cPass && r.ePass && r.pct > 0)
-          .sort((a,b) => b.amountEok - a.amountEok || b.pct - a.pct)  // 거래대금 순 표시
-          .map((row, idx) => ({
-            code: row.code, symbol: row.symbol, name: row.name,
-            pct: row.pct,
-            pctText: row.pct_text || `${row.pct>0?'+':''}${row.pct.toFixed(1)}%`,
-            currentAmountEok: row.amountEok,
-            amountText: row.amountText,
-            cPass: row.cPass, ePass: row.ePass,
-            currentRank: idx+1, eRank: idx+1,
-          }));
-
-        LEADSTOCKS_STATE.items = merged;
-        LEADSTOCKS_STATE.eligibleCount = rows.length;
-        LEADSTOCKS_STATE.cPassCount = rows.filter(r=>r.cPass).length;
-        LEADSTOCKS_STATE.ePassCount = rows.filter(r=>r.ePass).length;
-        LEADSTOCKS_STATE.computedAt = new Date();
-        LEADSTOCKS_STATE.rendered = false;
-        LEADSTOCKS_STATE.sourceLabel = '장중 Naver 실시간 (참고값)';
-        LEADSTOCKS_STATE.universeLabel = `Excel 전종목 유니버스 (${universeCodes.length}개)`;
-        LEADSTOCKS_STATE.tradeDate = getKstDateStr(getKstNow());
-        Logger.log('LeadStocks', `장중 모드: 거래대금30∩상승률50 → ${merged.length}종목`, 'ok');
-        return;
-      }
-    }
-
-    // ── 장마감 후: 거래대금30 ∩ 상승률50 (정확한 데이터) ────────
-    if (!inSession && staticData?.by_symbol && Object.keys(staticData.by_symbol).length >= 100) {
-      // 날짜 유효성 검사: 오늘(평일) 또는 직전 거래일(주말) 데이터인지 확인
-      const expectedDate = getExpectedTradeDate();
-      const dataDate = staticData.trade_date || '';
-      if (dataDate !== expectedDate) {
-        // 날짜 불일치: 오래된 데이터 → 표시 금지
-        Logger.log('LeadStocks', `장마감 데이터 날짜 불일치: ${dataDate} ≠ ${expectedDate} → 표시 생략`, 'warn');
-        LEADSTOCKS_STATE.items = [];
-        LEADSTOCKS_STATE.sourceLabel = `데이터 갱신 대기 (${dataDate} 기준)`;
-        LEADSTOCKS_STATE.tradeDate = dataDate;
-        LEADSTOCKS_STATE.computedAt = new Date();
-        LEADSTOCKS_STATE.rendered = false;
-        return;
-      }
-      const rows = Object.values(staticData.by_symbol).filter(row => {
-        if (!row || !isFinite(Number(row.pct)) || !isFinite(Number(row.trade_value_eok))) return false;
-        if (Number(row.trade_value_eok) === 0) return false;
-        // universeMap 기반 필터: ETF/우선주 제외, 실제 종목만
-        const code = String(row.code || '');
-        if (!universeMap[code]) return false;
-        return true;
-      });
-
-      if (rows.length >= 10) {
-        const amountRanked = [...rows].sort((a,b) => Number(b.trade_value_eok)-Number(a.trade_value_eok));
-        amountRanked.forEach((r,i) => { r.currentRank=i+1; r.cPass=i<30; });
-        const riseRanked = [...rows].sort((a,b) => Number(b.pct)-Number(a.pct));
-        riseRanked.forEach((r,i) => { r.eRank=i+1; r.ePass=i<50; });
-
-        const merged = rows
-          .filter(r => r.cPass && r.ePass && Number(r.pct) > 0)
-          .sort((a,b) => Number(b.trade_value_eok)-Number(a.trade_value_eok) || Number(b.pct)-Number(a.pct))
-          .map(r => ({
-            code: r.code, symbol: r.symbol,
-            name: r.name || (universeMap[r.code] && universeMap[r.code].name) || (KR_SECTOR_META && KR_SECTOR_META[r.code] && KR_SECTOR_META[r.code].name) || r.code,
-            pct: Number(r.pct),
-            pctText: r.pct_text || `${Number(r.pct)>0?'+':''}${Number(r.pct).toFixed(1)}%`,
-            currentAmountEok: Number(r.trade_value_eok),
-            amountText: r.trade_value_text || formatLeadAmount(Number(r.trade_value_eok)),
-            cPass: true, ePass: true,
-            currentRank: r.currentRank, eRank: r.eRank,
-          }));
-
-        LEADSTOCKS_STATE.items = merged;
-        LEADSTOCKS_STATE.eligibleCount = rows.length;
-        LEADSTOCKS_STATE.cPassCount = amountRanked.filter(x=>x.cPass).length;
-        LEADSTOCKS_STATE.ePassCount = riseRanked.filter(x=>x.ePass).length;
-        LEADSTOCKS_STATE.computedAt = new Date();
-        LEADSTOCKS_STATE.rendered = false;
-        LEADSTOCKS_STATE.sourceLabel = staticData.source || '저장 데이터 기준';
-        LEADSTOCKS_STATE.universeLabel = `Excel 전종목 유니버스 (${universeCodes.length}개)`;
-        LEADSTOCKS_STATE.tradeDate = staticData.trade_date || '';
-        Logger.log('LeadStocks', `장마감 모드: 거래대금30∩상승률50 → ${merged.length}종목`, 'ok');
-        return;
-      }
-    }
-
-    // 데이터 없음
-    if (inSession) {
-      LEADSTOCKS_STATE.sourceLabel = '장중 Naver 실시간 대기중';
-      LEADSTOCKS_STATE.universeLabel = `Excel 전종목 유니버스 (${universeCodes.length}개)`;
-      LEADSTOCKS_STATE.tradeDate = getKstDateStr(getKstNow());
-    }
-    LEADSTOCKS_STATE.items = [];
-    LEADSTOCKS_STATE.eligibleCount = 0;
-    LEADSTOCKS_STATE.computedAt = new Date();
-    LEADSTOCKS_STATE.rendered = false;
-    LEADSTOCKS_STATE.sourceLabel = '데이터 없음';
-    Logger.log('LeadStocks', '계산 가능한 데이터 없음', 'warn');
-
-  } catch (e) {
-    Logger.log('LeadStocks', `오류: ${e.message}`, 'warn');
-    LEADSTOCKS_STATE.items = [];
-    LEADSTOCKS_STATE.computedAt = new Date();
-    LEADSTOCKS_STATE.rendered = false;
-  }
-}
-
-// ── 주도주 렌더링 ──────────────────────────────────────────────
-function renderLeadStocks() {
-  const summaryEl = document.getElementById('leadstocks-summary');
-  const gridEl = document.getElementById('leadstocks-grid');
-  if (!summaryEl || !gridEl) return;
-
-  const lb = document.getElementById('leadstocks-loading');
-  const leadComputed = !!LEADSTOCKS_STATE.computedAt;
-  if (lb) {
-    if (leadComputed) lb.style.setProperty('display', 'none', 'important');
-    else lb.style.removeProperty('display');
-  }
-
-  const updatedText = LEADSTOCKS_STATE.computedAt
-    ? LEADSTOCKS_STATE.computedAt.toLocaleTimeString('ko-KR') : '--:--:--';
-
-  const inSession = isMarketSession();
-  const modeLabel = inSession ? '📡 장중 (상승률 기준)' : '📊 장마감 (거래대금30∩상승률50)';
-
-  summaryEl.innerHTML = `
-    <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">${LEADSTOCKS_STATE.universeLabel||'유니버스'}</div>
-      <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.eligibleCount||0}</div>
-    </div>
-    <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">${inSession ? '상승률 상위' : '편입종목 (C30∩E50)'}</div>
-      <div class="leadstocks-stat-value">${LEADSTOCKS_STATE.items.length||0}</div>
-    </div>
-    <div class="leadstocks-stat">
-      <div class="leadstocks-stat-label">갱신 / 기준일</div>
-      <div class="leadstocks-stat-value">${updatedText} / ${formatKrxTradeDate(LEADSTOCKS_STATE.tradeDate)}</div>
-    </div>
-  `;
-
-  if (!LEADSTOCKS_STATE.items.length) {
-    const sl = LEADSTOCKS_STATE.sourceLabel || '';
-    let emptyMsg = '조건을 만족한 종목이 아직 없습니다.';
-    if (sl.includes('갱신 대기')) {
-      const td = LEADSTOCKS_STATE.tradeDate || '';
-      const dateStr = td ? `${td.slice(0,4)}.${td.slice(4,6)}.${td.slice(6,8)}` : '';
-      emptyMsg = `오늘의 주도주 데이터를 불러오는 중입니다.<br><span style="font-size:0.85em;opacity:0.7">최근 갱신: ${dateStr || '-'} | 장 마감 후 자동 갱신됩니다</span>`;
-    } else if (sl.includes('데이터 없음')) {
-      emptyMsg = '오늘의 주도주 데이터가 없습니다.<br><span style="font-size:0.85em;opacity:0.7">장 마감(20:20) 이후 표시됩니다</span>';
-    }
-    gridEl.innerHTML = `<div class="leadstocks-empty">${emptyMsg}</div>`;
-    LEADSTOCKS_STATE.rendered = true;
-    return;
-  }
-
-  gridEl.innerHTML = `
-    <div class="leadstocks-sector-card" style="grid-column:1/-1">
-      <div class="leadstocks-list">
-        <div class="lead-col-header">
-          <span class="lch-rank" style="display:none">#</span>
-          <span class="lch-name">종목</span>
-          <span class="lch-pct">${inSession ? '상승률' : '등락률'}</span>
-          <span class="lch-amt">거래대금${inSession ? '*' : ''}</span>
-          <span class="lch-sector">섹터</span>
-        </div>
-        ${LEADSTOCKS_STATE.items.map((item, idx) => {
-          const sector = getKrSector(item.code || item.symbol);
-          const pctClass = Number(item.pct) >= 15 ? ' surge' : (Number(item.pct) < 0 ? ' down' : '');
-          return `
-          <div class="lead-row${Number(item.pct)>=15?' surge':''}">
-            <span class="lead-name" title="${item.name}">${item.name}</span>
-            <span class="lead-pct${pctClass}">${item.pctText}</span>
-            <span class="lead-amt">${item.amountText}</span>
-            <span class="lead-sector">${sector||item.market||''}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-  `;
-  LEADSTOCKS_STATE.rendered = true;
-}
 
 // ── refreshAll override (단순화) ──────────────────────────────
 const __originalRefreshAll = refreshAll;
 refreshAll = async function() {
   STATIC_KRX_STATE.data = null; // 매 갱신마다 재검사
-  // 두 배너 표시
   const now = Date.now();
-  ['kr-stocks-loading','leadstocks-loading'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.style.removeProperty('display'); el.dataset.shownAt = now; }
-  });
+  const krBar = document.getElementById('kr-stocks-loading');
+  if (krBar) { krBar.style.removeProperty('display'); krBar.dataset.shownAt = now; }
   return __originalRefreshAll();
 };
 
@@ -5822,10 +5224,6 @@ document.addEventListener('DOMContentLoaded', () => {
   async function bootstrapOverrides() {
     await loadSectorFiles();
     renderScheduleMonth();
-    if (typeof window.computeLeadStocks === 'function') {
-      try { await window.computeLeadStocks(); } catch(e) { console.warn(e); }
-      if (typeof window.renderLeadStocks === 'function') window.renderLeadStocks();
-    }
   }
 
   if (document.readyState === 'loading') {
@@ -5837,399 +5235,6 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
-<!-- ══════════════ 12. 주도섹터 달력 ══════════════ -->
-<script>
-(function() {
-  'use strict';
-
-  const SC_KEY = 'market_radar_sector_calendar_v1';
-  const MAX_MONTHS = 6; // 최대 6개월 데이터 보관
-  let scMonthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
-  /* ── 데이터 저장/로드 ── */
-  function scLoad() {
-    try { return JSON.parse(localStorage.getItem(SC_KEY) || '{}'); } catch { return {}; }
-  }
-  // BroadcastChannel: 같은 기기 내 탭/창 간 실시간 동기화
-  const _scChannel = (typeof BroadcastChannel !== 'undefined')
-    ? new BroadcastChannel('market_radar_sector_cal_sync') : null;
-
-  function scSave(data) {
-    // 6개월 이전 데이터 자동 정리
-    const cutoff = new Date();
-    cutoff.setMonth(cutoff.getMonth() - MAX_MONTHS);
-    const cutStr = fmtDate(cutoff);
-    const cleaned = {};
-    for (const [k, v] of Object.entries(data)) {
-      if (k >= cutStr) cleaned[k] = v;
-    }
-    localStorage.setItem(SC_KEY, JSON.stringify(cleaned));
-    // 다른 탭/창에 변경 알림 (BroadcastChannel)
-    try { if (_scChannel) _scChannel.postMessage({ type: 'sc_updated', ts: Date.now() }); } catch(e) {}
-    return cleaned;
-  }
-  function fmtDate(d) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
-  /* ── 오늘의 주도주 데이터에서 섹터 계산 ── */
-  function computeTodaySectors() {
-    // LEADSTOCKS_STATE.items 에서 상위 10위 종목 추출
-    let leaders = [];
-    if (typeof LEADSTOCKS_STATE !== 'undefined' && LEADSTOCKS_STATE.items && LEADSTOCKS_STATE.items.length) {
-      leaders = LEADSTOCKS_STATE.items;
-    } else if (typeof EMBEDDED_KRX_DATA !== 'undefined' && EMBEDDED_KRX_DATA.leaders) {
-      leaders = EMBEDDED_KRX_DATA.leaders.map(l => ({
-        code: l.code, symbol: l.symbol, name: l.name,
-        pct: l.pct, trade_value_eok: l.trade_value_eok
-      }));
-    }
-
-    // 상위 15위 종목에서 섹터 추출
-    const top15 = leaders.slice(0, 15);
-    const _gsFunc = window.getKrSector || (typeof getKrSector === 'function' ? getKrSector : null);
-
-    // 섹터별 { 등장횟수, 최고순위(낮을수록 좋음), 거래대금 합산 } 집계
-    const sectorMap = {};
-    top15.forEach((item, idx) => {
-      const code = item.code || (item.symbol || '').replace(/\.(?:KS|KQ)$/i, '');
-      const sector = _gsFunc ? _gsFunc(code) : null;
-      if (!sector || sector === 'ETF' || sector === 'ETF/스팩') return;
-      if (!sectorMap[sector]) sectorMap[sector] = { count: 0, bestRank: idx + 1, amtSum: 0 };
-      sectorMap[sector].count++;
-      sectorMap[sector].amtSum += Number(item.trade_value_eok) || 0;
-      if (idx + 1 < sectorMap[sector].bestRank) sectorMap[sector].bestRank = idx + 1;
-    });
-
-    // 1차: count 내림차순, 2차: bestRank 오름차순, 3차: amtSum 내림차순
-    const sorted = Object.entries(sectorMap)
-      .sort((a, b) => b[1].count - a[1].count || a[1].bestRank - b[1].bestRank || b[1].amtSum - a[1].amtSum);
-
-    // 2개 이상 중복 섹터 우선, 없으면 상위 3개 단독 섹터도 포함
-    const multiSectors = sorted.filter(([, v]) => v.count >= 2);
-    const result = (multiSectors.length > 0 ? multiSectors : sorted)
-      .slice(0, 3)
-      .map(([s], i) => `${i + 1}.${s}`);
-
-    return result;
-  }
-
-  // 섹터 저장값에서 순수 섹터명 추출 ("1.바이오" → "바이오", "바이오" → "바이오")
-  function parseSectorLabel(s) {
-    return String(s || '').replace(/^\d+\./, '').trim();
-  }
-
-  /* ── 자동 저장 트리거 ── */
-  function autoSaveTodaySectors() {
-    const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
-    const hour = now.getHours();
-    const todayStr = fmtDate(now);
-    const data = scLoad();
-    const todayData = data[todayStr] || {};
-
-    // 16:00~19:59 → v1 저장 (없으면)
-    if (hour >= 16 && hour < 20 && !todayData.v1) {
-      const sectors = computeTodaySectors();
-      if (sectors.length > 0) {
-        data[todayStr] = { ...todayData, v1: sectors };
-        scSave(data);
-      }
-    }
-    // 20:00 이후 → v2 저장 (없으면)
-    if (hour >= 20 && !todayData.v2) {
-      const sectors = computeTodaySectors();
-      if (sectors.length > 0) {
-        data[todayStr] = { ...todayData, v2: sectors };
-        scSave(data);
-      }
-    }
-  }
-
-  /* ── 섹터 색상 ── */
-  const SECTOR_COLORS = {
-    '반도체':'#58a6ff','2차전지':'#3fb950','방산':'#f85149','원전':'#e3a825',
-    '조선':'#39d3f2','바이오':'#bc8cff','에너지':'#ff9500','전력':'#ffcc00',
-    '자동차':'#60d394','화학':'#ff6b9d','로봇':'#a8edea','IT서비스':'#74b9ff',
-    '인터넷':'#6c5ce7','게임':'#fd79a8','엔터':'#e17055','금융':'#00b894',
-    '건설':'#fdcb6e','우주':'#c9b1ff','6G통신':'#00e5cc','6G':'#00e5cc',
-    '서비스':'#fab1a0','통신':'#38bdf8','보안':'#94a3b8','의료기기':'#7dd3fc',
-    '화장품':'#f472b6','전자':'#3b82f6','물류':'#10b981','유통':'#f97316',
-    '해운':'#06b6d4','항공':'#8b5cf6','철강':'#a3a3a3','식품':'#84cc16',
-    '제약':'#ec4899','소재':'#f59e0b','지주':'#6b7280','미디어':'#d946ef',
-    '북극항로':'#22d3ee','희토류':'#fbbf24','로켓':'#c9b1ff',
-  };
-  function getSectorColor(sector) {
-    return SECTOR_COLORS[sector] || '#8b949e';
-  }
-
-  /* ── 달력 렌더 ── */
-  function renderSectorCalendar() {
-    const grid = document.getElementById('sc-cal-grid');
-    const title = document.getElementById('sc-cal-title');
-    const sideList = document.getElementById('sc-side-list');
-    if (!grid || !title) return;
-
-    const data = scLoad();
-    const year = scMonthCursor.getFullYear();
-    const month = scMonthCursor.getMonth();
-    title.textContent = `${year}년 ${month+1}월`;
-
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month+1, 0);
-    const start = new Date(first); start.setDate(first.getDate() - first.getDay());
-    const end = new Date(last); end.setDate(last.getDate() + (6 - last.getDay()));
-    const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
-    const todayStr = fmtDate(now);
-
-    // ── 달력 그리드 (일정 탭의 day-cell / event-item 구조 그대로 사용) ──
-    let html = '';
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
-      const ds = fmtDate(d);
-      const other = d.getMonth() !== month;
-      const isToday = ds === todayStr;
-      const dayData = data[ds] || {};
-      let sectors = dayData.v2 || dayData.v1 || [];
-      const isFinal = !!dayData.v2;
-      // 오늘 날짜이고 저장된 섹터가 없으면 실시간 계산값 미리보기 표시 (저장 안 함)
-      const isLivePreview = isToday && !sectors.length;
-      if (isLivePreview) {
-        try { sectors = computeTodaySectors(); } catch(e) { sectors = []; }
-      }
-      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-
-      html += `<div class="day-cell ${other?'other-month':''} ${isToday?'today':''}"
-                   style="${isWeekend&&!other?'opacity:.55':''}"
-                   data-date="${ds}" onclick="window.scOpenEdit('${ds}')" title="클릭하여 섹터 입력/수정">
-        <div class="day-num" style="${isToday?'color:var(--yellow);font-weight:700':''}">${d.getDate()}</div>
-        <div class="day-events">
-          ${sectors.map(s => {
-            const nm = parseSectorLabel(s);
-            return `<div class="event-item sc-sector-pill"
-              style="background:${getSectorColor(nm)}30;color:${getSectorColor(nm)};border:1px solid ${getSectorColor(nm)}66;padding:3px 6px;font-size:11px;border-radius:5px;font-family:var(--sans);font-weight:600;${isLivePreview?'border-style:dashed;opacity:.8':''}"
-              >${nm}${isLivePreview?' ~':isFinal?'':' ·'}</div>`;
-          }).join('')}
-        </div>
-      </div>`;
-    }
-    grid.innerHTML = html;
-
-    // ── 최근 30일 빈도 / 정렬: 1차 30일 총빈도, 2차 최근 7일 빈도 ──
-    if (sideList) {
-      const freq30 = {}; // 30일 총빈도
-      const freq7  = {}; // 최근 7일 빈도 (tie-break)
-      const past30str = fmtDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
-      const past7str  = fmtDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7));
-
-      for (const [dateStr, dayData] of Object.entries(data)) {
-        if (dateStr < past30str) continue;
-        const sectors = dayData.v2 || dayData.v1 || [];
-        for (const s of sectors) {
-          const nm = parseSectorLabel(s);
-          freq30[nm] = (freq30[nm] || 0) + 1;
-          if (dateStr >= past7str) freq7[nm] = (freq7[nm] || 0) + 1;
-        }
-      }
-
-      // 1차: 30일 총빈도 내림차순, 2차: 7일 빈도 내림차순
-      const sorted = Object.entries(freq30)
-        .sort((a, b) => b[1] - a[1] || (freq7[b[0]] || 0) - (freq7[a[0]] || 0))
-        .slice(0, 8);
-
-      sideList.innerHTML = sorted.length
-        ? sorted.map(([s, c]) => {
-            const w = freq7[s] || 0;
-            const color = getSectorColor(s);
-            // 박스 개수로 빈도 시각화 (최대 10개), 7일 이내는 진하게
-            const boxes = Math.min(c, 10);
-            const boxHtml = Array.from({length: boxes}, (_, i) =>
-              `<span style="display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:2px;background:${color};opacity:${i < w ? '1' : '0.25'}"></span>`
-            ).join('');
-            return `<div style="display:flex;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);gap:8px">
-              <span class="event-item"
-                style="background:${color}28;color:${color};border:1px solid ${color}55;font-family:var(--sans);font-weight:600;font-size:13px;white-space:nowrap;flex-shrink:0;"
-                >${s}</span>
-              <span style="display:flex;align-items:center;gap:0;flex-shrink:0">${boxHtml}</span>
-              <span style="font-size:11px;color:${color};font-weight:700;opacity:.8;flex-shrink:0">${c}회</span>
-            </div>`;
-          }).join('')
-        : '<div class="schedule-week-empty">아직 데이터가 없습니다</div>';
-    }
-  }
-
-  /* ── 수동 편집 팝업 ── */
-  window.scOpenEdit = function(dateStr) {
-    const data = scLoad();
-    const dayData = data[dateStr] || {};
-    // 저장값에서 번호 제거해서 표시 ("1.바이오" → "바이오")
-    const curRaw = dayData.v2 || dayData.v1 || [];
-    const cur = curRaw.map(s => parseSectorLabel(s)).join(', ');
-    const input = prompt(`${dateStr} 주도섹터 입력 (쉼표 구분, 최대 3개)\n예: 반도체, 방산, 2차전지\n현재: ${cur || '없음'}`, cur);
-    if (input === null) return;
-    const sectors = input.split(',').map(s=>s.trim()).filter(Boolean).slice(0,3);
-    const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
-    const todayStr = fmtDate(now);
-    const hour = now.getHours();
-    // 오늘이면 시간대에 따라 v1/v2, 과거면 v2로 저장
-    if (dateStr === todayStr && hour < 20) {
-      data[dateStr] = { ...dayData, v1: sectors };
-    } else {
-      data[dateStr] = { ...dayData, v2: sectors };
-    }
-    scSave(data);
-    renderSectorCalendar();
-  };
-
-  window.changeSectorCalMonth = function(delta) {
-    scMonthCursor = new Date(scMonthCursor.getFullYear(), scMonthCursor.getMonth() + Number(delta), 1);
-    renderSectorCalendar();
-  };
-
-  window.scSaveToday = function() {
-    const sectors = computeTodaySectors();
-    if (!sectors.length) { alert('주도주 10위 내 2개↑ 중복 섹터가 없습니다.\n(장중이면 Naver 데이터 수신 후 재시도)'); return; }
-    const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Seoul'}));
-    const todayStr = fmtDate(now);
-    const hour = now.getHours();
-    const data = scLoad();
-    const dayData = data[todayStr] || {};
-    if (hour < 20) {
-      data[todayStr] = { ...dayData, v1: sectors };
-    } else {
-      data[todayStr] = { ...dayData, v2: sectors };
-    }
-    scSave(data);
-    renderSectorCalendar();
-    alert(`저장 완료: ${sectors.map(s=>parseSectorLabel(s)).join(', ')}`);
-  };
-
-  window.renderSectorCalendar = renderSectorCalendar;
-  window._autoSaveTodaySectors = autoSaveTodaySectors; // refreshAll에서 호출용
-
-  // ── 자동저장 전용 타이머 (렌더와 분리) ──
-  // 5분마다 체크 → 16시·20시 조건에 맞으면 저장 (렌더 시마다 덮어쓰기 방지)
-  setInterval(() => { autoSaveTodaySectors(); }, 5 * 60 * 1000);
-
-  // DOMContentLoaded 후 초기화
-  function initSectorCal() {
-    if (document.getElementById('sc-cal-grid')) {
-      renderSectorCalendar();
-      autoSaveTodaySectors();
-    }
-
-    // ── 탭 간 동기화 리스너 ──
-    // BroadcastChannel: 같은 기기 내 다른 탭에서 저장 시 즉시 리렌더
-    if (_scChannel) {
-      _scChannel.onmessage = (e) => {
-        if (e.data?.type === 'sc_updated') {
-          if (document.getElementById('sc-cal-grid')) renderSectorCalendar();
-        }
-      };
-    }
-    // storage 이벤트: 동일 기기 다른 창(크로스-오리진X)에서도 감지
-    window.addEventListener('storage', (e) => {
-      if (e.key === SC_KEY && document.getElementById('sc-cal-grid')) {
-        renderSectorCalendar();
-      }
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSectorCal, {once:true});
-  } else {
-    initSectorCal();
-  }
-})();
-</script>
-
-
-<script>
-(function() {
-  'use strict';
-  const KR_SECTOR_OVERRIDE = {
-    '000720': { name: '현대건설', sector1: '건설' },
-    '001450': { name: '현대해상', sector1: '보험' },
-    '005300': { name: '롯데칠성', sector1: '식품/음료' },
-    '005830': { name: 'DB손해보험', sector1: '보험' },
-    '006360': { name: 'GS건설', sector1: '건설' },
-    '015760': { name: '한국전력', sector1: '전력' },
-    '023530': { name: '롯데쇼핑', sector1: '유통' },
-    '028050': { name: '삼성E&A', sector1: '건설' },
-    '032830': { name: '삼성생명', sector1: '보험' },
-    '038500': { name: '삼표시멘트', sector1: '건자재' },
-    '047040': { name: '대우건설', sector1: '건설' },
-    '097950': { name: 'CJ제일제당', sector1: '식품/음료' },
-    '375500': { name: 'DL이앤씨', sector1: '건설' }
-  };
-
-  const normalize = (code) => String(code || '').replace(/\.(KS|KQ)$/i, '').trim();
-  const originalGetKrMeta = typeof getKrMeta === 'function' ? getKrMeta : null;
-  const originalGetKrSector = typeof getKrSector === 'function' ? getKrSector : null;
-
-  window.KR_SECTOR_OVERRIDE = KR_SECTOR_OVERRIDE;
-
-  if (typeof KR_SECTOR_META === 'object' && KR_SECTOR_META) {
-    Object.entries(KR_SECTOR_OVERRIDE).forEach(([code, info]) => {
-      KR_SECTOR_META[code] = {
-        ...(KR_SECTOR_META[code] || {}),
-        name: info.name || (KR_SECTOR_META[code] || {}).name || '',
-        market: (KR_SECTOR_META[code] || {}).market || '',
-        etf: Boolean((KR_SECTOR_META[code] || {}).etf),
-        sector1: info.sector1,
-        sector2: info.sector2 || ''
-      };
-    });
-  }
-
-  // KR_SECTOR_META에 오버라이드 반영 (KR_CODE_SECTOR 제거됨)
-  if (typeof KR_SECTOR_META === 'object' && KR_SECTOR_META) {
-    Object.entries(KR_SECTOR_OVERRIDE).forEach(([code, info]) => {
-      if (KR_SECTOR_META[code]) KR_SECTOR_META[code].sector1 = info.sector1;
-      else KR_SECTOR_META[code] = { name: info.name || '', sector1: info.sector1, market: 'KOSPI', etf: false };
-    });
-  }
-
-  window.getKrMeta = function(code) {
-    const c = normalize(code);
-    const override = KR_SECTOR_OVERRIDE[c];
-    if (override) {
-      const base = originalGetKrMeta ? (originalGetKrMeta(c) || {}) : {};
-      return {
-        ...base,
-        name: override.name || base.name || '',
-        sector1: override.sector1 || base.sector1 || '',
-        sector2: override.sector2 || base.sector2 || ''
-      };
-    }
-    return originalGetKrMeta ? originalGetKrMeta(code) : null;
-  };
-
-  window.getKrSector = function(code) {
-    const c = normalize(code);
-    const override = KR_SECTOR_OVERRIDE[c];
-    if (override?.sector1) return override.sector1;
-    return originalGetKrSector ? originalGetKrSector(code) : '';
-  };
-
-  function rerenderAfterOverride() {
-    try {
-      if (typeof renderLeadStocks === 'function') renderLeadStocks();
-      if (typeof renderSectorReferenceList === 'function') {
-        renderSectorReferenceList('krstocks');
-        renderSectorReferenceList('usstocks');
-      }
-      if (typeof updateKRStockSectorTotals === 'function') updateKRStockSectorTotals();
-    } catch (e) {
-      console.warn('sector override rerender failed', e);
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', rerenderAfterOverride, { once: true });
-  } else {
-    rerenderAfterOverride();
-  }
-  setTimeout(rerenderAfterOverride, 1200);
-})();
-</script>
 
 </body>
 </html>
