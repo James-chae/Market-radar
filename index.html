@@ -4230,7 +4230,6 @@ function showTab(name, btn) {
     const hasData = document.querySelector('.kr-stock-btn.sig-up, .kr-stock-btn.sig-down, .kr-stock-btn.sig-flat');
     if (bar && !hasData) { bar.style.display = ''; bar.dataset.shownAt = Date.now(); }
   }
-  }
   requestAnimationFrame(() => { initChartsForTab(name); if (name === 'usstocks') resizeChartToContainer('tv-usstocks-chart'); if (name === 'krstocks') resizeChartToContainer('tv-krstocks-chart'); });
   if (name === 'charts') {
     syncMainToolbar();
