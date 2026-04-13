@@ -5023,7 +5023,6 @@ function isEtfCode(code, embeddedBySymbol) {
 // ── refreshAll override (단순화) ──────────────────────────────
 const __originalRefreshAll = refreshAll;
 refreshAll = async function() {
-  STATIC_KRX_STATE.data = null; // 매 갱신마다 재검사
   const now = Date.now();
   const krBar = document.getElementById('kr-stocks-loading');
   if (krBar) { krBar.style.removeProperty('display'); krBar.dataset.shownAt = now; }
